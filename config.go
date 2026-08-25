@@ -7,9 +7,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	telemetrymetric "github.com/faustbrian/golib/pkg/telemetry/metric"
-	telemetrypropagation "github.com/faustbrian/golib/pkg/telemetry/propagation"
-	telemetrytrace "github.com/faustbrian/golib/pkg/telemetry/trace"
+	telemetrymetric "github.com/faustbrian/go-telemetry/metric"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/propagation"
+	telemetrytrace "github.com/faustbrian/go-telemetry/trace"
 )
 
 // Protocol selects an OTLP transport.

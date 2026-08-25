@@ -9,7 +9,7 @@ and whether secrets or untrusted identifiers were exported.
 
 ## Supported versions
 
-Until v1, only the latest released minor receives security fixes. After v1,
+Only the latest stable v1 minor receives security fixes.
 the current major and the immediately previous supported minor receive fixes
 according to the compatibility matrix.
 

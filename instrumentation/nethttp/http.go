@@ -20,7 +20,7 @@ import (
 	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
-const scopeName = "github.com/faustbrian/golib/pkg/telemetry/instrumentation/nethttp"
+const scopeName = "github.com/faustbrian/go-telemetry/instrumentation/nethttp"
 
 var operationPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,127}$`)
 

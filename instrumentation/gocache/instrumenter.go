@@ -15,7 +15,7 @@ import (
 	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
-const scopeName = "github.com/faustbrian/golib/pkg/telemetry/instrumentation/gocache"
+const scopeName = "github.com/faustbrian/go-telemetry/instrumentation/gocache"
 
 // Operation is a bounded cache operation label.
 type Operation string

@@ -1,38 +1,55 @@
 # Contributing
 
-## Development environment
+## Before Editing
 
-Use a supported Go version and install `golangci-lint` v2.12 and
-`govulncheck`. No Collector is required for the normal suite; protocol tests
-run in-process.
-
-```sh
-go mod download
-make check
-make race
-make fuzz
-make benchmark
-```
-
-`make check` verifies formatting, vetting, unit and protocol integration tests,
-meaningful 100% library coverage, safety constraints, and example builds.
+1. Read [`AGENTS.md`](AGENTS.md) and the affected module's goals and docs.
+2. Run `make inventory` and the narrow baseline gate for the module.
+3. Identify owned dependencies and reverse dependants in `modules.json`.
+4. Preserve unrelated work and generated/corpus provenance.
 
 ## Changes
 
-- Add behavior-focused tests before implementation changes.
-- Keep configuration explicit and return standard OpenTelemetry APIs.
-- Do not add vendor SDKs or direct-to-vendor defaults.
-- Do not record secrets, payloads, raw identifiers, or unbounded labels.
-- Add every user-visible change to `CHANGELOG.md`.
-- Update compatibility and upgrade documentation when dependencies or public
-  contracts change.
+Keep commits focused and conventional. Update every affected changelog with
+the behavior and migration impact. Public API changes require compatibility
+evidence and documentation. Specification behavior requires a decision record,
+fixture coverage, and interoperability evidence.
 
-Benchmarks that materially change should include before/after `-benchmem`
-output in the pull request. New integrations belong in isolated
-`instrumentation/*` packages and must not introduce dependency cycles.
+New direct dependencies and dependency updates must follow the
+[dependency governance policy](docs/dependency-governance.md). Package-local
+update bots are forbidden; the root policy owns every module and action update.
 
-## Pull requests
+Specification-backed changes must follow the
+[specification governance contract](docs/specification-governance.md), update
+the affected stable decision entries, and complete the Specification Decisions
+section of the pull request template. An unresolved interpretation or stale
+source pin is release-blocking; peer behavior cannot silently select policy.
 
-Explain the operational reason for the change, failure behavior, cardinality
-and privacy effects, compatibility impact, and the exact checks run. CI must be
-green before release.
+Do not add package-local workflows, permanent replacements, machine-specific
+paths, bypass flags, broad mutation exclusions, or aggregate quality metrics
+that hide a failing package.
+
+## Verification
+
+Run during development:
+
+```bash
+make inventory
+make specification-decisions
+make check MODULES=pkg/<library>
+```
+
+Before submitting a repository-wide change:
+
+```bash
+make ci-changed BASE=origin/main
+```
+
+The full scheduled and release gate is `make ci`. Report every unavailable or
+failing command; do not describe partial results as release-ready.
+
+## Adding A Module
+
+Follow [module lifecycle procedures](docs/module-lifecycle.md). New modules
+require an explicit purpose, ownership boundary, dependency review, package
+catalog entry, full quality gates, documentation, changelog, license, security
+policy, compatibility plan, and release dry-run.

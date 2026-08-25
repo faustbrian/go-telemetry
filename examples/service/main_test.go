@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	telemetry "github.com/faustbrian/golib/pkg/telemetry"
+	telemetry "github.com/faustbrian/go-telemetry"
 )
 
 func TestApplyEnvironmentNormalizesStandardOTLPEndpointURL(t *testing.T) {

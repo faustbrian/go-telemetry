@@ -5,7 +5,7 @@ package gohttpclient
 import (
 	"net/http"
 
-	"github.com/faustbrian/golib/pkg/telemetry/instrumentation/nethttp"
+	"github.com/faustbrian/go-telemetry/instrumentation/nethttp"
 )
 
 // Config is the fixed, low-cardinality outbound HTTP instrumentation config.

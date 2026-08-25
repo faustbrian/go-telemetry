@@ -15,7 +15,7 @@ import (
 	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
-const scopeName = "github.com/faustbrian/golib/pkg/telemetry/instrumentation/goqueue"
+const scopeName = "github.com/faustbrian/go-telemetry/instrumentation/goqueue"
 
 // Backend is a finite queue backend label.
 type Backend string

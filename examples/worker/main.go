@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	telemetry "github.com/faustbrian/golib/pkg/telemetry"
-	"github.com/faustbrian/golib/pkg/telemetry/examples/internal/exampleconfig"
+	telemetry "github.com/faustbrian/go-telemetry"
+	"github.com/faustbrian/go-telemetry/examples/internal/exampleconfig"
 )
 
 func main() {

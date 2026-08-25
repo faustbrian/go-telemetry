@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/telemetry"
-	"github.com/faustbrian/golib/pkg/telemetry/telemetryservice"
+	"github.com/faustbrian/go-telemetry"
+	"github.com/faustbrian/go-telemetry/telemetryservice"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/trace"
 )

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module_directory": ".",
+      "package_directory": "instrumentation/gohttpclient",
+      "reason": "The integration bridge exposes aliases and directly delegates transport construction; the complete enabled Gremlins operator set discovers no viable transformations.",
+      "source_digest": "0c37056fd145f64c9bc0df74f19462a3c23f4ab189d260408439ffb0b4c74aa4"
+    }
+  ]
+}

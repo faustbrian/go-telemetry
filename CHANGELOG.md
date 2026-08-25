@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-25
+
 ### Documentation
 
 - Replace obsolete standalone-repository links and workflow claims with
@@ -14,6 +16,7 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Publish the module from its standalone `github.com/faustbrian/go-telemetry` identity while preserving its documented API and behavior.
 - Replace obsolete owned-module pseudo-version pins with the monorepo's local
   `v0.0.0` source-proxy coordinates; release tooling continues to emit exact
   `v1.0.0` dependency versions.
@@ -79,4 +82,5 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/golib/commits/main/pkg/telemetry
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/faustbrian/go-telemetry/releases/tag/v1.0.0

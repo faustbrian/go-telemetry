@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	telemetrypropagation "github.com/faustbrian/golib/pkg/telemetry/propagation"
-	"github.com/faustbrian/golib/pkg/telemetry/testtelemetry"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/propagation"
+	"github.com/faustbrian/go-telemetry/testtelemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"

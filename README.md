@@ -1,5 +1,15 @@
 # telemetry
 
+[![CI](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
+[![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
+[![Mutation](https://img.shields.io/badge/mutation-100%25_required-blue)](CONTRIBUTING.md#verification)
+[![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry)
+[![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
+[![Go](https://img.shields.io/badge/go-1.26.6-00ADD8?logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 `telemetry` is a vendor-neutral OpenTelemetry runtime for Go services. It
 owns resource identity, trace and metric providers, OTLP exporters,
 propagation, sampling, global registration, flush, and shutdown while returning
@@ -24,7 +34,7 @@ import (
 	"context"
 	"log"
 
-	telemetry "github.com/faustbrian/golib/pkg/telemetry"
+	telemetry "github.com/faustbrian/go-telemetry"
 )
 
 func main() {
@@ -130,7 +140,7 @@ meaningful 100% statement coverage.
 
 Trace and metric APIs use stable OpenTelemetry interfaces. The log signal is
 intentionally absent from the stable runtime; see [log stability](docs/logs.md).
-Pre-v1 releases may refine configuration, but changes are documented in
+Major releases may refine configuration, but changes are documented in
 [`CHANGELOG.md`](CHANGELOG.md) and follow semantic versioning.
 
 ## License

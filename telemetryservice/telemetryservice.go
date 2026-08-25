@@ -15,8 +15,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/faustbrian/golib/pkg/service"
-	"github.com/faustbrian/golib/pkg/telemetry"
+	"github.com/faustbrian/go-service"
+	"github.com/faustbrian/go-telemetry"
 )
 
 // ErrInvalidOptions identifies invalid adapter construction.

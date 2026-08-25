@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	telemetrytrace "github.com/faustbrian/golib/pkg/telemetry/trace"
+	telemetrytrace "github.com/faustbrian/go-telemetry/trace"
 )
 
 func TestDefaultConfigIsSafeAndInspectable(t *testing.T) {

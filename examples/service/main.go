@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	telemetry "github.com/faustbrian/golib/pkg/telemetry"
-	"github.com/faustbrian/golib/pkg/telemetry/examples/internal/exampleconfig"
-	"github.com/faustbrian/golib/pkg/telemetry/instrumentation/nethttp"
+	telemetry "github.com/faustbrian/go-telemetry"
+	"github.com/faustbrian/go-telemetry/examples/internal/exampleconfig"
+	"github.com/faustbrian/go-telemetry/instrumentation/nethttp"
 )
 
 func main() {

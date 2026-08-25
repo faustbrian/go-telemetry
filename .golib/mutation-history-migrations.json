@@ -1,0 +1,312 @@
+{
+  "schema_version": 3,
+  "reason": "Exact mutation checkpoints retained across history rewrites only when the approved old and replacement package input fingerprints, tool version, and report digest match.",
+  "verifier_migration_review": {
+    "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+    "reason": "Each listed checkpoint was executed with the complete current Gremlins semantic patch set introduced by ac300cf3; the four omitted checkpoints require fresh campaigns.",
+    "reviewed_at": "2026-08-20"
+  },
+  "verifier_migrations": [
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "4ba223a72cca322b4a52b53362738126450fc2e2b885f9e46c04b48c806b222a",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": ".",
+      "report_sha256": "255d5ff86160b2da9ac578b19b80949eb0a5f30305a984bee69e9a5f18bd8994"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "68d6019e38975a6bce0b3f3fda639ac2462ef7089b58e41904031e93dd5ec6b6",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/gocache",
+      "report_sha256": "829d74f9f1abe25107a0650f553e61ca695057e5b649d0d447c70dcf7cd55782"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "387ba19743a111f7bea8a1645105ef9d55f6ff400c92a7069111f8c1b130c997",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/gopostgres",
+      "report_sha256": "3720e6e5fb94db65f82fbfc3ca6957656dd5627844d9f01944a398b96760d8e7"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "faad3df04d1142bb3c88d29fee709a1f7eedf7035f652c2b8227b0f4d6959762",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/goqueue",
+      "report_sha256": "70083b4ea01ca3a3f49439fe0b98f158d45dcbb38c46f8adc2bf9deba7586a79"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "38de39ebf4065f27fae8157f6d8cce0bd201b0d0e4ab6806455379eca20d5cdc",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/nethttp",
+      "report_sha256": "4359189b8f774d380a9b6795fbcb278d9af91ef954a478392ba369b939f82f50"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "99c04854df3236d661eb4edafca4555ae86d7ba886df39ef42a287336cb8900b",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "metric",
+      "report_sha256": "e26993e3e6f1ce9ca5c279c8d1aed3260b9291acaf1c97fc043ed7726745628b"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "e8fa71fe4082f01cdc82604f8d283fb8746ca911bc6f11f675cf13abfcdf8cdf",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "otlp",
+      "report_sha256": "4bb7ac72eade47567eb6af97778720a5a700e567bf9da58b618b45039d371d03"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "e19260e2ef3463f304d2d868b16d52cb07de84d6e2156cf505509d75a69600e1",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "propagation",
+      "report_sha256": "b256607a5fe0a19a4ac113a845b7fbb73c83050c6950d1dd107e5212e74dc613"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "033bcc1a3122c91672c89ac600ef786f6b7c1adee27af387ed7ce6c634a93586",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "telemetryservice",
+      "report_sha256": "22cedc877bf4dd3ac9231800eb8b02695e23c857b7253e3f0c46be1a003ceb9e"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "33f114c78c928795ae301b982c6ff4b3f3c19bcd8bcfc90f13a641d3beb4f96c",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "trace",
+      "report_sha256": "6875bbc3b1ce088a799b3fa752f22adca1a62081b63a701ffd6c4acebe8b2c44"
+    },
+    {
+      "module": ".",
+      "package": "instrumentation/gohttpclient",
+      "execution_revision": "61805082782695a3197ac1218ffeafb85cf570f5",
+      "gate_input_digest": "80c393db088f0d668ca96cfc8d9408ffa93d26d8723a122ba562f4e2ab4ca3a8",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "72094c8b2dcf0bfb4f1d7ef1e19f4be87352e3165051f0a9f28b3169215a5896"
+    }
+  ],
+  "entries": [
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "530389e60af04e1c18d8ffda6f9d02e5a5b29e75b878ea4f2a003e0f589a3b0b",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": ".",
+      "report_sha256": "3d90fafc70cdda209292c3f679100404fa3d2754d96fcb7fa826e6526d4faee0"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "125013601cf5231ebc5b478c40e735c0b2fba7638a441bdadf90b67823165520",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/gocache",
+      "report_sha256": "372afa1e42d28830d9e529644eefa63a79517b7453a214200b388122ec288a2c"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "64d715dfdb0638bfafc8ef5c6b5ac0d8f2c19a40291dc696e933b6f00b701872",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/gohttpclient",
+      "report_sha256": "72094c8b2dcf0bfb4f1d7ef1e19f4be87352e3165051f0a9f28b3169215a5896"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "3a33102d859fac8e0dfd78ef9de2595f09abf8f81df221f5ece0a4bc572fbaa6",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/gopostgres",
+      "report_sha256": "36964e52b361b824b45ce819005f3353a3419fab4890e3bab6667f5ad9af2065"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "684c6d8ce75108963b3edcf333278157f3c7b387a3d67bc57640c52ab8a13bdb",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/goqueue",
+      "report_sha256": "ecbdc61743db6b78d08dda1337ef6de40946240c51a111375a204a5e067b651e"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "e6104a902cb3ba4f6639877e43feda674bee1778da887ae8326af337e4a6a2d7",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "instrumentation/nethttp",
+      "report_sha256": "5d491fe514cac92d3db81f4b208a5addc110dcd5713ac2508dc73a8e4da20721"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "7e919a64c6442b3b0a383c718827bf68869af5233d7eb88164bd3967c618e5bc",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "metric",
+      "report_sha256": "872b552127893569688a5335660b33e082c3c4459f38f6d77c7a2621f1b785b7"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "3f602f249df7c119a5f8abca60eb9056b00a2ed788b2c3f783b46886637a4681",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "otlp",
+      "report_sha256": "403a6d85b306fee7ebfe5d6647fd642347f1507a1e81178cd65230a18e725534"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "bcd6555b966696bff52726f1e712f0226c8ecd165c983606d81a9774b7e45d21",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "propagation",
+      "report_sha256": "78aa092a033c982756bae59b2d0fb39c20b75a144c636809fc78c95d7b8259fd"
+    },
+    {
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "e8eabbec791b74a9158fd41519d8318c1624e29d95d515276076a1abc40eebd4",
+      "gremlins_version": "v0.6.0",
+      "migration_reason": "owned-module-version-locator-canonicalization",
+      "module": ".",
+      "package": "telemetryservice",
+      "replacement_gate_input_digest": "033bcc1a3122c91672c89ac600ef786f6b7c1adee27af387ed7ce6c634a93586",
+      "report_sha256": "22cedc877bf4dd3ac9231800eb8b02695e23c857b7253e3f0c46be1a003ceb9e"
+    },
+    {
+      "execution_revision": "8cb85e2f184a5fd013396bdb6521ecead1a61cc4",
+      "gate_input_digest": "6d423461321e86346ffb5ae35771af3adbc6c6bff4676c8bb1e78490e63ec02d",
+      "gremlins_version": "v0.6.0",
+      "module": ".",
+      "package": "trace",
+      "report_sha256": "ae8a1a02e90cc8844788e0b00b6099b7831c8c349bbb311a74d6f36ba2645d66"
+    },
+    {
+      "module": ".",
+      "package": ".",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "4ba223a72cca322b4a52b53362738126450fc2e2b885f9e46c04b48c806b222a",
+      "replacement_gate_input_digest": "70bf4fc2f673b6baa21fe687b0479956b21898106aff82b5b19403f99a322b41",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "255d5ff86160b2da9ac578b19b80949eb0a5f30305a984bee69e9a5f18bd8994"
+    },
+    {
+      "module": ".",
+      "package": "instrumentation/gocache",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "68d6019e38975a6bce0b3f3fda639ac2462ef7089b58e41904031e93dd5ec6b6",
+      "replacement_gate_input_digest": "7d8c9b749f552f17af6265128484c43e2cbc4a9fdb1b8e30686fded1488b7cf4",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "829d74f9f1abe25107a0650f553e61ca695057e5b649d0d447c70dcf7cd55782"
+    },
+    {
+      "module": ".",
+      "package": "instrumentation/gohttpclient",
+      "execution_revision": "61805082782695a3197ac1218ffeafb85cf570f5",
+      "gate_input_digest": "80c393db088f0d668ca96cfc8d9408ffa93d26d8723a122ba562f4e2ab4ca3a8",
+      "replacement_gate_input_digest": "e0ff012c74786c35b779d935878643b8c53afc4f7ca68f09098985c3c685a55d",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "72094c8b2dcf0bfb4f1d7ef1e19f4be87352e3165051f0a9f28b3169215a5896"
+    },
+    {
+      "module": ".",
+      "package": "instrumentation/gopostgres",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "387ba19743a111f7bea8a1645105ef9d55f6ff400c92a7069111f8c1b130c997",
+      "replacement_gate_input_digest": "739cfb1716b84d08604d3b4b359e33c19cdd217d7092f36d8e3f8fb1e0e2897e",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "3720e6e5fb94db65f82fbfc3ca6957656dd5627844d9f01944a398b96760d8e7"
+    },
+    {
+      "module": ".",
+      "package": "instrumentation/goqueue",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "faad3df04d1142bb3c88d29fee709a1f7eedf7035f652c2b8227b0f4d6959762",
+      "replacement_gate_input_digest": "8838399fcc78d9dcf6ee9e0780f3d71351aa48cc193e60616bcb9a27f88944e9",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "70083b4ea01ca3a3f49439fe0b98f158d45dcbb38c46f8adc2bf9deba7586a79"
+    },
+    {
+      "module": ".",
+      "package": "instrumentation/nethttp",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "38de39ebf4065f27fae8157f6d8cce0bd201b0d0e4ab6806455379eca20d5cdc",
+      "replacement_gate_input_digest": "5a4221cce84750c016ef9ab8537c5b3d23d9bc4e08a9a982c19dc744635dbdb8",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "4359189b8f774d380a9b6795fbcb278d9af91ef954a478392ba369b939f82f50"
+    },
+    {
+      "module": ".",
+      "package": "metric",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "99c04854df3236d661eb4edafca4555ae86d7ba886df39ef42a287336cb8900b",
+      "replacement_gate_input_digest": "1300de98724aa2b3f0ad03c079014d1fccef6aefe6fc384da967211d3c721d5b",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "e26993e3e6f1ce9ca5c279c8d1aed3260b9291acaf1c97fc043ed7726745628b"
+    },
+    {
+      "module": ".",
+      "package": "otlp",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "e8fa71fe4082f01cdc82604f8d283fb8746ca911bc6f11f675cf13abfcdf8cdf",
+      "replacement_gate_input_digest": "a3bf1952de1df8079e3bc0b48c81d84c5eb9974d35d93ff2d7a1e3a6859b72bb",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "4bb7ac72eade47567eb6af97778720a5a700e567bf9da58b618b45039d371d03"
+    },
+    {
+      "module": ".",
+      "package": "propagation",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "e19260e2ef3463f304d2d868b16d52cb07de84d6e2156cf505509d75a69600e1",
+      "replacement_gate_input_digest": "ac7b5ef59e5fe6f85adf5f12f6f035da1968425242e5a96ab6c00a63e8d8ec52",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "b256607a5fe0a19a4ac113a845b7fbb73c83050c6950d1dd107e5212e74dc613"
+    },
+    {
+      "module": ".",
+      "package": "telemetryservice",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "033bcc1a3122c91672c89ac600ef786f6b7c1adee27af387ed7ce6c634a93586",
+      "replacement_gate_input_digest": "684d64b73abdb0927552599d9e8c17c768aa2337f6f69acb90d1eb96caa223bc",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "22cedc877bf4dd3ac9231800eb8b02695e23c857b7253e3f0c46be1a003ceb9e"
+    },
+    {
+      "module": ".",
+      "package": "trace",
+      "execution_revision": "d7d487f309f3921eff48c5bb277ff11a4fef7077",
+      "gate_input_digest": "33f114c78c928795ae301b982c6ff4b3f3c19bcd8bcfc90f13a641d3beb4f96c",
+      "replacement_gate_input_digest": "3c05d6e6b32cfee490c0317944afc00204672ec11fdd507b9ce673e70736fc04",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+      "report_sha256": "6875bbc3b1ce088a799b3fa752f22adca1a62081b63a701ffd6c4acebe8b2c44"
+    }
+  ]
+}
