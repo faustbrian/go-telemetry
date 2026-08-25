@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-25
+
 ### Fixed
 
 - Bind the reviewed zero-mutant Go HTTP client instrumentation facade to its
@@ -26,8 +28,6 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 - Harden standalone documentation validation with deterministic spelling and
   link checks, package-specific documentation gates, and repository-local
   contributor guidance.
-
-## [1.0.0] - 2026-08-25
 
 ### Documentation
 
