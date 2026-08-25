@@ -7,7 +7,7 @@
       "module_directory": ".",
       "package_directory": "instrumentation/gohttpclient",
       "reason": "The integration bridge exposes aliases and directly delegates transport construction; the complete enabled Gremlins operator set discovers no viable transformations.",
-      "source_digest": "0c37056fd145f64c9bc0df74f19462a3c23f4ab189d260408439ffb0b4c74aa4"
+      "source_digest": "3a326bac5443172fbc0a0c03c225be763fa0f196ea87035c98083b7bbd7901e4"
     }
   ]
 }

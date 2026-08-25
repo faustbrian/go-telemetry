@@ -5,6 +5,11 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Bind the reviewed zero-mutant Go HTTP client instrumentation facade to its
+  exact standalone source identity.
+
 ### Changed
 
 - Exclude intentional nested modules from root local-proxy archives so local,
