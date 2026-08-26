@@ -5,6 +5,14 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Align isolated dependency checks with standalone package module paths.
+
+### Documentation
+
+- Remove completed implementation plans and the archived monorepo portal.
+
 ## [1.0.0] - 2026-08-25
 
 ### Fixed
@@ -31,10 +39,10 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Documentation
 
-- Replace obsolete standalone-repository links and workflow claims with
-  monorepo-canonical targets and current release guidance.
+- Replace obsolete repository links and workflow claims with standalone
+  package targets and current release guidance.
 
-- Link the package README to the repository-wide Golib documentation portal.
+- Add package discovery documentation.
 
 ### Changed
 
