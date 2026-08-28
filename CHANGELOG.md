@@ -5,6 +5,12 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Record active HTTP server requests and request and response body sizes so
+  services can observe saturation and payload pressure without retaining
+  payload content.
+
 ### Changed
 
 - Align isolated dependency checks with standalone package module paths.

@@ -43,14 +43,17 @@ type ClientConfig struct {
 }
 
 type serverHandler struct {
-	next       http.Handler
-	operation  string
-	route      string
-	tracer     trace.Tracer
-	propagator otelpropagation.TextMapPropagator
-	trusted    bool
-	duration   metric.Float64Histogram
-	requests   metric.Int64Counter
+	next         http.Handler
+	operation    string
+	route        string
+	tracer       trace.Tracer
+	propagator   otelpropagation.TextMapPropagator
+	trusted      bool
+	duration     metric.Float64Histogram
+	requests     metric.Int64Counter
+	active       metric.Int64UpDownCounter
+	requestSize  metric.Int64Histogram
+	responseSize metric.Int64Histogram
 }
 
 // NewHandler wraps handler with bounded tracing, metrics, and extraction.
@@ -78,15 +81,30 @@ func NewHandler(handler http.Handler, config ServerConfig) (http.Handler, error)
 	if err != nil {
 		return nil, err
 	}
+	active, err := meter.Int64UpDownCounter("http.server.active_requests", metric.WithUnit("{request}"))
+	if err != nil {
+		return nil, err
+	}
+	requestSize, err := meter.Int64Histogram("http.server.request.body.size", metric.WithUnit("By"))
+	if err != nil {
+		return nil, err
+	}
+	responseSize, err := meter.Int64Histogram("http.server.response.body.size", metric.WithUnit("By"))
+	if err != nil {
+		return nil, err
+	}
 	return &serverHandler{
-		next:       handler,
-		operation:  config.Operation,
-		route:      config.Route,
-		tracer:     tracerProvider.Tracer(scopeName),
-		propagator: propagator,
-		trusted:    config.TrustedInbound,
-		duration:   duration,
-		requests:   requests,
+		next:         handler,
+		operation:    config.Operation,
+		route:        config.Route,
+		tracer:       tracerProvider.Tracer(scopeName),
+		propagator:   propagator,
+		trusted:      config.TrustedInbound,
+		duration:     duration,
+		requests:     requests,
+		active:       active,
+		requestSize:  requestSize,
+		responseSize: responseSize,
 	}, nil
 }
 
@@ -111,6 +129,8 @@ func (handler *serverHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	request = request.WithContext(ctx)
 
 	started := time.Now()
+	handler.active.Add(ctx, 1, metric.WithAttributes(attributes...))
+	defer handler.active.Add(ctx, -1, metric.WithAttributes(attributes...))
 	var captured httpsnoop.Metrics
 	defer func() {
 		panicValue := recover()
@@ -132,6 +152,10 @@ func (handler *serverHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 		}
 		handler.duration.Record(ctx, duration.Seconds(), metric.WithAttributes(resultAttributes...))
 		handler.requests.Add(ctx, 1, metric.WithAttributes(resultAttributes...))
+		if request.ContentLength >= 0 {
+			handler.requestSize.Record(ctx, request.ContentLength, metric.WithAttributes(resultAttributes...))
+		}
+		handler.responseSize.Record(ctx, captured.Written, metric.WithAttributes(resultAttributes...))
 		span.End()
 		if panicValue != nil {
 			panic(panicValue)

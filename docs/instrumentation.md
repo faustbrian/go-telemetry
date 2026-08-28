@@ -19,6 +19,12 @@ Operation and route are fixed at construction. Raw request target, host,
 headers, body, and client address are never attributes. Trusted baggage is an
 explicit per-handler option described in [propagation](propagation.md).
 
+The server adapter records request count and duration, active requests, and
+request and response body sizes. Payload sizes are numeric measurements only;
+payload content is never inspected or retained. Requests without a known
+`Content-Length` omit the request-size measurement rather than buffering the
+body.
+
 ## net/http and http-client clients
 
 ```go

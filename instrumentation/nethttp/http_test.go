@@ -63,6 +63,57 @@ func TestHandlerRecordsOnlyBoundedServerAttributes(t *testing.T) {
 	assertNoSecret(t, attributes, "secret", "attacker.example", "token")
 }
 
+func TestHandlerRecordsActiveRequestsAndPayloadSizes(t *testing.T) {
+	t.Parallel()
+
+	harness := testtelemetry.New()
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	handler, err := NewHandler(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		close(entered)
+		<-release
+		_, _ = writer.Write([]byte("response"))
+	}), ServerConfig{
+		Operation:     "service.rpc",
+		Route:         "/rpc",
+		MeterProvider: harness.MeterProvider(),
+	})
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+	request := httptest.NewRequest(http.MethodPost, "/rpc", strings.NewReader("request"))
+	response := httptest.NewRecorder()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handler.ServeHTTP(response, request)
+	}()
+	<-entered
+
+	active := collectInt64Metric(t, harness, "http.server.active_requests")
+	if len(active) != 1 || active[0] != 1 {
+		t.Fatalf("active requests = %v, want [1]", active)
+	}
+	close(release)
+	<-done
+
+	if response.Code != http.StatusOK || response.Body.String() != "response" {
+		t.Fatalf("response = (%d, %q), want (200, response)", response.Code, response.Body.String())
+	}
+	requestSizes := collectInt64Metric(t, harness, "http.server.request.body.size")
+	responseSizes := collectInt64Metric(t, harness, "http.server.response.body.size")
+	active = collectInt64Metric(t, harness, "http.server.active_requests")
+	if len(requestSizes) != 1 || requestSizes[0] != int64(len("request")) {
+		t.Fatalf("request sizes = %v, want [%d]", requestSizes, len("request"))
+	}
+	if len(responseSizes) != 1 || responseSizes[0] != int64(len("response")) {
+		t.Fatalf("response sizes = %v, want [%d]", responseSizes, len("response"))
+	}
+	if len(active) != 1 || active[0] != 0 {
+		t.Fatalf("active requests after completion = %v, want [0]", active)
+	}
+}
+
 func TestTransportInjectsContextWithoutRecordingTargetData(t *testing.T) {
 	t.Parallel()
 
@@ -287,13 +338,17 @@ func TestConstructorsReportInstrumentFailures(t *testing.T) {
 	t.Parallel()
 
 	want := errors.New("instrument failed")
-	histogramProvider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: errorMeter{
+	histogramProvider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: &errorMeter{
 		Meter:        metricnoop.NewMeterProvider().Meter("test"),
 		histogramErr: want,
 	}}
-	counterProvider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: errorMeter{
+	counterProvider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: &errorMeter{
 		Meter:      metricnoop.NewMeterProvider().Meter("test"),
 		counterErr: want,
+	}}
+	activeProvider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: &errorMeter{
+		Meter:     metricnoop.NewMeterProvider().Meter("test"),
+		upDownErr: want,
 	}}
 	handler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
 	if _, err := NewHandler(handler, ServerConfig{Operation: "server.request", MeterProvider: histogramProvider}); !errors.Is(err, want) {
@@ -301,6 +356,22 @@ func TestConstructorsReportInstrumentFailures(t *testing.T) {
 	}
 	if _, err := NewHandler(handler, ServerConfig{Operation: "server.request", MeterProvider: counterProvider}); !errors.Is(err, want) {
 		t.Fatalf("NewHandler() counter error = %v, want %v", err, want)
+	}
+	if _, err := NewHandler(handler, ServerConfig{Operation: "server.request", MeterProvider: activeProvider}); !errors.Is(err, want) {
+		t.Fatalf("NewHandler() active counter error = %v, want %v", err, want)
+	}
+	for failedCall := 1; failedCall <= 2; failedCall++ {
+		intHistogramProvider := errorMeterProvider{
+			MeterProvider: metricnoop.NewMeterProvider(),
+			meter: &errorMeter{
+				Meter:                metricnoop.NewMeterProvider().Meter("test"),
+				intHistogramErr:      want,
+				intHistogramFailCall: failedCall,
+			},
+		}
+		if _, err := NewHandler(handler, ServerConfig{Operation: "server.request", MeterProvider: intHistogramProvider}); !errors.Is(err, want) {
+			t.Fatalf("NewHandler() int histogram call %d error = %v, want %v", failedCall, err, want)
+		}
 	}
 	if _, err := NewTransport(http.DefaultTransport, ClientConfig{Operation: "client.request", MeterProvider: histogramProvider}); !errors.Is(err, want) {
 		t.Fatalf("NewTransport() histogram error = %v, want %v", err, want)
@@ -370,8 +441,12 @@ func (provider errorMeterProvider) Meter(string, ...metric.MeterOption) metric.M
 
 type errorMeter struct {
 	metric.Meter
-	histogramErr error
-	counterErr   error
+	histogramErr         error
+	counterErr           error
+	upDownErr            error
+	intHistogramErr      error
+	intHistogramFailCall int
+	intHistogramCalls    int
 }
 
 func (meter errorMeter) Float64Histogram(string, ...metric.Float64HistogramOption) (metric.Float64Histogram, error) {
@@ -386,6 +461,21 @@ func (meter errorMeter) Int64Counter(string, ...metric.Int64CounterOption) (metr
 		return nil, meter.counterErr
 	}
 	return meter.Meter.Int64Counter("ok")
+}
+
+func (meter errorMeter) Int64UpDownCounter(string, ...metric.Int64UpDownCounterOption) (metric.Int64UpDownCounter, error) {
+	if meter.upDownErr != nil {
+		return nil, meter.upDownErr
+	}
+	return meter.Meter.Int64UpDownCounter("ok")
+}
+
+func (meter *errorMeter) Int64Histogram(string, ...metric.Int64HistogramOption) (metric.Int64Histogram, error) {
+	meter.intHistogramCalls++
+	if meter.intHistogramErr != nil && meter.intHistogramCalls == meter.intHistogramFailCall {
+		return nil, meter.intHistogramErr
+	}
+	return meter.Meter.Int64Histogram("ok")
 }
 
 func attributeMap(attributes []attribute.KeyValue) map[string]any {
@@ -406,6 +496,43 @@ func assertNoSecret(t *testing.T, attributes map[string]any, needles ...string) 
 			}
 		}
 	}
+}
+
+func collectInt64Metric(
+	t *testing.T,
+	harness *testtelemetry.Harness,
+	name string,
+) []int64 {
+	t.Helper()
+	metrics, err := harness.Metrics(context.Background())
+	if err != nil {
+		t.Fatalf("Metrics() error = %v", err)
+	}
+	for _, scope := range metrics.ScopeMetrics {
+		for _, measurement := range scope.Metrics {
+			if measurement.Name != name {
+				continue
+			}
+			switch data := measurement.Data.(type) {
+			case metricdata.Sum[int64]:
+				values := make([]int64, 0, len(data.DataPoints))
+				for _, point := range data.DataPoints {
+					values = append(values, point.Value)
+				}
+				return values
+			case metricdata.Histogram[int64]:
+				values := make([]int64, 0, len(data.DataPoints))
+				for _, point := range data.DataPoints {
+					values = append(values, point.Sum)
+				}
+				return values
+			default:
+				t.Fatalf("metric %s has data type %T", name, measurement.Data)
+			}
+		}
+	}
+	t.Fatalf("metric %s was not collected", name)
+	return nil
 }
 
 var _ otelpropagation.TextMapPropagator = (*telemetrypropagation.Policy)(nil)
