@@ -72,6 +72,12 @@ ctx = gopostgres.ContextWithOperation(ctx, "users.by_id")
 Unknown operation names collapse to `postgresql.query`. SQL and arguments are
 ignored. Errors expose only bounded outcome and valid SQLSTATE.
 
+The same tracer implements `pgxpool.AcquireTracer`. When it is assigned to
+`poolConfig.ConnConfig.Tracer`, pgxpool records acquisition duration and
+outcome, current waiting acquisitions, and acquired/idle/total/max pool
+snapshots. This keeps pool contention distinct from PostgreSQL query execution
+without recording connection identity or raw acquisition errors.
+
 ## cache
 
 ```go

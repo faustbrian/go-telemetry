@@ -10,10 +10,115 @@ import (
 	"github.com/faustbrian/go-telemetry/testtelemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
+
+func TestTracerRecordsPoolAcquireWaitAndOutcome(t *testing.T) {
+	t.Parallel()
+
+	harness := testtelemetry.New()
+	tracer, err := New(Config{MeterProvider: harness.MeterProvider()})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	ctx := tracer.TraceAcquireStart(
+		context.Background(),
+		nil,
+		pgxpool.TraceAcquireStartData{},
+	)
+	metrics, err := harness.Metrics(context.Background())
+	if err != nil {
+		t.Fatalf("Metrics() during acquire error = %v", err)
+	}
+	if got := int64MetricValue(t, metrics, "db.client.connection.waiting"); got != 1 {
+		t.Fatalf("waiting acquisitions = %d, want 1", got)
+	}
+	tracer.TraceAcquireEnd(
+		ctx,
+		nil,
+		pgxpool.TraceAcquireEndData{Err: context.DeadlineExceeded},
+	)
+	metrics, err = harness.Metrics(context.Background())
+	if err != nil {
+		t.Fatalf("Metrics() after acquire error = %v", err)
+	}
+	if got := int64MetricValue(t, metrics, "db.client.connection.waiting"); got != 0 {
+		t.Fatalf("waiting acquisitions after completion = %d, want 0", got)
+	}
+	if got := int64MetricValue(t, metrics, "db.client.connection.acquire.count"); got != 1 {
+		t.Fatalf("acquire count = %d, want 1", got)
+	}
+}
+
+func TestTracerRecordsBoundedAcquireOutcomesAndPoolStates(t *testing.T) {
+	t.Parallel()
+
+	harness := testtelemetry.New()
+	tracer, err := New(Config{MeterProvider: harness.MeterProvider()})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	poolConfig, err := pgxpool.ParseConfig("postgres://location@127.0.0.1:1/location?connect_timeout=1")
+	if err != nil {
+		t.Fatalf("ParseConfig() error = %v", err)
+	}
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	if err != nil {
+		t.Fatalf("NewWithConfig() error = %v", err)
+	}
+	t.Cleanup(pool.Close)
+
+	tracer.TraceAcquireEnd(context.Background(), pool, pgxpool.TraceAcquireEndData{})
+	for _, acquireErr := range []error{
+		nil,
+		context.Canceled,
+		errors.New("secret acquire failure"),
+	} {
+		ctx := tracer.TraceAcquireStart(context.Background(), pool, pgxpool.TraceAcquireStartData{})
+		tracer.TraceAcquireEnd(ctx, pool, pgxpool.TraceAcquireEndData{Err: acquireErr})
+	}
+	metrics, err := harness.Metrics(context.Background())
+	if err != nil {
+		t.Fatalf("Metrics() error = %v", err)
+	}
+	for _, name := range []string{
+		"db.client.connection.acquire.duration",
+		"db.client.connection.acquire.count",
+		"db.client.connection.count",
+	} {
+		found := false
+		for _, scope := range metrics.ScopeMetrics {
+			for _, candidate := range scope.Metrics {
+				found = found || candidate.Name == name
+			}
+		}
+		if !found {
+			t.Errorf("metric %q not found", name)
+		}
+	}
+}
+
+func int64MetricValue(t *testing.T, metrics metricdata.ResourceMetrics, name string) int64 {
+	t.Helper()
+	for _, scope := range metrics.ScopeMetrics {
+		for _, candidate := range scope.Metrics {
+			if candidate.Name != name {
+				continue
+			}
+			points := candidate.Data.(metricdata.Sum[int64]).DataPoints
+			if len(points) != 1 {
+				t.Fatalf("metric %q points = %d, want 1", name, len(points))
+			}
+			return points[0].Value
+		}
+	}
+	t.Fatalf("metric %q not found", name)
+	return 0
+}
 
 func TestTracerNeverRecordsSQLOrArguments(t *testing.T) {
 	t.Parallel()
@@ -152,16 +257,20 @@ func TestNewReportsInstrumentFailures(t *testing.T) {
 	t.Parallel()
 
 	want := errors.New("instrument failed")
-	provider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: errorMeter{
-		Meter:        metricnoop.NewMeterProvider().Meter("test"),
-		histogramErr: want,
-	}}
-	if _, err := New(Config{MeterProvider: provider}); !errors.Is(err, want) {
-		t.Fatalf("New() histogram error = %v, want %v", err, want)
-	}
-	provider.meter = errorMeter{Meter: metricnoop.NewMeterProvider().Meter("test"), counterErr: want}
-	if _, err := New(Config{MeterProvider: provider}); !errors.Is(err, want) {
-		t.Fatalf("New() counter error = %v, want %v", err, want)
+	for _, failed := range []string{
+		"db.client.operation.duration",
+		"db.client.operation.count",
+		"db.client.connection.acquire.duration",
+		"db.client.connection.acquire.count",
+		"db.client.connection.waiting",
+		"db.client.connection.count",
+	} {
+		provider := errorMeterProvider{MeterProvider: metricnoop.NewMeterProvider(), meter: errorMeter{
+			Meter: metricnoop.NewMeterProvider().Meter("test"), failed: failed, err: want,
+		}}
+		if _, err := New(Config{MeterProvider: provider}); !errors.Is(err, want) {
+			t.Fatalf("New() %s error = %v, want %v", failed, err, want)
+		}
 	}
 }
 
@@ -176,22 +285,36 @@ func (provider errorMeterProvider) Meter(string, ...metric.MeterOption) metric.M
 
 type errorMeter struct {
 	metric.Meter
-	histogramErr error
-	counterErr   error
+	failed string
+	err    error
 }
 
-func (meter errorMeter) Float64Histogram(string, ...metric.Float64HistogramOption) (metric.Float64Histogram, error) {
-	if meter.histogramErr != nil {
-		return nil, meter.histogramErr
+func (meter errorMeter) Float64Histogram(name string, options ...metric.Float64HistogramOption) (metric.Float64Histogram, error) {
+	if name == meter.failed {
+		return nil, meter.err
 	}
-	return meter.Meter.Float64Histogram("ok")
+	return meter.Meter.Float64Histogram(name, options...)
 }
 
-func (meter errorMeter) Int64Counter(string, ...metric.Int64CounterOption) (metric.Int64Counter, error) {
-	if meter.counterErr != nil {
-		return nil, meter.counterErr
+func (meter errorMeter) Int64Counter(name string, options ...metric.Int64CounterOption) (metric.Int64Counter, error) {
+	if name == meter.failed {
+		return nil, meter.err
 	}
-	return meter.Meter.Int64Counter("ok")
+	return meter.Meter.Int64Counter(name, options...)
+}
+
+func (meter errorMeter) Int64UpDownCounter(name string, options ...metric.Int64UpDownCounterOption) (metric.Int64UpDownCounter, error) {
+	if name == meter.failed {
+		return nil, meter.err
+	}
+	return meter.Meter.Int64UpDownCounter(name, options...)
+}
+
+func (meter errorMeter) Int64Gauge(name string, options ...metric.Int64GaugeOption) (metric.Int64Gauge, error) {
+	if name == meter.failed {
+		return nil, meter.err
+	}
+	return meter.Meter.Int64Gauge(name, options...)
 }
 
 var _ pgx.QueryTracer = (*Tracer)(nil)

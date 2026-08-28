@@ -11,6 +11,9 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   cycles, and cumulative GC pause time through an explicitly owned runtime
   registration.
 
+- Record PostgreSQL pool acquisition duration, waiting acquisitions, outcomes,
+  and acquired/idle/total/max connection snapshots alongside query metrics.
+
 - Record active HTTP server requests and request and response body sizes so
   services can observe saturation and payload pressure without retaining
   payload content.
