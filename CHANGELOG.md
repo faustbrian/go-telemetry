@@ -7,6 +7,10 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Added
 
+- Export Go heap usage, cumulative allocation volume, goroutine count, GC
+  cycles, and cumulative GC pause time through an explicitly owned runtime
+  registration.
+
 - Record active HTTP server requests and request and response body sizes so
   services can observe saturation and payload pressure without retaining
   payload content.

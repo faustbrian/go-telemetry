@@ -3,6 +3,21 @@
 All adapters accept standard providers. Pass runtime providers explicitly when
 `RegisterGlobal` is false.
 
+## Go runtime
+
+```go
+runtimeMetrics, err := goruntime.New(runtime.MeterProvider())
+defer runtimeMetrics.Close()
+```
+
+The runtime adapter registers no global provider and starts no background
+goroutine. It exports heap usage, cumulative allocation volume, goroutine
+count, completed GC cycles, and cumulative GC pause time. Derive allocation
+rate, GC frequency, and average GC pause from the cumulative counters in the
+telemetry backend. CPU, RSS, file descriptors, and container restarts belong
+to the process and container platform rather than the Go runtime and must be
+collected by the deployment platform.
+
 ## net/http server
 
 ```go
