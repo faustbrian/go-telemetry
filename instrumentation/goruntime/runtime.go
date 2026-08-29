@@ -26,7 +26,7 @@ type Instrumenter struct {
 // registration and must close it before shutting down the provider.
 func New(provider metric.MeterProvider) (*Instrumenter, error) {
 	if provider == nil {
-		return nil, errors.New("Go runtime meter provider is required")
+		return nil, errors.New("go runtime meter provider is required")
 	}
 	meter := provider.Meter(scopeName)
 	heap, err := meter.Int64ObservableGauge("go.memory.heap.used", metric.WithUnit("By"))
@@ -85,8 +85,8 @@ func (instrumenter *Instrumenter) Close() error {
 }
 
 func boundedUint64(value uint64) int64 {
-	if value > math.MaxInt64 {
+	if value>>63 != 0 {
 		return math.MaxInt64
 	}
-	return int64(value)
+	return int64(value & uint64(math.MaxInt64))
 }

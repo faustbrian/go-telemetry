@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-telemetry",
+  "module": ".",
+  "package": "instrumentation/nethttp",
+  "gate": "mutation",
+  "input_digest": "sha256:01b04889c845d7e884e335bd77fc915142818b10ab7271ebbe0c6e09b0bc6f5c",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:6a184ca30d77c38cc630fc34e9f7e723f1d2d0cd704911f8aa3288e5c5e9d70c",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.27.0",
+    "gremlins_binary_sha256": "sha256:6a2beddc477eb410f8a670b6c9049558563d3c4327498fe31604d31c773a959e"
+  },
+  "completed_at": "2026-08-29T08:19:07.345739Z"
+}

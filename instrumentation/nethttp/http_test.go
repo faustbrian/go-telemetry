@@ -114,6 +114,25 @@ func TestHandlerRecordsActiveRequestsAndPayloadSizes(t *testing.T) {
 	}
 }
 
+func TestHandlerRecordsZeroLengthRequestBody(t *testing.T) {
+	t.Parallel()
+
+	harness := testtelemetry.New()
+	handler, err := NewHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), ServerConfig{
+		Operation:     "service.rpc",
+		MeterProvider: harness.MeterProvider(),
+	})
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/rpc", nil))
+
+	requestSizes := collectInt64Metric(t, harness, "http.server.request.body.size")
+	if len(requestSizes) != 1 || requestSizes[0] != 0 {
+		t.Fatalf("request sizes = %v, want [0]", requestSizes)
+	}
+}
+
 func TestTransportInjectsContextWithoutRecordingTargetData(t *testing.T) {
 	t.Parallel()
 

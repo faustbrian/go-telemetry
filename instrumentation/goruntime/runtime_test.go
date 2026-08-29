@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"runtime"
 	"testing"
 
 	"go.opentelemetry.io/otel/metric"
@@ -11,6 +12,8 @@ import (
 	metricexport "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
+
+const firstOverflowingInt64 = uint64(math.MaxInt64) + 1
 
 func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
 	t.Parallel()
@@ -57,6 +60,60 @@ func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
 	}
 }
 
+func TestInstrumenterReportsGCPauseInSeconds(t *testing.T) {
+	t.Parallel()
+
+	for range 5 {
+		runtime.GC()
+	}
+	var before runtime.MemStats
+	runtime.ReadMemStats(&before)
+	if before.PauseTotalNs == 0 {
+		t.Fatal("runtime GC pause total is zero after forced collections")
+	}
+
+	reader := metricexport.NewManualReader()
+	provider := metricexport.NewMeterProvider(metricexport.WithReader(reader))
+	instrumenter, err := New(provider)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	t.Cleanup(func() {
+		if err := instrumenter.Close(); err != nil {
+			t.Fatalf("Close() error = %v", err)
+		}
+	})
+	var metrics metricdata.ResourceMetrics
+	if err := reader.Collect(context.Background(), &metrics); err != nil {
+		t.Fatalf("Collect() error = %v", err)
+	}
+	var pauseSeconds float64
+	found := false
+	for _, scope := range metrics.ScopeMetrics {
+		for _, candidate := range scope.Metrics {
+			if candidate.Name != "go.gc.pause.time" {
+				continue
+			}
+			points := candidate.Data.(metricdata.Sum[float64]).DataPoints
+			if len(points) != 1 {
+				t.Fatalf("GC pause points = %d, want 1", len(points))
+			}
+			pauseSeconds = points[0].Value
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("GC pause metric was not exported")
+	}
+	var after runtime.MemStats
+	runtime.ReadMemStats(&after)
+	lower := float64(before.PauseTotalNs) / 1e9
+	upper := float64(after.PauseTotalNs) / 1e9
+	if pauseSeconds < lower || pauseSeconds > upper {
+		t.Fatalf("GC pause seconds = %v, want value in [%v, %v]", pauseSeconds, lower, upper)
+	}
+}
+
 func TestNewRejectsMissingProviderAndReportsEveryInstrumentFailure(t *testing.T) {
 	t.Parallel()
 
@@ -92,8 +149,17 @@ func TestNilCloseAndUnsignedBounds(t *testing.T) {
 	if err := (*Instrumenter)(nil).Close(); err != nil {
 		t.Fatalf("nil Close() error = %v", err)
 	}
+	if err := (&Instrumenter{}).Close(); err != nil {
+		t.Fatalf("unregistered Close() error = %v", err)
+	}
+	if got := boundedUint64(0); got != 0 {
+		t.Fatalf("bounded zero = %d", got)
+	}
 	if got := boundedUint64(uint64(math.MaxInt64)); got != math.MaxInt64 {
 		t.Fatalf("bounded maximum = %d", got)
+	}
+	if got := boundedUint64(firstOverflowingInt64); got != math.MaxInt64 {
+		t.Fatalf("bounded first overflow = %d", got)
 	}
 	if got := boundedUint64(math.MaxUint64); got != math.MaxInt64 {
 		t.Fatalf("bounded overflow = %d", got)

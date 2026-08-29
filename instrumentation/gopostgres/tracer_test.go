@@ -102,6 +102,45 @@ func TestTracerRecordsBoundedAcquireOutcomesAndPoolStates(t *testing.T) {
 	}
 }
 
+func TestTracerMarksFailedAcquire(t *testing.T) {
+	t.Parallel()
+
+	harness := testtelemetry.New()
+	tracer, err := New(Config{
+		TracerProvider: harness.TracerProvider(),
+		MeterProvider:  harness.MeterProvider(),
+	})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	ctx := tracer.TraceAcquireStart(context.Background(), nil, pgxpool.TraceAcquireStartData{})
+	tracer.TraceAcquireEnd(ctx, nil, pgxpool.TraceAcquireEndData{Err: errors.New("acquire failed")})
+
+	spans := harness.Spans()
+	if len(spans) != 1 || spans[0].Status.Code != codes.Error {
+		t.Fatalf("acquire spans = %+v, want one error span", spans)
+	}
+	metrics, err := harness.Metrics(context.Background())
+	if err != nil {
+		t.Fatalf("Metrics() error = %v", err)
+	}
+	for _, scope := range metrics.ScopeMetrics {
+		for _, candidate := range scope.Metrics {
+			if candidate.Name != "db.client.connection.acquire.count" {
+				continue
+			}
+			points := candidate.Data.(metricdata.Sum[int64]).DataPoints
+			for _, point := range points {
+				if outcome, ok := point.Attributes.Value("error.type"); ok && outcome.AsString() == "error" && point.Value == 1 {
+					return
+				}
+			}
+		}
+	}
+	t.Fatal("failed acquire was not recorded with error.type=error")
+}
+
 func int64MetricValue(t *testing.T, metrics metricdata.ResourceMetrics, name string) int64 {
 	t.Helper()
 	for _, scope := range metrics.ScopeMetrics {
