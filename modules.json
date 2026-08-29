@@ -82,6 +82,18 @@
         },
         {
           "module_directory": ".",
+          "directory": "instrumentation/goruntime",
+          "name": "goruntime",
+          "import_path": "github.com/faustbrian/go-telemetry/instrumentation/goruntime",
+          "kind": "public",
+          "production": true,
+          "executable": true,
+          "coverage_required": true,
+          "build_required": true,
+          "build_tags": []
+        },
+        {
+          "module_directory": ".",
           "directory": "instrumentation/gopostgres",
           "name": "gopostgres",
           "import_path": "github.com/faustbrian/go-telemetry/instrumentation/gopostgres",

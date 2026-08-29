@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-telemetry",
+  "module": ".",
+  "package": "instrumentation/goruntime",
+  "gate": "mutation",
+  "input_digest": "sha256:4db07ffb264bac7858ed5e76c9508e4d65b5532347fee21c2aa22b24cf625b3d",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:e7528e74eb64338822d78c2cf848760de1cc8b59c0eb3fed7be2e468afc9f74c",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.27.0",
+    "gremlins_binary_sha256": "sha256:6a2beddc477eb410f8a670b6c9049558563d3c4327498fe31604d31c773a959e"
+  },
+  "completed_at": "2026-08-29T08:13:43.896305Z"
+}

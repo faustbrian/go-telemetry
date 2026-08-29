@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-telemetry",
+  "module": ".",
+  "package": "metric",
+  "gate": "mutation",
+  "input_digest": "sha256:5b85b27b76242dcfbd96e75ad8352a8c25483236b6845bb2aaf4f76e35b6d227",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:3df5cbb0d58c8b01cb6a1e3e17421e53a4ee860d4eefa2b420bed2883c3a5597",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.27.0",
+    "gremlins_binary_sha256": "sha256:6a2beddc477eb410f8a670b6c9049558563d3c4327498fe31604d31c773a959e"
+  },
+  "completed_at": "2026-08-29T08:19:39.404274Z"
+}
