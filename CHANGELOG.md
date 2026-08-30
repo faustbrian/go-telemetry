@@ -8,7 +8,7 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 ### Changed
 
 - Replace the copied repository verification implementation with the
-  checksum-verified `go-library-tools` v1.0.6 contract.
+  checksum-verified `go-library-tools` v1.0.13 contract.
 
 ## [1.1.0] - 2026-08-28
 
