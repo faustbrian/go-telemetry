@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-30",
+  "peer": {
+    "name": "OpenTelemetry Go",
+    "version": "v1.44.0",
+    "module_evidence": "go.mod and go.sum",
+    "trace_context_source": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/propagation/trace_context.go",
+    "trace_context_sha256": "7a8bc1fd39f895371d4484a68dab709271d0607d7476e1c610891724768c0a7e",
+    "baggage_source": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/propagation/baggage.go",
+    "baggage_sha256": "e3f5065828c5a40a1bcb5d483aa134461fd8e71f787be70a84278f1520fde8a6"
+  },
+  "observations": [
+    {
+      "profile": "OTLP transport",
+      "evidence": [
+        "TestHTTPCollectorInteroperability",
+        "TestGRPCCollectorInteroperabilityAndRetry"
+      ],
+      "result": "provider agreement",
+      "detail": "OpenTelemetry Go exporters produce protobuf trace and metric requests accepted by the pinned OTLP service messages over HTTP and gRPC."
+    },
+    {
+      "profile": "Trace Context",
+      "evidence": [
+        "TestPolicySeparatesTrustedAndUntrustedInboundBaggage",
+        "TestPolicyReplacesOutboundHeadersAndFiltersBaggage"
+      ],
+      "result": "maintained peer agreement",
+      "detail": "The package delegates W3C parsing and serialization to OpenTelemetry Go TraceContext after applying its explicit byte and replacement policy."
+    },
+    {
+      "profile": "Baggage",
+      "evidence": [
+        "TestPolicySeparatesTrustedAndUntrustedInboundBaggage",
+        "TestTrustedPolicyBoundsItemCountAndOutboundSize"
+      ],
+      "result": "deliberate policy difference",
+      "detail": "OpenTelemetry Go supplies grammar handling; this package additionally disables untrusted baggage and filters trusted members by application allow-list and tighter configured bounds."
+    },
+    {
+      "profile": "Semantic conventions",
+      "evidence": [
+        "TestBuildResourceOwnsServiceIdentity",
+        "TestHandlerRecordsOnlyBoundedServerAttributes",
+        "TestTracerRecordsPoolAcquireWaitAndOutcome"
+      ],
+      "result": "deliberate policy difference",
+      "detail": "Stable OpenTelemetry attribute names are retained while this package deliberately emits a privacy-minimized subset plus bounded package metrics."
+    }
+  ]
+}

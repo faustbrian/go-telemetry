@@ -1,0 +1,7 @@
+id	version	sections	role	url	sha256	status
+otlp-1.10.0	OTLP 1.10.0	all	normative-protocol	https://raw.githubusercontent.com/open-telemetry/opentelemetry-proto/v1.10.0/docs/specification.md	6943889d2fb010a699b936d22985877d51668d5c5f1ab7e827704b84de967231	pinned
+w3c-trace-context-1	Recommendation 2021-11-23	all	normative-propagation	https://www.w3.org/TR/2021/REC-trace-context-1-20211123/	9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be	pinned
+w3c-baggage-2024	Candidate Recommendation 2024-05-30	all	normative-baggage	https://www.w3.org/TR/2024/CR-baggage-20240530/	ff08151d54f98654d94a9ea9339685dde7edda9b3fd1071ada3ce999ba5e9356	pinned
+otel-semconv-1.40.0	Semantic Conventions 1.40.0	all	semantic-conventions	https://raw.githubusercontent.com/open-telemetry/semantic-conventions/v1.40.0/README.md	b9c8ee181cb50c45066479c992ac1491720cdbf9cfd7bc737fed5e6fb34c170f	pinned
+otel-go-trace-context-1.44.0	OpenTelemetry Go 1.44.0	propagation/trace_context.go	maintained-peer-source	https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/propagation/trace_context.go	7a8bc1fd39f895371d4484a68dab709271d0607d7476e1c610891724768c0a7e	pinned
+otel-go-baggage-1.44.0	OpenTelemetry Go 1.44.0	propagation/baggage.go	maintained-peer-source	https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/propagation/baggage.go	e3f5065828c5a40a1bcb5d483aa134461fd8e71f787be70a84278f1520fde8a6	pinned

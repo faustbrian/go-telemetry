@@ -8,6 +8,7 @@
 - [Traces](traces.md)
 - [Metrics](metrics.md)
 - [Propagation](propagation.md)
+- [Specification decisions](specification-decisions.md)
 - [Sampling](sampling.md)
 - [Graceful shutdown](graceful-shutdown.md)
 

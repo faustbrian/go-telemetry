@@ -7,6 +7,20 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Establish an auditable [specification decision
+  register](docs/specification-decisions.md) for OTLP, W3C Trace Context,
+  defensive baggage, and OpenTelemetry semantic-convention profiles with
+  pinned sources, maintained peer evidence, change monitoring, and CI
+  enforcement:
+  `TELEMETRY-DEC-001 sha256:527d76eaf1a10a709ea47f001363c1694340bf45396cc16985b2e7b52dd8a587`,
+  `TELEMETRY-DEC-002 sha256:10bf687e9f5306fd7f76ad20dc2f81171a8ebaf486b43e52bdc628d1e72b8bed`,
+  `TELEMETRY-DEC-003 sha256:cb639d30e8f960f72d78bd8690430d7325e33c706197cbf02a3992b109e72e29`,
+  `TELEMETRY-DEC-004 sha256:f8f94fae9bf0f73cffa4e6852727b245262206c298b8b031aa0cedf2482c12b1`,
+  `TELEMETRY-DEC-005 sha256:689aa1b13177ce2d06a7aa2b7279495bd1141337f8b224dc464fb09b59c2ddf9`,
+  `TELEMETRY-DEC-006 sha256:a0c2ea2a37a914ba1d6ec9e6c39976f59965bbc012c2c9d3cdfb554ac919c0c0`,
+  and
+  `TELEMETRY-DEC-007 sha256:e46f296581c864efa8dffa9c07d16716d117a7b97d15d720da9330b3621098f1`.
+
 - Replace the copied repository verification implementation with the
   checksum-verified `go-library-tools` v1.0.13 contract.
 

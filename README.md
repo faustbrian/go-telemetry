@@ -119,6 +119,8 @@ whether the service can accept business work.
 
 Start with the [documentation index](docs/README.md) for the public contract,
 architecture, compatibility, upgrade, contribution, and security material.
+Observable OTLP, W3C propagation, baggage, and semantic-convention choices are
+recorded in the [specification decision register](docs/specification-decisions.md).
 
 Runnable commands are in [`examples/service`](examples/service) and
 [`examples/worker`](examples/worker).

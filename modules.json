@@ -249,9 +249,21 @@
       "build_tags": [],
       "test_tags": [],
       "interoperability_tools": [],
-      "specifications": [],
-      "conformance_corpora": [],
-      "provenance": [],
+      "specifications": [
+        "OpenTelemetry Protocol 1.10.0",
+        "W3C Trace Context Level 1 Recommendation 2021-11-23",
+        "W3C Baggage Candidate Recommendation 2024-05-30",
+        "OpenTelemetry Semantic Conventions 1.40.0"
+      ],
+      "conformance_corpora": [
+        "OTLP HTTP/protobuf and gRPC trace and metric provider profiles",
+        "W3C trace-context and baggage hostile-header profiles",
+        "OpenTelemetry Go v1.44.0 maintained-provider comparison"
+      ],
+      "provenance": [
+        "specification/manifest.tsv",
+        "specification/maintained-peers.json"
+      ],
       "goal_files": [],
       "goal_status": "not-applicable",
       "goal_evidence": [],

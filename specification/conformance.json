@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "decisions": [
+    {
+      "id": "TELEMETRY-DEC-001",
+      "authoritative_sources": ["otlp-source"],
+      "executable_evidence": [
+        "TestHTTPCollectorInteroperability",
+        "TestGRPCCollectorInteroperabilityAndRetry",
+        "TestExporterConstructionSupportsEverySignalAndProtocol"
+      ],
+      "fixtures": [],
+      "fuzz": [],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "maintained peer agreement",
+      "public_behavior": [
+        "Traces and metrics export as OTLP protobuf over explicitly selected gRPC or HTTP transports."
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-002",
+      "authoritative_sources": ["otlp-source"],
+      "executable_evidence": [
+        "TestConfigValidationRejectsInvalidTransportSettings",
+        "TestHTTPExporterFailureModes",
+        "TestSecureExporterConstruction"
+      ],
+      "fixtures": [],
+      "fuzz": [],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": [
+        "OTLP delivery, retry, and transport-security settings are explicit and bounded."
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-003",
+      "authoritative_sources": ["trace-context-source"],
+      "executable_evidence": [
+        "TestPolicySeparatesTrustedAndUntrustedInboundBaggage",
+        "TestPolicyIgnoresOversizedTraceContext",
+        "TestWithinLimitCountsAllFields"
+      ],
+      "fixtures": [],
+      "fuzz": ["FuzzPropagationHeaders"],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "maintained peer agreement",
+      "public_behavior": [
+        "Valid bounded W3C Trace Context is extracted and invalid or oversized context is ignored."
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-004",
+      "authoritative_sources": ["trace-context-source"],
+      "executable_evidence": [
+        "TestPolicyReplacesOutboundHeadersAndFiltersBaggage",
+        "TestDisabledPolicyClearsExistingBaggage",
+        "TestTransportInjectsContextWithoutRecordingTargetData"
+      ],
+      "fixtures": [],
+      "fuzz": ["FuzzPropagationHeaders"],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "maintained peer agreement",
+      "public_behavior": [
+        "Outbound propagation replaces stale fields with one current context."
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-005",
+      "authoritative_sources": ["baggage-source"],
+      "executable_evidence": [
+        "TestPolicySeparatesTrustedAndUntrustedInboundBaggage",
+        "TestTrustedPolicyBoundsItemCountAndOutboundSize",
+        "TestPolicyAcceptsExactOutboundHeaderLimit"
+      ],
+      "fixtures": [],
+      "fuzz": ["FuzzUntrustedMetadata"],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": [
+        "Baggage is disabled for untrusted carriers and opt-in trusted baggage is allow-listed and bounded."
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-006",
+      "authoritative_sources": ["semconv-source"],
+      "executable_evidence": [
+        "TestBuildResourceOwnsServiceIdentity",
+        "TestConfigValidationRejectsReservedResourceAttributes",
+        "TestBuildResourceIgnoresReservedCustomAttributes"
+      ],
+      "fixtures": [],
+      "fuzz": ["FuzzResourceAttributes"],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "maintained peer agreement",
+      "public_behavior": [
+        "Resources use pinned semantic-convention identity and schema without generic override."
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-007",
+      "authoritative_sources": ["semconv-source"],
+      "executable_evidence": [
+        "TestHandlerRecordsOnlyBoundedServerAttributes",
+        "TestTracerNeverRecordsSQLOrArguments",
+        "TestWrapHandlerDoesNotRecordMessagesOrErrors",
+        "TestInstrumenterRecordsOnlyFixedCacheSemantics"
+      ],
+      "fixtures": [],
+      "fuzz": [],
+      "interoperability_evidence": [],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": ["specification/maintained-peers.json"],
+      "differential_classification": "deliberate policy difference",
+      "public_behavior": [
+        "Instrumentation emits a privacy-minimized bounded semantic subset."
+      ]
+    }
+  ]
+}
