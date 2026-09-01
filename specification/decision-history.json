@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "TELEMETRY-DEC-001",
+      "digests": [
+        "527d76eaf1a10a709ea47f001363c1694340bf45396cc16985b2e7b52dd8a587"
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-002",
+      "digests": [
+        "10bf687e9f5306fd7f76ad20dc2f81171a8ebaf486b43e52bdc628d1e72b8bed"
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-003",
+      "digests": [
+        "cb639d30e8f960f72d78bd8690430d7325e33c706197cbf02a3992b109e72e29"
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-004",
+      "digests": [
+        "f8f94fae9bf0f73cffa4e6852727b245262206c298b8b031aa0cedf2482c12b1"
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-005",
+      "digests": [
+        "689aa1b13177ce2d06a7aa2b7279495bd1141337f8b224dc464fb09b59c2ddf9"
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-006",
+      "digests": [
+        "a0c2ea2a37a914ba1d6ec9e6c39976f59965bbc012c2c9d3cdfb554ac919c0c0"
+      ]
+    },
+    {
+      "id": "TELEMETRY-DEC-007",
+      "digests": [
+        "e46f296581c864efa8dffa9c07d16716d117a7b97d15d720da9330b3621098f1"
+      ]
+    }
+  ]
+}

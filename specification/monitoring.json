@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-30",
+  "review_interval_days": 90,
+  "authorities": [
+    {
+      "id": "otlp-source",
+      "kind": "specification",
+      "version": "OTLP 1.10.0",
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-proto/v1.10.0/docs/specification.md",
+      "sha256": "6943889d2fb010a699b936d22985877d51668d5c5f1ab7e827704b84de967231",
+      "specifications": ["OpenTelemetry Protocol 1.10.0"]
+    },
+    {
+      "id": "otlp-releases",
+      "kind": "releases",
+      "url": "https://github.com/open-telemetry/opentelemetry-proto/releases.atom",
+      "sha256": "ecb90b2f99924434ec3698396f6642bb9db3f66c6869329fee6e489bbaf2b073",
+      "specifications": ["OpenTelemetry Protocol 1.10.0"]
+    },
+    {
+      "id": "trace-context-source",
+      "kind": "specification",
+      "version": "W3C Recommendation 2021-11-23",
+      "url": "https://www.w3.org/TR/2021/REC-trace-context-1-20211123/",
+      "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be",
+      "specifications": ["W3C Trace Context Level 1 Recommendation 2021-11-23"]
+    },
+    {
+      "id": "trace-context-releases",
+      "kind": "releases",
+      "url": "https://www.w3.org/standards/history/trace-context/",
+      "sha256": "210f1d71d5a667a18beea7c681e484088023ed8d839106f757b411c644cdfeaf",
+      "specifications": ["W3C Trace Context Level 1 Recommendation 2021-11-23"]
+    },
+    {
+      "id": "baggage-source",
+      "kind": "specification",
+      "version": "W3C Candidate Recommendation 2024-05-30",
+      "url": "https://www.w3.org/TR/2024/CR-baggage-20240530/",
+      "sha256": "ff08151d54f98654d94a9ea9339685dde7edda9b3fd1071ada3ce999ba5e9356",
+      "specifications": ["W3C Baggage Candidate Recommendation 2024-05-30"]
+    },
+    {
+      "id": "baggage-releases",
+      "kind": "releases",
+      "url": "https://www.w3.org/standards/history/baggage/",
+      "sha256": "72684b352aeb726c71d1709d835121fbeffba8426996b74bcb8810265db05b78",
+      "specifications": ["W3C Baggage Candidate Recommendation 2024-05-30"]
+    },
+    {
+      "id": "semconv-source",
+      "kind": "specification",
+      "version": "OpenTelemetry Semantic Conventions 1.40.0",
+      "url": "https://raw.githubusercontent.com/open-telemetry/semantic-conventions/v1.40.0/README.md",
+      "sha256": "b9c8ee181cb50c45066479c992ac1491720cdbf9cfd7bc737fed5e6fb34c170f",
+      "specifications": ["OpenTelemetry Semantic Conventions 1.40.0"]
+    },
+    {
+      "id": "semconv-releases",
+      "kind": "releases",
+      "url": "https://github.com/open-telemetry/semantic-conventions/releases.atom",
+      "sha256": "3d8cf1d64b674f8da0b05d4224cd64c5b5d0e3ed3c0d89bec272389dd8749e51",
+      "specifications": ["OpenTelemetry Semantic Conventions 1.40.0"]
+    }
+  ]
+}
