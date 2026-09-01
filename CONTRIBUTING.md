@@ -23,6 +23,8 @@ Specification-backed changes must follow the
 the affected stable decision entries, and complete the Specification Decisions
 section of the pull request template. An unresolved interpretation or stale
 source pin is release-blocking; peer behavior cannot silently select policy.
+The [specification decision register](docs/specification-decisions.md) and
+[conformance matrix](specification/README.md) are the review entry points.
 
 Required mutation gates must finish with zero surviving viable mutants.
 
