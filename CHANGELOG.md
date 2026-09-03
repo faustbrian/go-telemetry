@@ -5,10 +5,14 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-03
+
 ### Changed
 
 - Require gRPC v1.83.1 or later so fragmented HTTP/2 DATA frames cannot
   exhaust server heap through unbounded receive-buffer bookkeeping.
+- Normalize the missing Go runtime meter-provider validation error to begin
+  with lowercase text.
 
 - Publish complete schema-v2 cohesion metadata and versioned Golib ecosystem
   navigation for the telemetry runtime, instrumentation adapters, lifecycle
@@ -157,6 +161,7 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/faustbrian/go-telemetry/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/faustbrian/go-telemetry/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/faustbrian/go-telemetry/releases/tag/v1.0.0
