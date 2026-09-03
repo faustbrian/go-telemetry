@@ -7,6 +7,13 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Publish complete schema-v2 cohesion metadata and versioned Golib ecosystem
+  navigation for the telemetry runtime, instrumentation adapters, lifecycle
+  adapter, and supporting packages.
+- Adopt the checksum-verified `go-library-tools` v1.3.0 CLI, add the local
+  `make cohesion` gate to the complete repository contract, and pin reusable
+  CI cohesion enforcement to its immutable revision.
+
 - Establish an auditable [specification decision
   register](docs/specification-decisions.md) for OTLP, W3C Trace Context,
   defensive baggage, and OpenTelemetry semantic-convention profiles with
