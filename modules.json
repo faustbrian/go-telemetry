@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "github.com/faustbrian/go-telemetry",
   "go_version": "1.26.6",
   "modules": [
@@ -267,6 +267,119 @@
       "goal_files": [],
       "goal_status": "not-applicable",
       "goal_evidence": [],
+      "cohesion": {
+        "family": "observability",
+        "secondary_capabilities": [
+          "database-and-storage",
+          "eventing-and-messaging",
+          "http-and-service-edge",
+          "transport-and-networking"
+        ],
+        "responsibility": "Provide a vendor-neutral OpenTelemetry runtime, OTLP exporters, propagation, sampling, bounded instrumentation, and explicit provider lifecycle for Go services.",
+        "non_goals": [
+          "Provide vendor-specific ingestion or proprietary telemetry SDK integrations.",
+          "Replace standard OpenTelemetry API types or hide provider ownership.",
+          "Read runtime configuration implicitly or initialize telemetry through package side effects.",
+          "Promise a stable OpenTelemetry log-signal API before its upstream contract is stable."
+        ],
+        "public_package_identifier": "telemetry",
+        "primary_entry_packages": [
+          "github.com/faustbrian/go-telemetry"
+        ],
+        "package_selection": {
+          "github.com/faustbrian/go-telemetry": "Use for explicit configuration and lifecycle ownership of trace and metric providers, propagation, exporters, and optional OpenTelemetry globals.",
+          "github.com/faustbrian/go-telemetry/instrumentation/gocache": "Use to add bounded, payload-free observations around cache operations.",
+          "github.com/faustbrian/go-telemetry/instrumentation/gohttpclient": "Use for the HTTP-client RoundTripper instrumentation seam while preserving caller-owned transport behavior.",
+          "github.com/faustbrian/go-telemetry/instrumentation/gopostgres": "Use for bounded pgx query and pool instrumentation without recording SQL or arguments.",
+          "github.com/faustbrian/go-telemetry/instrumentation/goqueue": "Use to instrument queue handling without retaining messages or raw handler errors.",
+          "github.com/faustbrian/go-telemetry/instrumentation/goruntime": "Use to register bounded Go runtime metrics on a caller-provided meter provider.",
+          "github.com/faustbrian/go-telemetry/instrumentation/nethttp": "Use for private-by-default net/http server and client instrumentation.",
+          "github.com/faustbrian/go-telemetry/metric": "Use for metric views, histogram boundaries, attribute allow-lists, and cardinality limits.",
+          "github.com/faustbrian/go-telemetry/otlp": "Use to construct explicit OTLP gRPC or HTTP/protobuf trace and metric exporters.",
+          "github.com/faustbrian/go-telemetry/propagation": "Use for bounded W3C trace-context and trusted-baggage propagation policies.",
+          "github.com/faustbrian/go-telemetry/telemetryservice": "Use to adapt telemetry runtime initialization and shutdown to the Golib service lifecycle.",
+          "github.com/faustbrian/go-telemetry/testtelemetry": "Use in tests for deterministic in-memory providers and telemetry snapshots.",
+          "github.com/faustbrian/go-telemetry/trace": "Use for always-on, always-off, ratio, and parent-based trace sampling policies."
+        },
+        "lifecycle_status": "active",
+        "maturity": "stable",
+        "construction_styles": [
+          "functional-options",
+          "init",
+          "new-config",
+          "new-options",
+          "plain-function"
+        ],
+        "lifecycle_styles": [
+          "close",
+          "shutdown",
+          "stateless"
+        ],
+        "ownership": {
+          "configuration": "caller",
+          "mutable_inputs": [
+            "borrow",
+            "copy"
+          ],
+          "runtime_resources": "package",
+          "background_work": "package"
+        },
+        "optional_owned_dependencies": [],
+        "adapters": [
+          "github.com/faustbrian/go-telemetry/instrumentation/gocache",
+          "github.com/faustbrian/go-telemetry/instrumentation/gohttpclient",
+          "github.com/faustbrian/go-telemetry/instrumentation/gopostgres",
+          "github.com/faustbrian/go-telemetry/instrumentation/goqueue",
+          "github.com/faustbrian/go-telemetry/instrumentation/goruntime",
+          "github.com/faustbrian/go-telemetry/instrumentation/nethttp",
+          "github.com/faustbrian/go-telemetry/telemetryservice"
+        ],
+        "companions": [
+          "github.com/faustbrian/go-telemetry/metric",
+          "github.com/faustbrian/go-telemetry/otlp",
+          "github.com/faustbrian/go-telemetry/propagation",
+          "github.com/faustbrian/go-telemetry/testtelemetry",
+          "github.com/faustbrian/go-telemetry/trace"
+        ],
+        "supported_go": {
+          "minimum": "1.26.6",
+          "tested": [
+            "1.26.6"
+          ]
+        },
+        "supported_platforms": [
+          "portable-go"
+        ],
+        "supported_backends": [
+          "opentelemetry-collector",
+          "postgresql"
+        ],
+        "supported_protocols": [
+          "otlp-grpc",
+          "otlp-http-protobuf",
+          "w3c-baggage",
+          "w3c-trace-context"
+        ],
+        "documentation": {
+          "readme": "README.md",
+          "api": "https://pkg.go.dev/github.com/faustbrian/go-telemetry",
+          "adoption": "docs/README.md",
+          "security": "docs/security.md",
+          "compatibility": "docs/compatibility.md",
+          "performance": "docs/performance.md",
+          "examples": "README.md",
+          "faq": "docs/faq.md",
+          "changelog": "CHANGELOG.md",
+          "pkg_go_dev": "https://pkg.go.dev/github.com/faustbrian/go-telemetry",
+          "ecosystem_index": "https://github.com/faustbrian/go-library-tools/blob/v1.3.0/docs/ecosystem/README.md"
+        },
+        "known_good_compatibility_sets": [],
+        "delivery": {
+          "implementation": "not-started",
+          "hardening": "not-started",
+          "release": "not-started"
+        }
+      },
       "gates": {
         "api_compatibility": true,
         "benchmarks": true,

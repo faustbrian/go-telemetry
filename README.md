@@ -122,6 +122,10 @@ architecture, compatibility, upgrade, contribution, and security material.
 Observable OTLP, W3C propagation, baggage, and semantic-convention choices are
 recorded in the [specification decision register](docs/specification-decisions.md).
 
+Shared construction, ownership, lifecycle, and composition expectations are in
+the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.3.0/docs/ecosystem/README.md)
+and its [Observability family](https://github.com/faustbrian/go-library-tools/blob/v1.3.0/docs/ecosystem/design-language.md#package-families-and-selection).
+
 Runnable commands are in [`examples/service`](examples/service) and
 [`examples/worker`](examples/worker).
 
