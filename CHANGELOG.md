@@ -7,6 +7,9 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Require gRPC v1.83.1 or later so fragmented HTTP/2 DATA frames cannot
+  exhaust server heap through unbounded receive-buffer bookkeeping.
+
 - Publish complete schema-v2 cohesion metadata and versioned Golib ecosystem
   navigation for the telemetry runtime, instrumentation adapters, lifecycle
   adapter, and supporting packages.
