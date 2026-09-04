@@ -5,6 +5,21 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Adopt the checksum-verified `go-library-tools` v1.4.0 CLI and immutable W14
+  workflow, require online specification authority validation in local CI, and
+  retain schema-v2 metadata, cohesion enforcement, package-owned source,
+  decisions, and evidence.
+- Reconcile the `go-cli`, `go-correlation`, `go-identifier`, and `go-service`
+  v1.0.0 checksums with the public Go checksum database so clean dependency
+  resolution and verification remain available.
+
+### Documentation
+
+- Link the public module to the immutable v1.4.0 Golib ecosystem index and
+  Observability family guidance.
+
 ## [1.1.1] - 2026-09-03
 
 ### Changed
