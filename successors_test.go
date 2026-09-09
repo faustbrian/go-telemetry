@@ -7,7 +7,10 @@ import (
 	service "github.com/faustbrian/go-telemetry/adapters/service"
 	cache "github.com/faustbrian/go-telemetry/instrumentation/cache"
 	legacycache "github.com/faustbrian/go-telemetry/instrumentation/gocache"
+
+	//lint:ignore SA1019 Compatibility identity requires the legacy path.
 	legacyhttpclient "github.com/faustbrian/go-telemetry/instrumentation/gohttpclient" //nolint:staticcheck // Compatibility identity requires the legacy path.
+
 	legacypostgres "github.com/faustbrian/go-telemetry/instrumentation/gopostgres"
 	legacyqueue "github.com/faustbrian/go-telemetry/instrumentation/goqueue"
 	legacyruntime "github.com/faustbrian/go-telemetry/instrumentation/goruntime"

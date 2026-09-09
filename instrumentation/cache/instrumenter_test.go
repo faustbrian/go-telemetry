@@ -26,8 +26,8 @@ func TestInstrumenterRecordsOnlyFixedCacheSemantics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	//nolint:staticcheck // Compatibility behavior intentionally exercises Start.
-	ctx, end := instrumenter.Start(context.Background(), OperationGet)
+	//lint:ignore SA1019 Compatibility behavior intentionally exercises Start.
+	ctx, end := instrumenter.Start(context.Background(), OperationGet) //nolint:staticcheck
 	if ctx == nil {
 		t.Fatal("Start() context = nil")
 	}
@@ -66,8 +66,8 @@ func TestBeginIsCanonicalAndStartDelegates(t *testing.T) {
 			if err != nil {
 				t.Fatalf("New() error = %v", err)
 			}
-			//nolint:staticcheck // Compatibility behavior intentionally exercises Start.
-			return instrumenter.Start(ctx, operation)
+			//lint:ignore SA1019 Compatibility behavior intentionally exercises Start.
+			return instrumenter.Start(ctx, operation) //nolint:staticcheck
 		},
 	} {
 		ctx, end := begin(context.Background(), OperationGet)
@@ -87,8 +87,8 @@ func TestInstrumenterCollapsesUnknownValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	//nolint:staticcheck // Compatibility behavior intentionally exercises Start.
-	_, end := instrumenter.Start(context.Background(), Operation("secret-operation"))
+	//lint:ignore SA1019 Compatibility behavior intentionally exercises Start.
+	_, end := instrumenter.Start(context.Background(), Operation("secret-operation")) //nolint:staticcheck
 	end(Outcome("secret-outcome"), nil)
 	span := harness.Spans()[0]
 	if span.Name != "cache.other" || strings.Contains(fmt.Sprint(span), "secret") {
