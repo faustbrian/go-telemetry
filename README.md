@@ -25,6 +25,12 @@ stability promises.
 - OpenTelemetry Go 1.43.x or 1.44.x
 - an OTLP-compatible Collector for production export
 
+## Installation
+
+```sh
+go get github.com/faustbrian/go-telemetry@latest
+```
+
 ## Quick start
 
 ```go
@@ -90,12 +96,20 @@ authenticated cluster-local insecure connection.
 - `metric`: views, histogram boundaries, attribute allow-lists, and cardinality
 - `propagation`: bounded W3C trace context and trusted baggage policies
 - `instrumentation/nethttp`: private-by-default `net/http` server and client
-- `instrumentation/gohttpclient`: `http-client` RoundTripper adapter
-- `instrumentation/gopostgres`: pgx query tracer for `postgres`
-- `instrumentation/gocache`: dependency-neutral `cache` observations
-- `instrumentation/goqueue`: dependency-neutral `queue` handler wrapper
-- `telemetryservice`: explicit `service` lifecycle initialization and shutdown
+- `instrumentation/httpclient`: `http-client` RoundTripper adapter
+- `instrumentation/postgres`: pgx query tracer for `postgres`
+- `instrumentation/cache`: dependency-neutral `cache` observations
+- `instrumentation/queue`: dependency-neutral `queue` handler wrapper
+- `instrumentation/runtime`: caller-owned Go runtime metrics registration
+- `adapters/service`: explicit `service` lifecycle initialization and shutdown
 - `testtelemetry`: deterministic in-memory providers and snapshots
+
+The former `instrumentation/go{cache,httpclient,postgres,queue,runtime}` and
+`telemetryservice` paths remain source-compatible. The HTTP client path is a
+forwarding facade; packages with released named-type or sentinel identity stay
+the explicit compatibility implementations used by their target-oriented
+successors. New code should use the target-oriented paths above; see the
+[compatibility guide](docs/compatibility.md) for the migration map.
 
 Instrumentation never records raw URL paths, queries, hosts, headers, client
 addresses, SQL, query arguments, database error text, cache keys or values,
@@ -103,7 +117,7 @@ queue messages, raw handler errors, or panic values by default.
 
 ## Service lifecycle
 
-`telemetryservice.New` constructs and owns a runtime as a
+`adapters/service.New` constructs and owns a runtime as a
 `service.Component`. Callers explicitly choose required or best-effort
 initialization and retain control of `Config.RegisterGlobal`, exporters,
 sampling, and propagation. The adapter exposes the concrete runtime, performs

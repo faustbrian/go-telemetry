@@ -5,7 +5,20 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add target-oriented cache, HTTP client, PostgreSQL, queue, runtime, and
+  service adapter packages, preserving all released types and behavior.
+- Add `instrumentation/cache.Instrumenter.Begin` as the direct cache
+  observation entry point.
+
 ### Changed
+
+- Keep released instrumentation and service paths as compatibility paths for
+  the target-oriented packages, preserving named-type, reflection, sentinel,
+  and instrumentation identity; cache `Start` now delegates to `Begin`.
+- Document the runtime option contract: options apply left to right, literal
+  nil options are ignored, and the last trace or metric exporter wins.
 
 - Adopt the checksum-verified `go-library-tools` v1.4.0 CLI and immutable W14
   workflow, require online specification authority validation in local CI, and

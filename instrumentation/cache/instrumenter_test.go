@@ -1,4 +1,4 @@
-package gocache
+package telemetrycache
 
 import (
 	"context"
