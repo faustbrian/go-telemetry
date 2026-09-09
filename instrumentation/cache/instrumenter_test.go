@@ -26,6 +26,7 @@ func TestInstrumenterRecordsOnlyFixedCacheSemantics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
+	//nolint:staticcheck // Compatibility behavior intentionally exercises Start.
 	ctx, end := instrumenter.Start(context.Background(), OperationGet)
 	if ctx == nil {
 		t.Fatal("Start() context = nil")
@@ -65,6 +66,7 @@ func TestBeginIsCanonicalAndStartDelegates(t *testing.T) {
 			if err != nil {
 				t.Fatalf("New() error = %v", err)
 			}
+			//nolint:staticcheck // Compatibility behavior intentionally exercises Start.
 			return instrumenter.Start(ctx, operation)
 		},
 	} {
@@ -85,6 +87,7 @@ func TestInstrumenterCollapsesUnknownValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
+	//nolint:staticcheck // Compatibility behavior intentionally exercises Start.
 	_, end := instrumenter.Start(context.Background(), Operation("secret-operation"))
 	end(Outcome("secret-outcome"), nil)
 	span := harness.Spans()[0]
@@ -101,7 +104,7 @@ func TestEndIsConcurrencySafeAndIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	_, end := instrumenter.Start(context.Background(), OperationLoad)
+	_, end := instrumenter.Begin(context.Background(), OperationLoad)
 	var wait sync.WaitGroup
 	for range 20 {
 		wait.Add(1)
@@ -123,7 +126,7 @@ func TestNewUsesNoopProviders(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	_, end := instrumenter.Start(context.Background(), OperationSet)
+	_, end := instrumenter.Begin(context.Background(), OperationSet)
 	end(OutcomeSuccess, nil)
 }
 

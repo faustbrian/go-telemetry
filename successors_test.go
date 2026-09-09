@@ -7,7 +7,7 @@ import (
 	service "github.com/faustbrian/go-telemetry/adapters/service"
 	cache "github.com/faustbrian/go-telemetry/instrumentation/cache"
 	legacycache "github.com/faustbrian/go-telemetry/instrumentation/gocache"
-	legacyhttpclient "github.com/faustbrian/go-telemetry/instrumentation/gohttpclient"
+	legacyhttpclient "github.com/faustbrian/go-telemetry/instrumentation/gohttpclient" //nolint:staticcheck // Compatibility identity requires the legacy path.
 	legacypostgres "github.com/faustbrian/go-telemetry/instrumentation/gopostgres"
 	legacyqueue "github.com/faustbrian/go-telemetry/instrumentation/goqueue"
 	legacyruntime "github.com/faustbrian/go-telemetry/instrumentation/goruntime"
@@ -46,6 +46,7 @@ func TestSuccessorsPreserveLegacyTypeAndSentinelIdentity(t *testing.T) {
 			t.Fatalf("legacy type %T package path = %q, want %q", pair.legacy, got, pair.pkgPath)
 		}
 	}
+	//nolint:errorlint // Exact sentinel identity is the compatibility contract.
 	if service.ErrInvalidOptions != legacyservice.ErrInvalidOptions {
 		t.Fatal("service sentinel identity changed")
 	}

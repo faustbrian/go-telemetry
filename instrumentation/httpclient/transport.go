@@ -1,4 +1,4 @@
-// Package httpclient adapts the privacy-preserving net/http client bridge to
+// Package telemetryhttpclient adapts the privacy-preserving net/http client bridge to
 // http-client's standard RoundTripper composition seam.
 package telemetryhttpclient
 

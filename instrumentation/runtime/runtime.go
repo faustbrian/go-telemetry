@@ -9,8 +9,10 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
+// Instrumenter owns the registered Go runtime callback.
 type Instrumenter = goruntime.Instrumenter
 
+// New registers observable Go runtime instruments on provider.
 func New(provider metric.MeterProvider) (*Instrumenter, error) {
 	return goruntime.New(provider)
 }
