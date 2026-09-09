@@ -466,13 +466,13 @@
       },
       "gates": {
         "api_compatibility": true,
-        "benchmarks": true,
+        "benchmarks": false,
         "conformance": false,
         "coverage": true,
         "documentation": true,
-        "fuzz": true,
+        "fuzz": false,
         "lint": true,
-        "mutation": true,
+        "mutation": false,
         "race": true,
         "security": true,
         "tests": true

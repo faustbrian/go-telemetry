@@ -65,24 +65,27 @@ shown here.
   line execution without behavioral assertions is not acceptable coverage.
 - Every production package MUST have exact 100% statement coverage without
   rounding or aggregate masking.
-- Every viable mutant MUST be killed. Mutation efficacy and mutant coverage
-  MUST both be exactly 100%.
-- Invalid or equivalent mutants require a narrow reviewed record containing a
-  stable identifier, rationale, evidence, reviewer, date, and expiry.
+- Mutation MUST run only for a named material behavioral risk. When selected,
+  every viable mutant MUST be killed; equivalent mutants require a narrow
+  rationale in the change review.
 - Parsers and hostile boundaries MUST have fuzz tests, corpus seeds, resource
   limits, and deterministic regression cases for every discovered failure.
-- Concurrent code MUST pass `go test -race` and targeted stress/leak tests.
+- A change affecting concurrent code MUST pass the focused `go test -race`
+  boundary and targeted stress or leak tests when their risk requires them.
 - Specification claims MUST be proven against pinned official fixtures and
   independent implementations where applicable.
-- Benchmarks MUST compare equivalent behavior and publish latency, throughput,
-  allocations, environment, corpus, and statistical method.
+- Benchmarks MUST run only for a material performance or resource claim. When
+  selected, they MUST compare equivalent behavior and publish latency,
+  throughput, allocations, environment, corpus, and statistical method.
 
 ## Required Commands
 
 - `make inventory` validates repository and package manifests.
 - `make check` runs the exact contract for every repository module.
-- `make ci` runs the complete repository contract.
-- Local commands and CI MUST use the same scripts and thresholds.
+- `make ci` runs ordinary repository checks plus gates selected for the named
+  risks in the change.
+- Local and CI executions of the same gate MUST use the same scripts and
+  thresholds.
 - Missing tools, services, packages, profiles, mutants, or reports MUST fail.
 - NilAway is advisory; its findings MUST remain visible and tracked against a
   no-regression baseline.

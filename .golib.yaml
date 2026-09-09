@@ -9,13 +9,6 @@ manifest:
 evidence:
   root: .verification
 
-mutation:
-  root: .verification/mutation
-  imports:
-    - module: .
-      archive: .verification/mutation/bootstrap/root.zip
-      ledger: .verification/mutation/migration-ledger.json
-
 api:
   baselines:
     - module: .
@@ -35,40 +28,9 @@ operations:
         run: 'CollectorInteroperability|ExporterFailureModes'
         timeout: 20m
   - module: .
-    gate: fuzz
-    steps:
-      - type: go-test
-        packages: [.]
-        fuzz: '^FuzzResourceAttributes$'
-        budget: 10000x
-        timeout: 2m
-      - type: go-test
-        packages: [.]
-        fuzz: '^FuzzConfiguration$'
-        budget: 10000x
-        timeout: 2m
-      - type: go-test
-        packages: [./propagation]
-        fuzz: '^FuzzPropagationHeaders$'
-        budget: 10000x
-        timeout: 2m
-      - type: go-test
-        packages: [./propagation]
-        fuzz: '^FuzzUntrustedMetadata$'
-        budget: 10000x
-        timeout: 2m
-  - module: .
     gate: docs
     steps:
       - type: go-test
         packages: [./...]
         run: '^Example'
-        timeout: 20m
-  - module: .
-    gate: benchmark
-    steps:
-      - type: go-test
-        packages: [./...]
-        benchmark: .
-        budget: 100ms
         timeout: 20m

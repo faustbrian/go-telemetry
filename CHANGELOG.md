@@ -17,6 +17,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 - Keep released instrumentation and service paths as compatibility paths for
   the target-oriented packages, preserving named-type, reflection, sentinel,
   and instrumentation identity; cache `Start` now delegates to `Begin`.
+- Select mutation, fuzz, and benchmark campaigns only when a change has a
+  corresponding material risk instead of requiring them for every PR.
 - Document the runtime option contract: options apply left to right, literal
   nil options are ignored, and the last trace or metric exporter wins.
 

@@ -6,14 +6,17 @@
 manual metric reader. Use it for exact span names, parents, attributes, status,
 metric values, and privacy assertions.
 
-## Required local gates
+## Local gates
 
 ```sh
-make check       # format, vet, tests, integration, coverage, safety, examples
-make race        # complete provider and instrumentation race suite
-make fuzz        # resource, config, propagation, and metadata fuzz smoke
-make benchmark   # overhead, allocations, and batching baselines
+make check       # ordinary format, vet, test, coverage, safety, and examples
+make race        # changes affecting concurrent lifecycle behavior
+make fuzz        # changes affecting hostile parsing boundaries
+make benchmark   # changes making performance or resource claims
 ```
+
+`make check` is the default local gate. Select race, fuzz, and benchmark
+campaigns only for the material risk exercised by the change.
 
 ## OTLP failures
 
