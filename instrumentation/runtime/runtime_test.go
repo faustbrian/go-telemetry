@@ -1,0 +1,195 @@
+package telemetryruntime
+
+import (
+	"context"
+	"errors"
+	"runtime"
+	"testing"
+
+	"go.opentelemetry.io/otel/metric"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
+	metricexport "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+)
+
+func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
+	t.Parallel()
+
+	reader := metricexport.NewManualReader()
+	provider := metricexport.NewMeterProvider(metricexport.WithReader(reader))
+	instrumenter, err := New(provider)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	t.Cleanup(func() {
+		if err := instrumenter.Close(); err != nil {
+			t.Fatalf("Close() error = %v", err)
+		}
+	})
+	var metrics metricdata.ResourceMetrics
+	if err := reader.Collect(context.Background(), &metrics); err != nil {
+		t.Fatalf("Collect() error = %v", err)
+	}
+	want := map[string]bool{
+		"go.memory.heap.used": false,
+		"go.memory.allocated": false,
+		"go.goroutine.count":  false,
+		"go.gc.cycles":        false,
+		"go.gc.pause.time":    false,
+	}
+	for _, scope := range metrics.ScopeMetrics {
+		for _, candidate := range scope.Metrics {
+			if _, ok := want[candidate.Name]; ok {
+				want[candidate.Name] = true
+			}
+		}
+	}
+	for name, found := range want {
+		if !found {
+			t.Errorf("runtime metric %q was not exported", name)
+		}
+	}
+	if err := instrumenter.Close(); err != nil {
+		t.Fatalf("first Close() error = %v", err)
+	}
+	if err := instrumenter.Close(); err != nil {
+		t.Fatalf("second Close() error = %v", err)
+	}
+}
+
+func TestInstrumenterReportsGCPauseInSeconds(t *testing.T) {
+	t.Parallel()
+
+	for range 5 {
+		runtime.GC()
+	}
+	var before runtime.MemStats
+	runtime.ReadMemStats(&before)
+	if before.PauseTotalNs == 0 {
+		t.Fatal("runtime GC pause total is zero after forced collections")
+	}
+
+	reader := metricexport.NewManualReader()
+	provider := metricexport.NewMeterProvider(metricexport.WithReader(reader))
+	instrumenter, err := New(provider)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	t.Cleanup(func() {
+		if err := instrumenter.Close(); err != nil {
+			t.Fatalf("Close() error = %v", err)
+		}
+	})
+	var metrics metricdata.ResourceMetrics
+	if err := reader.Collect(context.Background(), &metrics); err != nil {
+		t.Fatalf("Collect() error = %v", err)
+	}
+	var pauseSeconds float64
+	found := false
+	for _, scope := range metrics.ScopeMetrics {
+		for _, candidate := range scope.Metrics {
+			if candidate.Name != "go.gc.pause.time" {
+				continue
+			}
+			points := candidate.Data.(metricdata.Sum[float64]).DataPoints
+			if len(points) != 1 {
+				t.Fatalf("GC pause points = %d, want 1", len(points))
+			}
+			pauseSeconds = points[0].Value
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("GC pause metric was not exported")
+	}
+	var after runtime.MemStats
+	runtime.ReadMemStats(&after)
+	lower := float64(before.PauseTotalNs) / 1e9
+	upper := float64(after.PauseTotalNs) / 1e9
+	if pauseSeconds < lower || pauseSeconds > upper {
+		t.Fatalf("GC pause seconds = %v, want value in [%v, %v]", pauseSeconds, lower, upper)
+	}
+}
+
+func TestNewRejectsMissingProviderAndReportsEveryInstrumentFailure(t *testing.T) {
+	t.Parallel()
+
+	if _, err := New(nil); err == nil {
+		t.Fatal("New(nil) error = nil")
+	}
+	want := errors.New("instrument conflict")
+	for _, failed := range []string{
+		"go.memory.heap.used",
+		"go.memory.allocated",
+		"go.goroutine.count",
+		"go.gc.cycles",
+		"go.gc.pause.time",
+		"callback",
+	} {
+		provider := failingMeterProvider{
+			MeterProvider: metricnoop.NewMeterProvider(),
+			meter: failingMeter{
+				Meter:  metricnoop.NewMeterProvider().Meter("test"),
+				failed: failed,
+				err:    want,
+			},
+		}
+		if _, err := New(provider); !errors.Is(err, want) {
+			t.Errorf("New() failure %q error = %v, want %v", failed, err, want)
+		}
+	}
+}
+
+func TestNilClose(t *testing.T) {
+	t.Parallel()
+
+	if err := (*Instrumenter)(nil).Close(); err != nil {
+		t.Fatalf("nil Close() error = %v", err)
+	}
+	if err := (&Instrumenter{}).Close(); err != nil {
+		t.Fatalf("unregistered Close() error = %v", err)
+	}
+}
+
+type failingMeterProvider struct {
+	metric.MeterProvider
+	meter metric.Meter
+}
+
+func (provider failingMeterProvider) Meter(string, ...metric.MeterOption) metric.Meter {
+	return provider.meter
+}
+
+type failingMeter struct {
+	metric.Meter
+	failed string
+	err    error
+}
+
+func (meter failingMeter) Int64ObservableGauge(name string, options ...metric.Int64ObservableGaugeOption) (metric.Int64ObservableGauge, error) {
+	if name == meter.failed {
+		return nil, meter.err
+	}
+	return meter.Meter.Int64ObservableGauge(name, options...)
+}
+
+func (meter failingMeter) Int64ObservableCounter(name string, options ...metric.Int64ObservableCounterOption) (metric.Int64ObservableCounter, error) {
+	if name == meter.failed {
+		return nil, meter.err
+	}
+	return meter.Meter.Int64ObservableCounter(name, options...)
+}
+
+func (meter failingMeter) Float64ObservableCounter(name string, options ...metric.Float64ObservableCounterOption) (metric.Float64ObservableCounter, error) {
+	if name == meter.failed {
+		return nil, meter.err
+	}
+	return meter.Meter.Float64ObservableCounter(name, options...)
+}
+
+func (meter failingMeter) RegisterCallback(callback metric.Callback, instruments ...metric.Observable) (metric.Registration, error) {
+	if meter.failed == "callback" {
+		return nil, meter.err
+	}
+	return meter.Meter.RegisterCallback(callback, instruments...)
+}

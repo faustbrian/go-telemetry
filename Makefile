@@ -1,8 +1,9 @@
 SHELL := /usr/bin/env bash
 
 GOLIB ?= golib
+GO ?= go
 
-.PHONY: check ci cohesion inventory repository-check specification-check
+.PHONY: benchmark check ci cohesion fuzz inventory race repository-check specification-check
 
 check:
 	$(GOLIB) check --all
@@ -17,3 +18,15 @@ inventory repository-check:
 
 specification-check:
 	$(GOLIB) specification check --online
+
+race:
+	$(GO) test -race ./...
+
+fuzz:
+	$(GO) test -run '^$$' -fuzz '^FuzzResourceAttributes$$' -fuzztime=10000x .
+	$(GO) test -run '^$$' -fuzz '^FuzzConfiguration$$' -fuzztime=10000x .
+	$(GO) test -run '^$$' -fuzz '^FuzzPropagationHeaders$$' -fuzztime=10000x ./propagation
+	$(GO) test -run '^$$' -fuzz '^FuzzUntrustedMetadata$$' -fuzztime=10000x ./propagation
+
+benchmark:
+	$(GO) test -run '^$$' -bench . -benchtime=100ms ./...

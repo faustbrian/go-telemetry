@@ -24,7 +24,7 @@ and return the same result.
 
 ## Service lifecycle adapter
 
-`telemetryservice` initializes the runtime during component startup and always
+`adapters/service` initializes the runtime during component startup and always
 owns a successfully constructed runtime. It calls `Runtime.Shutdown` once after
 business components declared later in the service plan have drained. That
 operation force-flushes and closes providers using both the service shutdown

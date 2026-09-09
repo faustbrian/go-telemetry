@@ -26,7 +26,8 @@ source pin is release-blocking; peer behavior cannot silently select policy.
 The [specification decision register](docs/specification-decisions.md) and
 [conformance matrix](specification/README.md) are the review entry points.
 
-Required mutation gates must finish with zero surviving viable mutants.
+When mutation is selected for a named material risk, it must finish with zero
+surviving viable mutants.
 
 Do not add package-local workflows, permanent replacements, machine-specific
 paths, bypass flags, broad mutation exclusions, or aggregate quality metrics
@@ -47,8 +48,9 @@ Before submitting a repository-wide change:
 make ci
 ```
 
-The full scheduled and release gate is `make ci`. Report every unavailable or
-failing command; do not describe partial results as release-ready.
+`make ci` runs the ordinary repository contract and its configured risk gates.
+Release-specific checks run at the release boundary. Report every unavailable
+or failing selected command; do not describe partial results as release-ready.
 
 ## Adding A Module
 

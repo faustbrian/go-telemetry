@@ -92,8 +92,8 @@ func New(config Config) (*Instrumenter, error) {
 	}, nil
 }
 
-// Start begins one cache observation without accepting a key or value.
-func (instrumenter *Instrumenter) Start(ctx context.Context, operation Operation) (context.Context, EndFunc) {
+// Begin begins one cache observation without accepting a key or value.
+func (instrumenter *Instrumenter) Begin(ctx context.Context, operation Operation) (context.Context, EndFunc) {
 	operation = normalizeOperation(operation)
 	attributes := []attribute.KeyValue{attribute.String("cache.operation.name", string(operation))}
 	ctx, span := instrumenter.tracer.Start(
@@ -122,6 +122,13 @@ func (instrumenter *Instrumenter) Start(ctx context.Context, operation Operation
 			span.End()
 		})
 	}
+}
+
+// Start begins one cache observation without accepting a key or value.
+//
+// Deprecated: use Begin.
+func (instrumenter *Instrumenter) Start(ctx context.Context, operation Operation) (context.Context, EndFunc) {
+	return instrumenter.Begin(ctx, operation)
 }
 
 func normalizeOperation(operation Operation) Operation {

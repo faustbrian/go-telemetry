@@ -41,5 +41,5 @@ and rotate credentials through a controlled application restart.
 ## Dependency and code safety
 
 CI runs `govulncheck`, lint security checks, a Go/OpenTelemetry compatibility
-matrix, protocol failure tests, fuzz smoke, and race tests. Production code is
+matrix, protocol failure tests, and selected risk checks. Production code is
 scanned for cgo, `unsafe`, and `go:linkname`.

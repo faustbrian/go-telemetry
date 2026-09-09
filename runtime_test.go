@@ -19,6 +19,37 @@ import (
 	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
+func TestOptionsApplyLeftToRightIgnoringNilAndUseLastExporter(t *testing.T) {
+	firstTrace := &recordingSpanExporter{}
+	lastTrace := &recordingSpanExporter{}
+	firstMetric := &recordingMetricExporter{}
+	lastMetric := &recordingMetricExporter{}
+
+	config := DefaultConfig("options", "test")
+	config.RegisterGlobal = false
+	runtime, err := Init(
+		context.Background(),
+		config,
+		WithTraceExporter(firstTrace),
+		nil,
+		WithMetricExporter(firstMetric),
+		WithTraceExporter(lastTrace),
+		WithMetricExporter(lastMetric),
+	)
+	if err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	if err := runtime.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown() error = %v", err)
+	}
+	if firstTrace.shutdowns != 0 || lastTrace.shutdowns != 1 {
+		t.Fatalf("trace exporter shutdowns = first %d, last %d", firstTrace.shutdowns, lastTrace.shutdowns)
+	}
+	if firstMetric.shutdowns != 0 || lastMetric.shutdowns != 1 {
+		t.Fatalf("metric exporter shutdowns = first %d, last %d", firstMetric.shutdowns, lastMetric.shutdowns)
+	}
+}
+
 func TestRuntimeProvidesStandardAPIsAndShutsDownOnce(t *testing.T) {
 	exporter := &recordingSpanExporter{}
 	config := DefaultConfig("orders", "1.2.3")

@@ -3,7 +3,6 @@
 [![CI](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
-[![Mutation](https://img.shields.io/badge/mutation-100%25_required-blue)](CONTRIBUTING.md#verification)
 [![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
@@ -24,6 +23,12 @@ stability promises.
 - Go 1.25 or 1.26
 - OpenTelemetry Go 1.43.x or 1.44.x
 - an OTLP-compatible Collector for production export
+
+## Installation
+
+```sh
+go get github.com/faustbrian/go-telemetry@latest
+```
 
 ## Quick start
 
@@ -90,12 +95,20 @@ authenticated cluster-local insecure connection.
 - `metric`: views, histogram boundaries, attribute allow-lists, and cardinality
 - `propagation`: bounded W3C trace context and trusted baggage policies
 - `instrumentation/nethttp`: private-by-default `net/http` server and client
-- `instrumentation/gohttpclient`: `http-client` RoundTripper adapter
-- `instrumentation/gopostgres`: pgx query tracer for `postgres`
-- `instrumentation/gocache`: dependency-neutral `cache` observations
-- `instrumentation/goqueue`: dependency-neutral `queue` handler wrapper
-- `telemetryservice`: explicit `service` lifecycle initialization and shutdown
+- `instrumentation/httpclient`: `http-client` RoundTripper adapter
+- `instrumentation/postgres`: pgx query tracer for `postgres`
+- `instrumentation/cache`: dependency-neutral `cache` observations
+- `instrumentation/queue`: dependency-neutral `queue` handler wrapper
+- `instrumentation/runtime`: caller-owned Go runtime metrics registration
+- `adapters/service`: explicit `service` lifecycle initialization and shutdown
 - `testtelemetry`: deterministic in-memory providers and snapshots
+
+The former `instrumentation/go{cache,httpclient,postgres,queue,runtime}` and
+`telemetryservice` paths remain source-compatible. The HTTP client path is a
+forwarding facade; packages with released named-type or sentinel identity stay
+the explicit compatibility implementations used by their target-oriented
+successors. New code should use the target-oriented paths above; see the
+[compatibility guide](docs/compatibility.md) for the migration map.
 
 Instrumentation never records raw URL paths, queries, hosts, headers, client
 addresses, SQL, query arguments, database error text, cache keys or values,
@@ -103,7 +116,7 @@ queue messages, raw handler errors, or panic values by default.
 
 ## Service lifecycle
 
-`telemetryservice.New` constructs and owns a runtime as a
+`adapters/service.New` constructs and owns a runtime as a
 `service.Component`. Callers explicitly choose required or best-effort
 initialization and retain control of `Config.RegisterGlobal`, exporters,
 sampling, and propagation. The adapter exposes the concrete runtime, performs
@@ -133,13 +146,13 @@ Runnable commands are in [`examples/service`](examples/service) and
 
 ```sh
 make check
-make race
-make fuzz
-make benchmark
+make race        # changes affecting concurrent lifecycle behavior
+make fuzz        # changes affecting hostile parsing boundaries
+make benchmark   # changes making performance or resource claims
 ```
 
-CI also runs linting, vulnerability scanning, examples, Collector protocol
-tests, and the supported Go/OpenTelemetry matrix. Library packages enforce
+CI also runs the applicable linting, vulnerability, example, Collector
+protocol, race, and supported Go/OpenTelemetry checks. Library packages enforce
 meaningful 100% statement coverage.
 
 ## Stability

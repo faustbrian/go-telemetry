@@ -4,8 +4,8 @@
 
 - `CHANGELOG.md` contains every user-visible change.
 - Compatibility, upgrade, security, and operations docs match behavior.
-- `make check`, `make race`, `make fuzz`, `make benchmark`, lint, and
-  `govulncheck` pass.
+- `make check`, lint, `govulncheck`, and every race, fuzz, or benchmark gate
+  selected for a material release risk pass.
 - The Go/OpenTelemetry matrix and all GitHub Actions gates are green.
 - No cardinality, privacy, race, leak, deadlock, timeout, or unbounded-resource
   blocker remains.

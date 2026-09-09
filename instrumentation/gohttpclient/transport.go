@@ -1,21 +1,21 @@
-// Package gohttpclient adapts the privacy-preserving net/http client bridge to
-// http-client's standard RoundTripper composition seam.
+// Package gohttpclient preserves the original HTTP client instrumentation path.
+//
+// Deprecated: use github.com/faustbrian/go-telemetry/instrumentation/httpclient.
 package gohttpclient
 
 import (
 	"net/http"
 
-	"github.com/faustbrian/go-telemetry/instrumentation/nethttp"
+	httpclient "github.com/faustbrian/go-telemetry/instrumentation/httpclient"
 )
 
-// Config is the fixed, low-cardinality outbound HTTP instrumentation config.
-type Config = nethttp.ClientConfig
+// Config controls privacy-preserving HTTP client instrumentation.
+type Config = httpclient.Config
 
-// Transport is a standard instrumented http.RoundTripper.
-type Transport = nethttp.Transport
+// Transport instruments outbound HTTP requests.
+type Transport = httpclient.Transport
 
-// NewTransport wraps the RoundTripper used by http-client without importing
-// that module or creating a dependency cycle.
+// NewTransport wraps base with privacy-preserving client instrumentation.
 func NewTransport(base http.RoundTripper, config Config) (*Transport, error) {
-	return nethttp.NewTransport(base, config)
+	return httpclient.NewTransport(base, config)
 }

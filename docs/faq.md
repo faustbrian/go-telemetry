@@ -52,5 +52,6 @@ run in-process; use `make integration` when changing transport behavior.
 ## Why exactly 100% statement coverage?
 
 The gate ensures every production statement is exercised, but it is only one
-part of quality. Race, fuzz, protocol, privacy, failure, vulnerability, and
-benchmark gates cover properties statement execution cannot prove.
+part of quality. Protocol, privacy, failure, and vulnerability checks cover
+properties statement execution cannot prove. Race, fuzz, and benchmark gates
+add evidence when a change has the corresponding material risk.

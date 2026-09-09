@@ -52,7 +52,7 @@ transport, err := nethttp.NewTransport(http.DefaultTransport, nethttp.ClientConf
 client := &http.Client{Transport: transport, Timeout: 10 * time.Second}
 ```
 
-`instrumentation/gohttpclient.NewTransport` exposes the same contract at the
+`instrumentation/httpclient.NewTransport` exposes the same contract at the
 RoundTripper seam used by `http-client`. Outbound propagation replaces stale
 headers on a cloned request.
 
