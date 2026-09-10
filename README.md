@@ -6,7 +6,7 @@
 [![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
-[![Go](https://img.shields.io/badge/go-1.26.6-00ADD8?logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 `telemetry` is a vendor-neutral OpenTelemetry runtime for Go services. It
@@ -20,7 +20,7 @@ stability promises.
 
 ## Requirements
 
-- Go 1.25 or 1.26
+- Go 1.27
 - OpenTelemetry Go 1.43.x or 1.44.x
 - an OTLP-compatible Collector for production export
 
