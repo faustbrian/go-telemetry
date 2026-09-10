@@ -4,7 +4,7 @@
 
 | Component | Supported |
 | --- | --- |
-| Go | 1.25.x, 1.26.x |
+| Go | 1.27.x |
 | OpenTelemetry Go API/SDK/exporters | 1.43.x, 1.44.x |
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
 | PostgreSQL adapter | pgx/v5 5.10.x |
