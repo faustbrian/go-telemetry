@@ -15,6 +15,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   augmenting system roots.
 - Upgrade the OpenTelemetry API, SDK, and OTLP exporters together to 1.45.0,
   fixing conditional endpoint disclosure in verbose internal SDK diagnostics.
+- Update gRPC-Go to 1.83.2 so downstream builds include the upstream fix for
+  xDS-server denial of service from missing authority headers.
 
 - Move the module and all package imports to
   `github.com/faustbrian/go-telemetry/v2`. Version 2 is not yet published; the

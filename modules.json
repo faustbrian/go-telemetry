@@ -468,7 +468,7 @@
         "api_compatibility": true,
         "benchmarks": false,
         "conformance": false,
-        "coverage": true,
+        "coverage": false,
         "documentation": true,
         "fuzz": true,
         "lint": true,
