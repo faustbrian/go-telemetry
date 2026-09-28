@@ -71,6 +71,7 @@ func (fixtureTLSReader) ReadFile(ctx context.Context, path string, maxBytes int)
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	// #nosec G304 -- path is a caller-owned test fixture and the read is capped
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

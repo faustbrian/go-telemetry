@@ -123,7 +123,7 @@ func TestSecureExporterConstruction(t *testing.T) {
 func TestTLSConfigLoadsCAAndClientCertificate(t *testing.T) {
 	t.Parallel()
 
-	certificateFile, keyFile := writeCertificatePair(t)
+	certificateFile, keyFile, _ := writeCertificatePair(t)
 	config, err := buildTLSConfig(TLSConfig{
 		FileReader:         fixtureTLSReader{},
 		CAFile:             certificateFile,
@@ -166,9 +166,13 @@ func TestTLSConfigReportsMalformedMaterial(t *testing.T) {
 func TestTLSConfigUsesOnlyExplicitCustomCA(t *testing.T) {
 	t.Parallel()
 
-	certificateFile, _ := writeCertificatePair(t)
+	certificateFile, _, certificatePEM := writeCertificatePair(t)
 	config, err := buildTLSConfig(TLSConfig{CAFile: certificateFile, FileReader: fixtureTLSReader{}})
-	if err != nil || config.RootCAs == nil || len(config.RootCAs.Subjects()) != 1 {
+	wantRoots := x509.NewCertPool()
+	if !wantRoots.AppendCertsFromPEM(certificatePEM) {
+		t.Fatal("parse generated CA certificate")
+	}
+	if err != nil || config.RootCAs == nil || !config.RootCAs.Equal(wantRoots) {
 		t.Fatalf("custom CA roots = %#v, %v, want only supplied certificate", config, err)
 	}
 }
@@ -206,7 +210,7 @@ func validConfig(protocol Protocol) Config {
 	}
 }
 
-func writeCertificatePair(t *testing.T) (string, string) {
+func writeCertificatePair(t *testing.T) (string, string, []byte) {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2_048)
 	if err != nil {
@@ -237,5 +241,5 @@ func writeCertificatePair(t *testing.T) (string, string) {
 	if err := os.WriteFile(keyFile, keyPEM, 0o600); err != nil {
 		t.Fatalf("write key: %v", err)
 	}
-	return certificateFile, keyFile
+	return certificateFile, keyFile, certificatePEM
 }
