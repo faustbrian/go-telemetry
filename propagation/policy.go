@@ -5,7 +5,6 @@ package propagation
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"go.opentelemetry.io/otel/baggage"
 	otelpropagation "go.opentelemetry.io/otel/propagation"
@@ -40,20 +39,27 @@ type Policy struct {
 
 // New validates and constructs a propagation policy.
 func New(config Config) (*Policy, error) {
-	var errs []error
-	if config.MaxHeaderBytes <= 0 {
-		errs = append(errs, errors.New("maximum propagation header bytes must be positive"))
+	if len(config.TrustedBaggageKeys) > 128 {
+		return nil, errors.New("trusted baggage keys exceed 128 entries")
 	}
-	if config.MaxBaggageItems <= 0 {
-		errs = append(errs, errors.New("maximum baggage items must be positive"))
+	var errs []error
+	if config.MaxHeaderBytes <= 0 || config.MaxHeaderBytes > 1<<20 {
+		errs = append(errs, errors.New("maximum propagation header bytes must be between 1 and 1048576"))
+	}
+	if config.MaxBaggageItems <= 0 || config.MaxBaggageItems > 128 {
+		errs = append(errs, errors.New("maximum baggage items must be between 1 and 128"))
 	}
 	allowed := make(map[string]struct{}, len(config.TrustedBaggageKeys))
 	for _, key := range config.TrustedBaggageKeys {
+		if len(key) > 255 {
+			errs = append(errs, errors.New("trusted baggage key exceeds 255 bytes"))
+			continue
+		}
 		if _, err := baggage.NewMember(key, "value"); err != nil {
-			errs = append(errs, fmt.Errorf("trusted baggage key %q: %w", key, err))
+			errs = append(errs, errors.New("trusted baggage key is invalid"))
 		}
 		if _, duplicate := allowed[key]; duplicate {
-			errs = append(errs, fmt.Errorf("trusted baggage key %q is duplicated", key))
+			errs = append(errs, errors.New("trusted baggage key is duplicated"))
 		}
 		allowed[key] = struct{}{}
 	}

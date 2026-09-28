@@ -4,7 +4,7 @@
 // that package's released type and instrumentation identities.
 package telemetrycache
 
-import gocache "github.com/faustbrian/go-telemetry/instrumentation/gocache"
+import gocache "github.com/faustbrian/go-telemetry/v2/instrumentation/gocache"
 
 // Operation is a bounded cache operation label.
 type Operation = gocache.Operation

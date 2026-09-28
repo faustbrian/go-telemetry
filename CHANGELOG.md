@@ -5,6 +5,32 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Validate resources and exporter-header budgets at every public construction
+  boundary, redact rejected configuration and file diagnostics, and bound trace
+  queues, metric cardinality, and trusted baggage configuration.
+- Require an explicit context-aware TLS material reader for configured paths,
+  with a 1 MiB per-result budget and custom-CA-only trust instead of implicitly
+  augmenting system roots.
+- Upgrade the OpenTelemetry API, SDK, and OTLP exporters together to 1.45.0,
+  fixing conditional endpoint disclosure in verbose internal SDK diagnostics.
+
+- Move the module and all package imports to
+  `github.com/faustbrian/go-telemetry/v2`. Version 2 is not yet published; the
+  `v2` release tag and direct-consumer migrations remain release blockers, so
+  consumers must remain on released version 1.2.0 meanwhile.
+- Make telemetry signals, global OpenTelemetry registration, and plaintext
+  OTLP transport explicit opt-ins; bound aggregate resource, exporter-header,
+  metric-view, attribute, and histogram configuration.
+- Require request-specific authentication proof before HTTP handlers accept
+  trusted inbound baggage. Proof panics now return a redacted HTTP 500 before
+  business handling. A pre-canceled call can retry before shutdown starts;
+  concurrent calls share the terminal result once it does, without retrying
+  partially completed provider shutdown.
+- Select hostile configuration and propagation fuzz targets in the repository
+  fuzz gate and document the versioned threat model and residual risks.
+
 ## [1.2.0] - 2026-09-09
 
 ### Added

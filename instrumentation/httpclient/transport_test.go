@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
 )
 
 func TestTransportComposesWithStandardRoundTripper(t *testing.T) {

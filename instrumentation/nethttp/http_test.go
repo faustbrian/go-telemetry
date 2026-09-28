@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	telemetrypropagation "github.com/faustbrian/go-telemetry/propagation"
-	"github.com/faustbrian/go-telemetry/testtelemetry"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v2/propagation"
+	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
@@ -53,6 +53,9 @@ func TestHandlerRecordsOnlyBoundedServerAttributes(t *testing.T) {
 		t.Fatalf("spans = %d, want 1", len(spans))
 	}
 	span := spans[0]
+	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/instrumentation/nethttp" {
+		t.Fatalf("instrumentation scope = %q, want released identity", span.InstrumentationScope.Name)
+	}
 	if span.Name != "users.show" || span.Parent.SpanID().String() != "00f067aa0ba902b7" {
 		t.Fatalf("span name/parent = %q/%s, want fixed operation and remote parent", span.Name, span.Parent.SpanID())
 	}
@@ -416,6 +419,7 @@ func TestHandlerCanExplicitlyTrustInboundBaggage(t *testing.T) {
 	}), ServerConfig{
 		Operation:      "trusted.request",
 		TrustedInbound: true,
+		TrustInbound:   func(*http.Request) bool { return true },
 		Propagator:     policy,
 	})
 	if err != nil {
@@ -429,12 +433,92 @@ func TestHandlerCanExplicitlyTrustInboundBaggage(t *testing.T) {
 	}
 }
 
+func TestHandlerRequiresPerRequestTrustedInboundProof(t *testing.T) {
+	t.Parallel()
+
+	policyConfig := telemetrypropagation.DefaultConfig()
+	policyConfig.BaggageEnabled = true
+	policyConfig.TrustedBaggageKeys = []string{"tenant.tier"}
+	policy, err := telemetrypropagation.New(policyConfig)
+	if err != nil {
+		t.Fatalf("propagation.New() error = %v", err)
+	}
+	var tier string
+	handler, err := NewHandler(http.HandlerFunc(func(_ http.ResponseWriter, request *http.Request) {
+		tier = baggage.FromContext(request.Context()).Member("tenant.tier").Value()
+	}), ServerConfig{
+		Operation:      "trusted.request",
+		TrustedInbound: true,
+		TrustInbound:   func(*http.Request) bool { return false },
+		Propagator:     policy,
+	})
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("baggage", "tenant.tier=gold")
+	handler.ServeHTTP(httptest.NewRecorder(), request)
+	if tier != "" {
+		t.Fatalf("unproven tenant tier = %q, want dropped baggage", tier)
+	}
+}
+
+func TestHandlerFailsClosedWhenTrustedInboundProofPanics(t *testing.T) {
+	t.Parallel()
+
+	policyConfig := telemetrypropagation.DefaultConfig()
+	policyConfig.BaggageEnabled = true
+	policyConfig.TrustedBaggageKeys = []string{"tenant.tier"}
+	policy, err := telemetrypropagation.New(policyConfig)
+	if err != nil {
+		t.Fatalf("propagation.New() error = %v", err)
+	}
+	called := false
+	handler, err := NewHandler(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		called = true
+	}), ServerConfig{
+		Operation:      "trusted.request",
+		TrustedInbound: true,
+		TrustInbound:   func(*http.Request) bool { panic("secret proof failure") },
+		Propagator:     policy,
+	})
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("baggage", "tenant.tier=gold")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if called {
+		t.Fatal("business handler ran after trusted-inbound proof panic")
+	}
+	if response.Code != http.StatusInternalServerError {
+		t.Fatalf("proof panic status = %d, want 500", response.Code)
+	}
+	if body := strings.TrimSpace(response.Body.String()); body != "trusted inbound proof failed" {
+		t.Fatal("proof panic response was not categorical and redacted")
+	}
+}
+
+func TestHandlerRejectsTrustedInboundWithoutRequestProof(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), ServerConfig{
+		Operation:      "trusted.request",
+		TrustedInbound: true,
+	})
+	if err == nil {
+		t.Fatal("NewHandler() error = nil, want trusted inbound proof requirement")
+	}
+}
+
 func TestTrustedHandlerFallsBackToStandardExtractor(t *testing.T) {
 	t.Parallel()
 
 	handler, err := NewHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), ServerConfig{
 		Operation:      "trusted.request",
 		TrustedInbound: true,
+		TrustInbound:   func(*http.Request) bool { return true },
 		Propagator:     otelpropagation.TraceContext{},
 	})
 	if err != nil {

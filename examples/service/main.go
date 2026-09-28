@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	telemetry "github.com/faustbrian/go-telemetry"
-	"github.com/faustbrian/go-telemetry/examples/internal/exampleconfig"
-	"github.com/faustbrian/go-telemetry/instrumentation/nethttp"
+	telemetry "github.com/faustbrian/go-telemetry/v2"
+	"github.com/faustbrian/go-telemetry/v2/examples/internal/exampleconfig"
+	"github.com/faustbrian/go-telemetry/v2/instrumentation/nethttp"
 )
 
 func main() {
@@ -27,6 +27,8 @@ func main() {
 
 func run(ctx context.Context) error {
 	config := telemetry.DefaultConfig("example-service", "dev")
+	config.Traces.Enabled = true
+	config.Metrics.Enabled = true
 	if err := applyEnvironment(&config); err != nil {
 		return fmt.Errorf("configure telemetry: %w", err)
 	}

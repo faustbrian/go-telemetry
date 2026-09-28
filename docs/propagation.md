@@ -32,10 +32,17 @@ handler, err := nethttp.NewHandler(next, nethttp.ServerConfig{
     Operation: "internal.orders.list",
     Route: "/internal/orders",
     TrustedInbound: true,
+    TrustInbound: func(request *http.Request) bool {
+        return authenticatedWorkload(request.Context())
+    },
     Propagator: runtime.Propagator(),
 })
 ```
 
+`TrustedInbound` requires `TrustInbound` to prove authentication for each
+request. A false proof uses untrusted extraction and clears baggage.
+If the proof callback panics, the request ends with a categorical HTTP 500
+without invoking the business handler or returning the panic value.
 `TrustedInbound` has no effect on propagators that do not implement trusted
 extraction; they use the standard interface. Unknown baggage keys are always
 dropped. Never allow user IDs, request IDs, emails, tokens, or arbitrary tenant

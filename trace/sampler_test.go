@@ -3,6 +3,7 @@ package trace
 import (
 	"context"
 	"math"
+	"strings"
 	"testing"
 
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -60,6 +61,13 @@ func TestNewSamplerValidatesModesAndRatio(t *testing.T) {
 		if _, err := NewSampler(config); err == nil {
 			t.Fatalf("NewSampler(%+v) error = nil, want validation error", config)
 		}
+	}
+}
+
+func TestNewSamplerRejectsModeWithoutDisclosingItsValue(t *testing.T) {
+	const sensitive = "password=private_payload"
+	if _, err := NewSampler(Config{Mode: Mode(sensitive)}); err == nil || strings.Contains(err.Error(), sensitive) {
+		t.Fatal("unsupported sampling mode was accepted or disclosed")
 	}
 }
 

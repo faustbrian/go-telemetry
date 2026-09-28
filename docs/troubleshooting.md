@@ -14,8 +14,12 @@ Do not infer Collector health from application readiness.
 ## TLS failures
 
 Verify the mounted CA is PEM, `ServerName` matches the certificate, and client
-certificate/key are configured together. `InsecureSkipVerify` weakens identity
-verification and should be a temporary, explicit compatibility setting.
+certificate/key are configured together. For any configured material path,
+verify that the signal's `Exporter.TLS.FileReader` is set, honors context
+cancellation, and accepts no more than 1 MiB per result. A custom CA replaces
+system roots, so its PEM must contain every required authority.
+`InsecureSkipVerify` weakens identity verification and should be a temporary,
+explicit compatibility setting.
 
 ## Authentication failures
 
@@ -45,14 +49,15 @@ headers. Oversized or malformed headers are intentionally ignored.
 
 Baggage is intentionally absent unless enabled, allow-listed, within bounds,
 and extracted through a trusted boundary. For HTTP, set `TrustedInbound` only
-on authenticated internal handlers. Public handlers always drop baggage.
+on authenticated internal handlers and provide `TrustInbound` to prove each
+request crossed that boundary. Public handlers always drop baggage.
 
 ## Shutdown takes too long
 
-Use a fresh bounded context derived with `context.WithoutCancel`; an already
-cancelled signal context aborts immediately. Verify timeout and retry horizons,
-then inspect each joined error. Shutdown is idempotent; repeated calls do not
-restart export.
+Use a fresh bounded context derived with `context.WithoutCancel`; a call with an
+already-canceled context leaves shutdown available for one retry. Verify
+timeout and retry horizons, then inspect each joined error. Once shutdown
+starts it is idempotent; repeated calls do not restart export.
 
 ## Duplicate initialization
 

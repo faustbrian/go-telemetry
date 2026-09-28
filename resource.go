@@ -24,6 +24,12 @@ var reservedResourceKeys = map[string]struct{}{
 // BuildResource constructs the resource used by every enabled signal. Service
 // identity always wins over custom attributes.
 func BuildResource(ctx context.Context, config Config) (*resource.Resource, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := config.validateResource(true); err != nil {
+		return nil, err
+	}
 	attributes := make([]attribute.KeyValue, 0, len(config.Resource)+5)
 	attributes = append(
 		attributes,

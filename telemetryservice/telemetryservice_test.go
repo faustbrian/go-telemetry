@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry"
-	"github.com/faustbrian/go-telemetry/telemetryservice"
+	"github.com/faustbrian/go-telemetry/v2"
+	"github.com/faustbrian/go-telemetry/v2/telemetryservice"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/trace"
 )
@@ -128,6 +128,7 @@ func TestShutdownFailureIsStableAndRunsOnce(t *testing.T) {
 	exporter := &failingSpanExporter{err: shutdownErr}
 	config := telemetry.DefaultConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
+	config.Traces.Enabled = true
 	config.Metrics.Enabled = false
 	adapter, err := telemetryservice.New(telemetryservice.Options{
 		Name:           "telemetry",

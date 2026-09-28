@@ -2,6 +2,7 @@
 package trace
 
 import (
+	"errors"
 	"fmt"
 	"math"
 
@@ -41,7 +42,7 @@ func NewSampler(config Config) (trace.Sampler, error) {
 		}
 		sampler = trace.TraceIDRatioBased(config.Ratio)
 	default:
-		return nil, fmt.Errorf("sampling mode %q is unsupported", config.Mode)
+		return nil, errors.New("sampling mode is unsupported")
 	}
 	if config.ParentBased {
 		sampler = trace.ParentBased(sampler)

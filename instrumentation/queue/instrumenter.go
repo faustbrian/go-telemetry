@@ -7,7 +7,7 @@ package telemetryqueue
 import (
 	"context"
 
-	goqueue "github.com/faustbrian/go-telemetry/instrumentation/goqueue"
+	goqueue "github.com/faustbrian/go-telemetry/v2/instrumentation/goqueue"
 )
 
 // Backend is a finite queue backend label.

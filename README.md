@@ -21,7 +21,7 @@ stability promises.
 ## Requirements
 
 - Go 1.27
-- OpenTelemetry Go 1.43.x or 1.44.x
+- OpenTelemetry Go 1.45.x or later compatible releases
 - an OTLP-compatible Collector for production export
 
 ## Installation
@@ -29,6 +29,13 @@ stability promises.
 ```sh
 go get github.com/faustbrian/go-telemetry@latest
 ```
+
+Version 1.2.0 remains the latest published release, so the badge, installation
+command, and import below intentionally reference version 1. The current
+source is the planned version 2 module at
+`github.com/faustbrian/go-telemetry/v2`; it contains breaking security defaults
+and must not be adopted until a `v2` tag is published. See the
+[pending migration notes](docs/compatibility.md#planned-version-2).
 
 ## Quick start
 
@@ -45,6 +52,8 @@ import (
 func main() {
 	config := telemetry.DefaultConfig("orders", "1.2.3")
 	config.Environment = "production"
+	config.Traces.Enabled = true
+	config.Metrics.Enabled = true
 	config.Traces.Exporter.Endpoint = "otel-collector:4317"
 	config.Metrics.Exporter.Endpoint = "otel-collector:4317"
 
@@ -65,17 +74,19 @@ func main() {
 
 `DefaultConfig` only builds a value. Network clients, providers, globals, and
 goroutines are created by `Init`. `Runtime` exposes standard tracer, meter, and
-propagator interfaces. `Shutdown` is idempotent, bounded by the configured
-timeout, restores only globals still owned by the runtime, and joins provider
-and exporter failures.
+propagator interfaces. `Shutdown` is idempotent, propagates the shorter caller
+or configured deadline to providers and exporters, restores only globals still
+owned by the runtime, and joins provider and exporter failures. As with the
+standard OpenTelemetry interfaces, a custom exporter must cooperate with
+context cancellation for that deadline to bound its call.
 
-## Safe defaults
+## Planned version 2 safe defaults
 
 | Setting | Default |
 | --- | --- |
-| signals | traces and metrics enabled |
+| signals | traces and metrics disabled |
 | transport | OTLP/gRPC to `localhost:4317` |
-| transport security | explicit insecure local Collector connection |
+| transport security | TLS; plaintext requires explicit opt-in |
 | compression | gzip |
 | trace sampling | parent-based 10% ratio |
 | span queue / batch | 2,048 / 512 |
@@ -84,8 +95,10 @@ and exporter failures.
 | shutdown timeout | 10 seconds |
 
 Every default is represented in `Config` and can be inspected or overridden.
-Production clusters should configure TLS or deliberately retain an
-authenticated cluster-local insecure connection.
+Enabling a signal creates its exporter and background SDK processing during
+`Init`. Global registration and plaintext transport are separate explicit
+choices. Production clusters should configure TLS; plaintext is intended only
+for an authenticated, policy-protected local or same-cluster connection.
 
 ## Packages
 
@@ -120,8 +133,8 @@ queue messages, raw handler errors, or panic values by default.
 `service.Component`. Callers explicitly choose required or best-effort
 initialization and retain control of `Config.RegisterGlobal`, exporters,
 sampling, and propagation. The adapter exposes the concrete runtime, performs
-no retries, and delegates bounded flush, shutdown, and global restoration to
-`Runtime.Shutdown`.
+no retries, and delegates deadline-propagated flush, shutdown, and conditional
+global restoration to `Runtime.Shutdown`.
 
 Required initialization failures stop service startup. Best-effort failures
 permit startup and remain available through `InitializationError`; no

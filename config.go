@@ -7,9 +7,15 @@ import (
 	"time"
 	"unicode/utf8"
 
-	telemetrymetric "github.com/faustbrian/go-telemetry/metric"
-	telemetrypropagation "github.com/faustbrian/go-telemetry/propagation"
-	telemetrytrace "github.com/faustbrian/go-telemetry/trace"
+	telemetrymetric "github.com/faustbrian/go-telemetry/v2/metric"
+	telemetryotlp "github.com/faustbrian/go-telemetry/v2/otlp"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v2/propagation"
+	telemetrytrace "github.com/faustbrian/go-telemetry/v2/trace"
+)
+
+const (
+	maxResourceAttributes     = 128
+	maxResourceAttributeBytes = 64 * 1_024
 )
 
 // Protocol selects an OTLP transport.
@@ -85,6 +91,8 @@ type ExporterConfig struct {
 // TLSConfig controls transport security. Insecure is intended for a local or
 // same-cluster Collector connection and must be selected explicitly.
 type TLSConfig struct {
+	// FileReader owns explicitly configured, bounded TLS material access.
+	FileReader         telemetryotlp.TLSFileReader
 	Insecure           bool
 	CAFile             string
 	CertificateFile    string
@@ -116,15 +124,15 @@ type SamplerConfig struct {
 	ParentBased bool
 }
 
-// DefaultConfig returns inspectable defaults suitable for exporting to a
-// Collector sidecar or cluster-local agent.
+// DefaultConfig returns inspectable, inactive defaults. Callers must explicitly
+// enable signals, global registration, and plaintext transport when required.
 func DefaultConfig(serviceName, serviceVersion string) Config {
 	exporter := ExporterConfig{
 		Protocol:    ProtocolGRPC,
 		Endpoint:    "localhost:4317",
 		Headers:     make(map[string]string),
 		Compression: CompressionGZIP,
-		TLS:         TLSConfig{Insecure: true},
+		TLS:         TLSConfig{},
 		Retry: RetryConfig{
 			Enabled:         true,
 			InitialInterval: 5 * time.Second,
@@ -140,7 +148,7 @@ func DefaultConfig(serviceName, serviceVersion string) Config {
 		Service:  ServiceConfig{Name: serviceName, Version: serviceVersion},
 		Resource: make(map[string]string),
 		Traces: TraceConfig{
-			Enabled:  true,
+			Enabled:  false,
 			Exporter: exporter,
 			Batch: BatchConfig{
 				MaxQueueSize:       2_048,
@@ -155,20 +163,20 @@ func DefaultConfig(serviceName, serviceVersion string) Config {
 			},
 		},
 		Metrics: MetricConfig{
-			Enabled:          true,
+			Enabled:          false,
 			Exporter:         metricExporter,
 			ExportInterval:   time.Minute,
 			ExportTimeout:    30 * time.Second,
 			CardinalityLimit: 1_000,
 		},
 		Propagation:     telemetrypropagation.DefaultConfig(),
-		RegisterGlobal:  true,
+		RegisterGlobal:  false,
 		ShutdownTimeout: 10 * time.Second,
 	}
 }
 
 // Validate reports every invalid setting in the configuration.
-func (c Config) Validate() error {
+func (c Config) validateResource(allowReserved bool) error {
 	var errs []error
 	if c.Service.Name == "" {
 		errs = append(errs, errors.New("service name is required"))
@@ -188,19 +196,35 @@ func (c Config) Validate() error {
 			errs = append(errs, fmt.Errorf("%s must be valid UTF-8 and at most 255 bytes", field.name))
 		}
 	}
+	resourceBytes := 0
+	if len(c.Resource) > maxResourceAttributes {
+		errs = append(errs, fmt.Errorf("resource attributes exceed %d entries", maxResourceAttributes))
+	} else {
+		for key, value := range c.Resource {
+			resourceBytes += len(key) + len(value)
+			if _, reserved := reservedResourceKeys[key]; reserved && !allowReserved {
+				errs = append(errs, errors.New("resource attribute uses a reserved key"))
+			}
+			if key == "" || len(key) > 255 || !utf8.ValidString(key) {
+				errs = append(errs, errors.New("resource attribute key is invalid"))
+			}
+			if len(value) > 4_096 || !utf8.ValidString(value) {
+				errs = append(errs, errors.New("resource attribute value is invalid"))
+			}
+		}
+		if resourceBytes > maxResourceAttributeBytes {
+			errs = append(errs, fmt.Errorf("resource attributes exceed %d bytes", maxResourceAttributeBytes))
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// Validate reports every invalid setting without exposing configuration values.
+func (c Config) Validate() error {
+	var errs []error
+	errs = append(errs, c.validateResource(false))
 	if c.ShutdownTimeout <= 0 {
 		errs = append(errs, errors.New("shutdown timeout must be positive"))
-	}
-	for key, value := range c.Resource {
-		if _, reserved := reservedResourceKeys[key]; reserved {
-			errs = append(errs, fmt.Errorf("resource attribute %q is reserved", key))
-		}
-		if key == "" || len(key) > 255 || !utf8.ValidString(key) {
-			errs = append(errs, fmt.Errorf("resource attribute key %q is invalid", key))
-		}
-		if len(value) > 4_096 || !utf8.ValidString(value) {
-			errs = append(errs, fmt.Errorf("resource attribute %q value is invalid", key))
-		}
 	}
 	if c.Traces.Enabled {
 		errs = append(errs, c.Traces.validate()...)
@@ -217,8 +241,8 @@ func (c Config) Validate() error {
 
 func (c TraceConfig) validate() []error {
 	errs := c.Exporter.validate("trace")
-	if c.Batch.MaxQueueSize <= 0 {
-		errs = append(errs, errors.New("trace batch max queue size must be positive"))
+	if c.Batch.MaxQueueSize <= 0 || c.Batch.MaxQueueSize > 65_536 {
+		errs = append(errs, errors.New("trace batch max queue size must be between 1 and 65536"))
 	}
 	if c.Batch.MaxExportBatchSize <= 0 || c.Batch.MaxExportBatchSize > c.Batch.MaxQueueSize {
 		errs = append(errs, errors.New("trace batch size must be positive and no greater than queue size"))
@@ -251,28 +275,8 @@ func (c MetricConfig) validate() []error {
 }
 
 func (c ExporterConfig) validate(signal string) []error {
-	var errs []error
-	if c.Protocol != ProtocolGRPC && c.Protocol != ProtocolHTTPProtobuf {
-		errs = append(errs, fmt.Errorf("%s exporter protocol %q is unsupported", signal, c.Protocol))
+	if err := otlpConfig(c).Validate(); err != nil {
+		return []error{fmt.Errorf("%s exporter: %w", signal, err)}
 	}
-	if c.Endpoint == "" {
-		errs = append(errs, fmt.Errorf("%s exporter endpoint is required", signal))
-	}
-	if c.Compression != CompressionNone && c.Compression != CompressionGZIP {
-		errs = append(errs, fmt.Errorf("%s exporter compression %q is unsupported", signal, c.Compression))
-	}
-	if c.Timeout <= 0 {
-		errs = append(errs, fmt.Errorf("%s exporter timeout must be positive", signal))
-	}
-	if c.Retry.Enabled && (c.Retry.InitialInterval <= 0 || c.Retry.MaxInterval <= 0 || c.Retry.MaxElapsedTime <= 0) {
-		errs = append(errs, fmt.Errorf("%s exporter retry intervals must be positive", signal))
-	}
-	if (c.TLS.CertificateFile == "") != (c.TLS.PrivateKeyFile == "") {
-		errs = append(errs, fmt.Errorf("%s exporter client certificate and private key must be configured together", signal))
-	}
-	if c.TLS.Insecure && (c.TLS.CAFile != "" || c.TLS.CertificateFile != "" ||
-		c.TLS.PrivateKeyFile != "" || c.TLS.ServerName != "" || c.TLS.InsecureSkipVerify) {
-		errs = append(errs, fmt.Errorf("%s exporter plaintext mode cannot include TLS settings", signal))
-	}
-	return errs
+	return nil
 }

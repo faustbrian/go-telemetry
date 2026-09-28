@@ -1,5 +1,9 @@
 # Upgrade guide
 
+The current source is the unpublished `/v2` module. Released consumers must
+remain on version 1.2.0 until a `v2` tag exists, then follow the
+[planned version 2 migration](compatibility.md#planned-version-2).
+
 ## Before upgrading
 
 1. Read `CHANGELOG.md` for changed defaults, metrics, attributes, and errors.
@@ -14,7 +18,7 @@ Upgrade all OTel API, SDK, and OTLP exporter modules together. Run the
 compatibility script in a disposable checkout:
 
 ```sh
-./scripts/test-otel-version.sh v1.44.0
+./scripts/test-otel-version.sh v1.45.0
 ```
 
 The script modifies `go.mod`; do not run it over unrelated uncommitted module
@@ -26,6 +30,20 @@ Treat endpoint, TLS, retry, timeout, sampling, metric views, cardinality,
 propagation allow-lists, and instrumentation operation names as operational
 contracts. Roll them out independently from application behavior where
 possible.
+
+Version 2 does not read configured TLS paths from the filesystem itself. If
+either signal configures `CAFile`, `CertificateFile`, or `PrivateKeyFile`, set
+that signal's `Exporter.TLS.FileReader` to a caller-owned implementation of
+`otlp.TLSFileReader`; direct `otlp` callers set `TLSConfig.FileReader`.
+Its method is
+`ReadFile(ctx context.Context, path string, maxBytes int) ([]byte, error)`.
+It must honor cancellation during blocking I/O and reject
+material exceeding the inclusive `maxBytes` budget before retaining it.
+Construction passes 1 MiB for each CA, certificate, and key result, rechecks
+returned sizes, and uses a finite timeout. An arbitrary reader that ignores
+the context can still block construction, so audit its I/O behavior before
+deployment. A custom CA replaces, rather than extends, the system trust pool;
+include all required authorities in the supplied PEM.
 
 ## Rollback
 

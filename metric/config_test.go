@@ -126,3 +126,71 @@ func TestOptionsAcceptMaximumUnitLength(t *testing.T) {
 		t.Fatalf("Options(maximum unit) error = %v", err)
 	}
 }
+
+func TestOptionsRejectAggregateViewBudgets(t *testing.T) {
+	t.Parallel()
+
+	views := make([]ViewConfig, 129)
+	for index := range views {
+		views[index].Name = fmt.Sprintf("metric.%d", index)
+	}
+	if _, err := Options(Config{CardinalityLimit: 10, Views: views}); err == nil {
+		t.Fatal("Options() error = nil, want view count budget error")
+	}
+
+	attributes := make([]attribute.Key, 129)
+	for index := range attributes {
+		attributes[index] = attribute.Key(fmt.Sprintf("attribute.%d", index))
+	}
+	if _, err := Options(Config{CardinalityLimit: 10, Views: []ViewConfig{{
+		Name:              "metric",
+		AllowedAttributes: attributes,
+	}}}); err == nil {
+		t.Fatal("Options() error = nil, want allowed attribute budget error")
+	}
+
+	boundaries := make([]float64, 257)
+	for index := range boundaries {
+		boundaries[index] = float64(index)
+	}
+	if _, err := Options(Config{CardinalityLimit: 10, Views: []ViewConfig{{
+		Name:       "metric",
+		Boundaries: boundaries,
+	}}}); err == nil {
+		t.Fatal("Options() error = nil, want histogram boundary budget error")
+	}
+}
+
+func TestOversizedAttributeBudgetDoesNotInspectOrExposeEntries(t *testing.T) {
+	t.Parallel()
+
+	attributes := make([]attribute.Key, 129)
+	for index := range attributes {
+		attributes[index] = "secret-duplicate"
+	}
+	_, err := Options(Config{CardinalityLimit: 10, Views: []ViewConfig{{
+		Name:              "metric",
+		AllowedAttributes: attributes,
+	}}})
+	if err == nil || !strings.Contains(err.Error(), "allowed attributes exceed 128 entries") {
+		t.Fatalf("Options() error = %v, want aggregate attribute budget error", err)
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatalf("Options() exposed entries after rejecting the aggregate budget: %v", err)
+	}
+}
+
+func TestAttributeValidationDoesNotExposeUntrustedKeys(t *testing.T) {
+	t.Parallel()
+
+	_, err := Options(Config{CardinalityLimit: 10, Views: []ViewConfig{{
+		Name:              "metric",
+		AllowedAttributes: []attribute.Key{"secret-customer-token", "secret-customer-token"},
+	}}})
+	if err == nil {
+		t.Fatal("Options() error = nil, want duplicate attribute error")
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatalf("Options() exposed an untrusted attribute key: %v", err)
+	}
+}

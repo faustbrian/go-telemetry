@@ -5,7 +5,7 @@
 package telemetryruntime
 
 import (
-	goruntime "github.com/faustbrian/go-telemetry/instrumentation/goruntime"
+	goruntime "github.com/faustbrian/go-telemetry/v2/instrumentation/goruntime"
 	"go.opentelemetry.io/otel/metric"
 )
 

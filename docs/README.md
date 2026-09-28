@@ -19,6 +19,7 @@
 - [Performance](performance.md)
 - [Troubleshooting](troubleshooting.md)
 - [Security](security.md)
+- [Threat model](threat-model.md)
 - [Instrumentation](instrumentation.md)
 - [Testing](testing.md)
 - [Release process](release.md)

@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	telemetrymetric "github.com/faustbrian/go-telemetry/metric"
-	telemetryotlp "github.com/faustbrian/go-telemetry/otlp"
-	telemetrypropagation "github.com/faustbrian/go-telemetry/propagation"
-	telemetrytrace "github.com/faustbrian/go-telemetry/trace"
+	telemetrymetric "github.com/faustbrian/go-telemetry/v2/metric"
+	telemetryotlp "github.com/faustbrian/go-telemetry/v2/otlp"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v2/propagation"
+	telemetrytrace "github.com/faustbrian/go-telemetry/v2/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
@@ -86,7 +86,8 @@ type Runtime struct {
 	previousPropagator otelpropagation.TextMapPropagator
 	registered         bool
 
-	shutdownOnce sync.Once
+	shutdownMu   sync.Mutex
+	shutdownDone chan struct{}
 	shutdownErr  error
 }
 
@@ -227,6 +228,7 @@ func otlpConfig(config ExporterConfig) telemetryotlp.Config {
 		Headers:     config.Headers,
 		Compression: telemetryotlp.Compression(config.Compression),
 		TLS: telemetryotlp.TLSConfig{
+			FileReader:         config.TLS.FileReader,
 			Insecure:           config.TLS.Insecure,
 			CAFile:             config.TLS.CAFile,
 			CertificateFile:    config.TLS.CertificateFile,
@@ -284,40 +286,59 @@ func (r *Runtime) ForceFlush(ctx context.Context) error {
 }
 
 // Shutdown unregisters globals owned by this runtime, flushes providers, and
-// shuts them down. Every call returns the same aggregate result.
+// shuts them down. A pre-canceled call before shutdown starts is rejected
+// without consuming the one attempt; after shutdown starts every call returns
+// the same aggregate result.
 func (r *Runtime) Shutdown(ctx context.Context) error {
-	r.shutdownOnce.Do(func() {
-		bounded, cancel := context.WithTimeout(ctx, r.config.ShutdownTimeout)
-		defer cancel()
+	contextErr := ctx.Err()
+	r.shutdownMu.Lock()
+	if done := r.shutdownDone; done != nil {
+		r.shutdownMu.Unlock()
+		<-done
+		return r.shutdownErr
+	}
+	if contextErr != nil {
+		r.shutdownMu.Unlock()
+		return contextErr
+	}
+	r.shutdownDone = make(chan struct{})
+	done := r.shutdownDone
+	r.shutdownMu.Unlock()
 
-		if r.registered {
-			globalRuntime.Lock()
-			if globalRuntime.active == r {
-				if otel.GetTracerProvider() == r.tracerProvider {
-					otel.SetTracerProvider(r.previousTracer)
-				}
-				if otel.GetMeterProvider() == r.meterProvider {
-					otel.SetMeterProvider(r.previousMeter)
-				}
-				if otel.GetTextMapPropagator() == r.propagator {
-					otel.SetTextMapPropagator(r.previousPropagator)
-				}
-				globalRuntime.active = nil
+	// Closing done publishes the one terminal result even if a caller-owned
+	// exporter panics; the initiating caller still observes that panic.
+	r.shutdownErr = errors.New("telemetry shutdown aborted")
+	defer close(done)
+	bounded, cancel := context.WithTimeout(ctx, r.config.ShutdownTimeout)
+	defer cancel()
+
+	if r.registered {
+		globalRuntime.Lock()
+		if globalRuntime.active == r {
+			if otel.GetTracerProvider() == r.tracerProvider {
+				otel.SetTracerProvider(r.previousTracer)
 			}
-			globalRuntime.Unlock()
+			if otel.GetMeterProvider() == r.meterProvider {
+				otel.SetMeterProvider(r.previousMeter)
+			}
+			if otel.GetTextMapPropagator() == r.propagator {
+				otel.SetTextMapPropagator(r.previousPropagator)
+			}
+			globalRuntime.active = nil
 		}
+		globalRuntime.Unlock()
+	}
 
-		var errs []error
-		if r.sdkMeter != nil {
-			errs = append(errs, r.sdkMeter.ForceFlush(bounded))
-			errs = append(errs, r.shutdownMeter(bounded))
-		}
-		if r.sdkTracer != nil {
-			errs = append(errs, r.sdkTracer.ForceFlush(bounded))
-			errs = append(errs, r.shutdownTracer(bounded))
-		}
-		r.shutdownErr = errors.Join(errs...)
-	})
+	var errs []error
+	if r.sdkMeter != nil {
+		errs = append(errs, r.sdkMeter.ForceFlush(bounded))
+		errs = append(errs, r.shutdownMeter(bounded))
+	}
+	if r.sdkTracer != nil {
+		errs = append(errs, r.sdkTracer.ForceFlush(bounded))
+		errs = append(errs, r.shutdownTracer(bounded))
+	}
+	r.shutdownErr = errors.Join(errs...)
 
 	return r.shutdownErr
 }
