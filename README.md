@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
+[![Coverage](https://img.shields.io/badge/coverage-risk_based-blue)](CONTRIBUTING.md#verification)
 [![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
-[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry/v2.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry/v2)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -27,15 +27,12 @@ stability promises.
 ## Installation
 
 ```sh
-go get github.com/faustbrian/go-telemetry@latest
+go get github.com/faustbrian/go-telemetry/v2@v2.0.0
 ```
 
-Version 1.2.0 remains the latest published release, so the badge, installation
-command, and import below intentionally reference version 1. The current
-source is the planned version 2 module at
-`github.com/faustbrian/go-telemetry/v2`; it contains breaking security defaults
-and must not be adopted until a `v2` tag is published. See the
-[pending migration notes](docs/compatibility.md#planned-version-2).
+The v2 module has breaking security defaults. Resolve the public `v2.0.0`
+tag before adopting it; until that tag is available, remain on the released
+v1 module. See the [migration notes](docs/compatibility.md#version-2-migration).
 
 ## Quick start
 
@@ -46,16 +43,18 @@ import (
 	"context"
 	"log"
 
-	telemetry "github.com/faustbrian/go-telemetry"
+	telemetry "github.com/faustbrian/go-telemetry/v2"
 )
 
 func main() {
-	config := telemetry.DefaultConfig("orders", "1.2.3")
-	config.Environment = "production"
+	config := telemetry.DefaultConfig("orders", "2.0.0")
+	config.Environment = "local"
 	config.Traces.Enabled = true
 	config.Metrics.Enabled = true
-	config.Traces.Exporter.Endpoint = "otel-collector:4317"
-	config.Metrics.Exporter.Endpoint = "otel-collector:4317"
+	config.Traces.Exporter.Endpoint = "localhost:4317"
+	config.Metrics.Exporter.Endpoint = "localhost:4317"
+	config.Traces.Exporter.TLS.Insecure = true
+	config.Metrics.Exporter.TLS.Insecure = true
 
 	runtime, err := telemetry.Init(context.Background(), config)
 	if err != nil {
@@ -80,7 +79,7 @@ owned by the runtime, and joins provider and exporter failures. As with the
 standard OpenTelemetry interfaces, a custom exporter must cooperate with
 context cancellation for that deadline to bound its call.
 
-## Planned version 2 safe defaults
+## Version 2 safe defaults
 
 | Setting | Default |
 | --- | --- |
@@ -165,8 +164,8 @@ make benchmark   # changes making performance or resource claims
 ```
 
 CI also runs the applicable linting, vulnerability, example, Collector
-protocol, race, and supported Go/OpenTelemetry checks. Library packages enforce
-meaningful 100% statement coverage.
+protocol, race, and supported Go/OpenTelemetry checks. Coverage is evaluated
+against changed behavior and material risk, not a universal percentage.
 
 ## Stability
 

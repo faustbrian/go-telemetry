@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-09-28
+
 ### Changed
 
 - Validate resources and exporter-header budgets at every public construction
@@ -17,11 +19,14 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   fixing conditional endpoint disclosure in verbose internal SDK diagnostics.
 - Update gRPC-Go to 1.83.2 so downstream builds include the upstream fix for
   xDS-server denial of service from missing authority headers.
+- Pin the v1.7.2 shared release contract so the selected release checks honor
+  risk-based coverage while retaining tests, race, fuzz, API, lint, and security
+  gates.
 
 - Move the module and all package imports to
-  `github.com/faustbrian/go-telemetry/v2`. Version 2 is not yet published; the
-  `v2` release tag and direct-consumer migrations remain release blockers, so
-  consumers must remain on released version 1.2.0 meanwhile.
+  `github.com/faustbrian/go-telemetry/v2`. Consumers must remain on released
+  version 1.2.0 until the `v2.0.0` tag resolves publicly; direct-consumer
+  migrations follow publication.
 - Make telemetry signals, global OpenTelemetry registration, and plaintext
   OTLP transport explicit opt-ins; bound aggregate resource, exporter-header,
   metric-view, attribute, and histogram configuration.
@@ -221,7 +226,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/faustbrian/go-telemetry/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/faustbrian/go-telemetry/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/faustbrian/go-telemetry/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/faustbrian/go-telemetry/compare/v1.0.0...v1.1.0

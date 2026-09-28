@@ -49,9 +49,9 @@ logging remains independent.
 Use `testtelemetry` for deterministic providers. OTLP protocol tests already
 run in-process; use `make integration` when changing transport behavior.
 
-## Why exactly 100% statement coverage?
+## How is test coverage assessed?
 
-The gate ensures every production statement is exercised, but it is only one
-part of quality. Protocol, privacy, failure, and vulnerability checks cover
-properties statement execution cannot prove. Race, fuzz, and benchmark gates
-add evidence when a change has the corresponding material risk.
+Coverage follows the changed behavior and its material risk, without a
+universal statement percentage. Protocol, privacy, failure, and vulnerability
+checks cover properties that statement execution cannot prove. Race, fuzz,
+and benchmark gates add evidence when a change has the corresponding risk.

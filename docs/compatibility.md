@@ -1,6 +1,6 @@
 # Compatibility
 
-Planned v2 callers configuring CA, client-certificate, or private-key paths
+V2 callers configuring CA, client-certificate, or private-key paths
 must supply `TLS.FileReader`, implementing `otlp.TLSFileReader` with
 `ReadFile(ctx context.Context, path string, maxBytes int) ([]byte, error)`.
 The runtime forwards that reader to both trace and metric exporters; direct
@@ -39,11 +39,11 @@ Stable compatibility covers exported root, `otlp`, `trace`, `metric`,
 resource and metric names; propagation and privacy policies; and lifecycle
 error behavior.
 
-## Planned version 2
+## Version 2 migration
 
-The current source uses `github.com/faustbrian/go-telemetry/v2`, but version 2
-has not been published. Version 1.2.0 remains the supported release. Consumers
-must stay on the version 1 import path until a `v2` tag is published.
+The current source uses `github.com/faustbrian/go-telemetry/v2`. Consumers
+must stay on the version 1 import path until the immutable `v2.0.0` tag is
+published and resolves through the public Go proxy.
 
 After publication, migrate imports to `/v2`, explicitly enable required
 signals and global registration, and opt into plaintext only for a protected
