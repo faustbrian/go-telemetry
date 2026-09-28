@@ -1,8 +1,8 @@
 # Upgrade guide
 
-The current source is the unpublished `/v2` module. Released consumers must
-remain on version 1.2.0 until a `v2` tag exists, then follow the
-[planned version 2 migration](compatibility.md#planned-version-2).
+The current source is the `/v2` module. Consumers must remain on version
+1.2.0 until the public `v2.0.0` tag resolves, then follow the
+[version 2 migration](compatibility.md#version-2-migration).
 
 ## Before upgrading
 
