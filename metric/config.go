@@ -7,12 +7,19 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"unicode/utf8"
 
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 )
 
 var instrumentNamePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.\-/*?]{0,254}$`)
+
+const (
+	maxViews             = 128
+	maxAllowedAttributes = 128
+	maxBoundaries        = 256
+)
 
 // Config applies a hard per-stream cardinality budget and explicit views.
 type Config struct {
@@ -32,8 +39,11 @@ type ViewConfig struct {
 
 // Options validates config and returns standard OpenTelemetry SDK options.
 func Options(config Config) ([]sdkmetric.Option, error) {
-	if config.CardinalityLimit <= 0 {
-		return nil, errors.New("metric cardinality limit must be positive")
+	if config.CardinalityLimit <= 0 || config.CardinalityLimit > 100_000 {
+		return nil, errors.New("metric cardinality limit must be between 1 and 100000")
+	}
+	if len(config.Views) > maxViews {
+		return nil, fmt.Errorf("metric views exceed %d entries", maxViews)
 	}
 	options := []sdkmetric.Option{sdkmetric.WithCardinalityLimit(config.CardinalityLimit)}
 	for index, view := range config.Views {
@@ -59,28 +69,42 @@ func Options(config Config) ([]sdkmetric.Option, error) {
 
 func (config ViewConfig) validate() error {
 	var errs []error
-	if !instrumentNamePattern.MatchString(config.Name) {
-		errs = append(errs, fmt.Errorf("instrument name %q is invalid", config.Name))
+	if len(config.AllowedAttributes) > maxAllowedAttributes {
+		errs = append(errs, fmt.Errorf("allowed attributes exceed %d entries", maxAllowedAttributes))
+	}
+	if len(config.Boundaries) > maxBoundaries {
+		errs = append(errs, fmt.Errorf("histogram boundaries exceed %d entries", maxBoundaries))
+	}
+	if len(config.Name) > 255 || !instrumentNamePattern.MatchString(config.Name) {
+		errs = append(errs, errors.New("instrument name is invalid"))
 	}
 	if len(config.Unit) > 63 {
 		errs = append(errs, errors.New("instrument unit exceeds 63 characters"))
 	}
-	seen := make(map[attribute.Key]struct{}, len(config.AllowedAttributes))
-	for _, key := range config.AllowedAttributes {
-		if key == "" {
-			errs = append(errs, errors.New("allowed attribute key cannot be empty"))
+	if len(config.AllowedAttributes) <= maxAllowedAttributes {
+		seen := make(map[attribute.Key]struct{}, len(config.AllowedAttributes))
+		for _, key := range config.AllowedAttributes {
+			if len(key) > 255 || !utf8.ValidString(string(key)) {
+				errs = append(errs, errors.New("allowed attribute key is invalid or exceeds 255 bytes"))
+				continue
+			}
+			if key == "" {
+				errs = append(errs, errors.New("allowed attribute key cannot be empty"))
+			}
+			if _, duplicate := seen[key]; duplicate {
+				errs = append(errs, errors.New("allowed attribute keys contain a duplicate"))
+			}
+			seen[key] = struct{}{}
 		}
-		if _, duplicate := seen[key]; duplicate {
-			errs = append(errs, fmt.Errorf("allowed attribute key %q is duplicated", key))
-		}
-		seen[key] = struct{}{}
 	}
-	for index, boundary := range config.Boundaries {
-		if math.IsNaN(boundary) || math.IsInf(boundary, 0) {
-			errs = append(errs, errors.New("histogram boundaries must be finite"))
-		}
-		if index > 0 && boundary <= config.Boundaries[index-1] {
-			errs = append(errs, errors.New("histogram boundaries must be strictly increasing"))
+	if len(config.Boundaries) <= maxBoundaries {
+		for index, boundary := range config.Boundaries {
+			if math.IsNaN(boundary) || math.IsInf(boundary, 0) {
+				errs = append(errs, errors.New("histogram boundaries must be finite"))
+			}
+			if index > 0 && boundary <= config.Boundaries[index-1] {
+				errs = append(errs, errors.New("histogram boundaries must be strictly increasing"))
+			}
 		}
 	}
 	return errors.Join(errs...)

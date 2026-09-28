@@ -1,12 +1,13 @@
 package telemetry
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"testing"
 	"time"
 
-	telemetrytrace "github.com/faustbrian/go-telemetry/trace"
+	telemetrytrace "github.com/faustbrian/go-telemetry/v2/trace"
 )
 
 func TestDefaultConfigIsSafeAndInspectable(t *testing.T) {
@@ -20,8 +21,14 @@ func TestDefaultConfigIsSafeAndInspectable(t *testing.T) {
 	if config.Service.Version != "1.2.3" {
 		t.Fatalf("service version = %q, want 1.2.3", config.Service.Version)
 	}
-	if !config.Traces.Enabled || !config.Metrics.Enabled {
-		t.Fatal("traces and metrics must be enabled by default")
+	if config.Traces.Enabled || config.Metrics.Enabled {
+		t.Fatal("traces and metrics must require explicit enablement")
+	}
+	if config.RegisterGlobal {
+		t.Fatal("global registration must require explicit enablement")
+	}
+	if config.Traces.Exporter.TLS.Insecure || config.Metrics.Exporter.TLS.Insecure {
+		t.Fatal("plaintext export must require explicit enablement")
 	}
 	if config.Traces.Exporter.Protocol != ProtocolGRPC {
 		t.Fatalf("trace protocol = %q, want %q", config.Traces.Exporter.Protocol, ProtocolGRPC)
@@ -46,6 +53,78 @@ func TestDefaultConfigIsSafeAndInspectable(t *testing.T) {
 	}
 	if config.Propagation.MaxHeaderBytes != 8*1_024 || config.Propagation.BaggageEnabled {
 		t.Fatalf("default propagation = %+v, want bounded trace context only", config.Propagation)
+	}
+}
+
+func TestConfigValidationRejectsAggregateResourceAndHeaderBudgets(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]func(*Config){
+		"resource attribute count": func(config *Config) {
+			for index := range 129 {
+				config.Resource[fmt.Sprintf("attribute.%d", index)] = "value"
+			}
+		},
+		"resource attribute bytes": func(config *Config) {
+			for index := range 17 {
+				config.Resource[fmt.Sprintf("attribute.%d", index)] = strings.Repeat("v", 4_096)
+			}
+		},
+		"exporter header count": func(config *Config) {
+			config.Traces.Enabled = true
+			for index := range 65 {
+				config.Traces.Exporter.Headers[fmt.Sprintf("x-header-%d", index)] = "value"
+			}
+		},
+		"exporter header bytes": func(config *Config) {
+			config.Traces.Enabled = true
+			for index := range 9 {
+				config.Traces.Exporter.Headers[fmt.Sprintf("x-header-%d", index)] = strings.Repeat("v", 8_192)
+			}
+		},
+	}
+
+	for name, mutate := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			config := DefaultConfig("orders", "1.2.3")
+			mutate(&config)
+			if err := config.Validate(); err == nil {
+				t.Fatal("Validate() error = nil, want aggregate budget error")
+			}
+		})
+	}
+}
+
+func TestOversizedResourceBudgetDoesNotInspectOrExposeEntries(t *testing.T) {
+	t.Parallel()
+
+	config := DefaultConfig("orders", "1.2.3")
+	for index := range 128 {
+		config.Resource[fmt.Sprintf("attribute.%d", index)] = "value"
+	}
+	config.Resource["secret"+string([]byte{0xff})] = "value"
+
+	err := config.Validate()
+	if err == nil || !strings.Contains(err.Error(), "resource attributes exceed 128 entries") {
+		t.Fatalf("Validate() error = %v, want aggregate resource budget error", err)
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatalf("Validate() exposed an entry after rejecting the aggregate budget: %v", err)
+	}
+}
+
+func TestResourceValidationDoesNotExposeUntrustedKeys(t *testing.T) {
+	t.Parallel()
+
+	config := DefaultConfig("orders", "1.2.3")
+	config.Resource["secret-customer-token"+string([]byte{0xff})] = "value"
+	err := config.Validate()
+	if err == nil {
+		t.Fatal("Validate() error = nil, want invalid resource key error")
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatalf("Validate() exposed an untrusted resource key: %v", err)
 	}
 }
 
@@ -80,6 +159,7 @@ func TestConfigValidationRejectsUnsafeValues(t *testing.T) {
 		},
 		"incomplete client TLS": func(config *Config) { config.Traces.Exporter.TLS.CertificateFile = "client.pem" },
 		"plaintext with TLS": func(config *Config) {
+			config.Traces.Exporter.TLS.Insecure = true
 			config.Traces.Exporter.TLS.CAFile = "collector-ca.pem"
 		},
 		"empty resource key": func(config *Config) { config.Resource[""] = "value" },
@@ -97,6 +177,8 @@ func TestConfigValidationRejectsUnsafeValues(t *testing.T) {
 			t.Parallel()
 
 			config := DefaultConfig("orders", "1.2.3")
+			config.Traces.Enabled = true
+			config.Metrics.Enabled = true
 			mutate(&config)
 
 			if err := config.Validate(); err == nil {
@@ -110,6 +192,8 @@ func TestConfigValidationAcceptsExactMaximums(t *testing.T) {
 	t.Parallel()
 
 	config := DefaultConfig("orders", strings.Repeat("v", 255))
+	config.Traces.Enabled = true
+	config.Metrics.Enabled = true
 	config.Resource[strings.Repeat("k", 255)] = strings.Repeat("v", 4_096)
 	config.Traces.Batch.MaxExportBatchSize = config.Traces.Batch.MaxQueueSize
 
@@ -122,6 +206,7 @@ func TestConfigValidationReportsQueueBoundary(t *testing.T) {
 	t.Parallel()
 
 	config := DefaultConfig("orders", "1.2.3")
+	config.Traces.Enabled = true
 	config.Traces.Batch.MaxQueueSize = 0
 	err := config.Validate()
 	if err == nil || !strings.Contains(err.Error(), "max queue size") {

@@ -20,7 +20,12 @@ err := errors.Join(server.Shutdown(shutdownCtx), runtime.Shutdown(shutdownCtx))
 
 The runtime applies the shorter of the caller deadline and
 `Config.ShutdownTimeout`. Repeated and concurrent calls execute shutdown once
-and return the same result.
+and return the same result. A call whose context is already canceled returns
+that context error without consuming shutdown, so the owner can retry once
+with a usable bounded context. A timeout after shutdown begins is terminal
+because providers may already be partially closed. The deadline is propagated
+to providers and exporters; it cannot preempt a custom exporter that ignores
+context cancellation.
 
 ## Service lifecycle adapter
 
@@ -47,11 +52,14 @@ runtime is rejected and its partial providers are cleaned up.
 
 Set `terminationGracePeriodSeconds` longer than application drain plus telemetry
 shutdown. Derive the shutdown context from `context.WithoutCancel(signalCtx)`;
-using the already-cancelled signal context would skip export immediately.
+an already-canceled call is rejected before shutdown starts and still requires
+the owner to retry with a usable bounded context.
 
 ## Failure handling
 
 Shutdown joins force-flush, provider, and exporter failures. The runtime records
 exporter shutdown errors itself because supported OTel SDK versions differ in
 whether provider shutdown returns them. Log or report the aggregate once, then
-allow the process to exit when the deadline expires.
+allow the process to exit after shutdown returns. A process-level supervisor is
+still required to enforce a hard termination deadline around non-cooperative
+exporter implementations.

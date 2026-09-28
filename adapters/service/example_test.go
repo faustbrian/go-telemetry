@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/faustbrian/go-telemetry"
-	telemetryservice "github.com/faustbrian/go-telemetry/adapters/service"
+	"github.com/faustbrian/go-telemetry/v2"
+	telemetryservice "github.com/faustbrian/go-telemetry/v2/adapters/service"
 )
 
 func ExampleNew() {

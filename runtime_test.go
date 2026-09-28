@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	telemetrymetric "github.com/faustbrian/go-telemetry/metric"
-	telemetrypropagation "github.com/faustbrian/go-telemetry/propagation"
-	telemetrytrace "github.com/faustbrian/go-telemetry/trace"
+	telemetrymetric "github.com/faustbrian/go-telemetry/v2/metric"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v2/propagation"
+	telemetrytrace "github.com/faustbrian/go-telemetry/v2/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
@@ -19,13 +19,21 @@ import (
 	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
+func enabledConfig(serviceName, serviceVersion string) Config {
+	config := DefaultConfig(serviceName, serviceVersion)
+	config.Traces.Enabled = true
+	config.Metrics.Enabled = true
+	config.RegisterGlobal = true
+	return config
+}
+
 func TestOptionsApplyLeftToRightIgnoringNilAndUseLastExporter(t *testing.T) {
 	firstTrace := &recordingSpanExporter{}
 	lastTrace := &recordingSpanExporter{}
 	firstMetric := &recordingMetricExporter{}
 	lastMetric := &recordingMetricExporter{}
 
-	config := DefaultConfig("options", "test")
+	config := enabledConfig("options", "test")
 	config.RegisterGlobal = false
 	runtime, err := Init(
 		context.Background(),
@@ -52,8 +60,9 @@ func TestOptionsApplyLeftToRightIgnoringNilAndUseLastExporter(t *testing.T) {
 
 func TestRuntimeProvidesStandardAPIsAndShutsDownOnce(t *testing.T) {
 	exporter := &recordingSpanExporter{}
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
+	config.Traces.Enabled = true
 	config.Metrics.Enabled = false
 	config.Traces.Sampler.Ratio = 1
 
@@ -93,7 +102,7 @@ func TestRuntimeProvidesStandardAPIsAndShutsDownOnce(t *testing.T) {
 
 func TestTraceQueueBoundDoesNotBlockBusinessWork(t *testing.T) {
 	exporter := newBlockingSpanExporter()
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Metrics.Enabled = false
 	config.Traces.Sampler.Ratio = 1
@@ -141,7 +150,7 @@ func TestRuntimeRestoresGlobalsItRegistered(t *testing.T) {
 	previous := otel.GetTracerProvider()
 	previousMeter := otel.GetMeterProvider()
 	previousPropagator := otel.GetTextMapPropagator()
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = true
 	config.Metrics.ExportInterval = time.Hour
 
@@ -181,7 +190,7 @@ func TestRuntimeRestoresGlobalsItRegistered(t *testing.T) {
 func TestRuntimeReturnsShutdownFailuresOnEveryCall(t *testing.T) {
 	want := errors.New("exporter shutdown failed")
 	exporter := &recordingSpanExporter{shutdownErr: want}
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Metrics.Enabled = false
 
@@ -196,10 +205,71 @@ func TestRuntimeReturnsShutdownFailuresOnEveryCall(t *testing.T) {
 	}
 }
 
+func TestShutdownCanRetryAfterPreCanceledContext(t *testing.T) {
+	t.Parallel()
+
+	exporter := &recordingSpanExporter{}
+	config := enabledConfig("orders", "1.2.3")
+	config.RegisterGlobal = false
+	config.Traces.Enabled = true
+	config.Metrics.Enabled = false
+	runtime, err := Init(context.Background(), config, WithTraceExporter(exporter))
+	if err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := runtime.Shutdown(canceled); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Shutdown(canceled) error = %v, want %v", err, context.Canceled)
+	}
+	if got := exporter.shutdownCount(); got != 0 {
+		t.Fatalf("shutdowns after canceled call = %d, want 0", got)
+	}
+	if err := runtime.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown(retry) error = %v", err)
+	}
+	if got := exporter.shutdownCount(); got != 1 {
+		t.Fatalf("shutdowns after retry = %d, want 1", got)
+	}
+	if err := runtime.Shutdown(canceled); err != nil {
+		t.Fatalf("Shutdown(canceled after completion) error = %v, want shared result", err)
+	}
+}
+
+func TestPreCanceledConcurrentShutdownSharesStartedResult(t *testing.T) {
+	exporter := newBlockingShutdownSpanExporter()
+	want := errors.New("exporter shutdown failed")
+	exporter.shutdownErr = want
+	release := sync.OnceFunc(func() { close(exporter.release) })
+	defer release()
+
+	config := enabledConfig("orders", "1.2.3")
+	config.RegisterGlobal = false
+	config.Metrics.Enabled = false
+	runtime, err := Init(context.Background(), config, WithTraceExporter(exporter))
+	if err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	firstDone := make(chan error, 1)
+	go func() { firstDone <- runtime.Shutdown(context.Background()) }()
+	<-exporter.started
+
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	secondDone := make(chan error, 1)
+	go func() { secondDone <- runtime.Shutdown(canceled) }()
+	release()
+	for _, result := range []error{<-firstDone, <-secondDone} {
+		if !errors.Is(result, want) || errors.Is(result, context.Canceled) {
+			t.Fatal("concurrent shutdown did not share the terminal exporter result")
+		}
+	}
+}
+
 func TestRuntimeReturnsMetricShutdownFailures(t *testing.T) {
 	want := errors.New("metric exporter shutdown failed")
 	exporter := &recordingMetricExporter{shutdownErr: want}
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Traces.Enabled = false
 	config.Metrics.ExportInterval = time.Hour
@@ -245,7 +315,7 @@ func TestRuntimeAggregatesTraceAndMetricFlushFailures(t *testing.T) {
 	metricFailure := errors.New("metric flush failed")
 	traceExporter := &recordingSpanExporter{exportErr: traceFailure}
 	metricExporter := &recordingMetricExporter{flushErr: metricFailure}
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Traces.Sampler.Ratio = 1
 	config.Metrics.ExportInterval = time.Hour
@@ -268,7 +338,7 @@ func TestRuntimeAggregatesTraceAndMetricFlushFailures(t *testing.T) {
 
 func TestRuntimeOwnsMetricExportAndShutdown(t *testing.T) {
 	exporter := &recordingMetricExporter{}
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Traces.Enabled = false
 	config.Metrics.ExportInterval = time.Hour
@@ -305,10 +375,11 @@ func TestRuntimeOwnsMetricExportAndShutdown(t *testing.T) {
 
 func TestInitCleansUpTraceProviderAfterMetricConstructionFailure(t *testing.T) {
 	exporter := &recordingSpanExporter{}
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Metrics.Exporter.TLS.Insecure = false
 	config.Metrics.Exporter.TLS.CAFile = "missing-ca.pem"
+	config.Metrics.Exporter.TLS.FileReader = failingTLSReader{}
 
 	if _, err := Init(context.Background(), config, WithTraceExporter(exporter)); err == nil {
 		t.Fatal("Init() error = nil, want metric construction error")
@@ -319,7 +390,7 @@ func TestInitCleansUpTraceProviderAfterMetricConstructionFailure(t *testing.T) {
 }
 
 func TestInitRejectsDuplicateGlobalRuntimeAndCleansUp(t *testing.T) {
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.Metrics.ExportInterval = time.Hour
 	first, err := Init(
 		context.Background(),
@@ -351,12 +422,11 @@ func TestInitRejectsDuplicateGlobalRuntimeAndCleansUp(t *testing.T) {
 
 func TestInitBoundsCleanupWithoutCallerCancellation(t *testing.T) {
 	exporter := newCleanupProbeSpanExporter()
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Metrics.Enabled = false
 	config.ShutdownTimeout = 10 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
 
 	started := time.Now()
 	_, err := Init(
@@ -365,6 +435,7 @@ func TestInitBoundsCleanupWithoutCallerCancellation(t *testing.T) {
 		WithTraceExporter(exporter),
 		optionFunc(func(options *options) {
 			options.buildSampler = func(telemetrytrace.Config) (trace.Sampler, error) {
+				cancel()
 				return nil, errors.New("sampler construction failed")
 			}
 		}),
@@ -384,7 +455,7 @@ func TestInitBoundsCleanupWithoutCallerCancellation(t *testing.T) {
 }
 
 func TestDuplicateInitCleanupDoesNotHoldGlobalLock(t *testing.T) {
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.Metrics.Enabled = false
 	active, err := Init(context.Background(), config, WithTraceExporter(&recordingSpanExporter{}))
 	if err != nil {
@@ -425,7 +496,7 @@ func TestDuplicateInitCleanupDoesNotHoldGlobalLock(t *testing.T) {
 
 func TestShutdownDoesNotReplaceExternallyChangedGlobal(t *testing.T) {
 	previous := otel.GetTracerProvider()
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.Metrics.Enabled = false
 	runtime, err := Init(context.Background(), config, WithTraceExporter(&recordingSpanExporter{}))
 	if err != nil {
@@ -447,10 +518,10 @@ func TestShutdownDoesNotReplaceExternallyChangedGlobal(t *testing.T) {
 }
 
 func TestDisabledRuntimeNeedsNoExporters(t *testing.T) {
+	previousTracer := otel.GetTracerProvider()
+	previousMeter := otel.GetMeterProvider()
+	previousPropagator := otel.GetTextMapPropagator()
 	config := DefaultConfig("orders", "1.2.3")
-	config.RegisterGlobal = false
-	config.Traces.Enabled = false
-	config.Metrics.Enabled = false
 
 	runtime, err := Init(context.Background(), config, nil)
 	if err != nil {
@@ -458,6 +529,10 @@ func TestDisabledRuntimeNeedsNoExporters(t *testing.T) {
 	}
 	if _, ok := runtime.TracerProvider().(tracenoop.TracerProvider); !ok {
 		t.Fatalf("TracerProvider() = %T, want no-op provider", runtime.TracerProvider())
+	}
+	if otel.GetTracerProvider() != previousTracer || otel.GetMeterProvider() != previousMeter ||
+		otel.GetTextMapPropagator() != previousPropagator {
+		t.Fatal("Init(DefaultConfig) mutated process-global telemetry")
 	}
 	if err := runtime.ForceFlush(context.Background()); err != nil {
 		t.Fatalf("ForceFlush() error = %v", err)
@@ -468,7 +543,7 @@ func TestDisabledRuntimeNeedsNoExporters(t *testing.T) {
 }
 
 func TestInitSkipsNilOptionsAndAppliesFollowingOptions(t *testing.T) {
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Traces.Enabled = false
 	config.Metrics.Enabled = false
@@ -489,18 +564,19 @@ func TestInitSkipsNilOptionsAndAppliesFollowingOptions(t *testing.T) {
 }
 
 func TestInitRejectsInvalidConfig(t *testing.T) {
-	config := DefaultConfig("", "1.2.3")
+	config := enabledConfig("", "1.2.3")
 	if _, err := Init(context.Background(), config); err == nil {
 		t.Fatal("Init() error = nil, want validation error")
 	}
 }
 
 func TestInitReportsTraceExporterConstructionFailure(t *testing.T) {
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 	config.Metrics.Enabled = false
 	config.Traces.Exporter.TLS.Insecure = false
 	config.Traces.Exporter.TLS.CAFile = "missing-ca.pem"
+	config.Traces.Exporter.TLS.FileReader = failingTLSReader{}
 	if _, err := Init(context.Background(), config); err == nil {
 		t.Fatal("Init() error = nil, want trace exporter construction error")
 	}
@@ -508,7 +584,7 @@ func TestInitReportsTraceExporterConstructionFailure(t *testing.T) {
 
 func TestInitPropagatesInternalConstructionFailures(t *testing.T) {
 	want := errors.New("construction failed")
-	config := DefaultConfig("orders", "1.2.3")
+	config := enabledConfig("orders", "1.2.3")
 	config.RegisterGlobal = false
 
 	t.Run("resource", func(t *testing.T) {
@@ -620,7 +696,7 @@ func (e *blockingShutdownSpanExporter) Shutdown(ctx context.Context) error {
 	close(e.started)
 	select {
 	case <-e.release:
-		return nil
+		return e.shutdownErr
 	case <-ctx.Done():
 		return ctx.Err()
 	}

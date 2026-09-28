@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,6 +33,9 @@ func TestTracerRecordsPoolAcquireWaitAndOutcome(t *testing.T) {
 	metrics, err := harness.Metrics(context.Background())
 	if err != nil {
 		t.Fatalf("Metrics() during acquire error = %v", err)
+	}
+	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/instrumentation/gopostgres" {
+		t.Fatalf("instrumentation scope = %q, want released identity", metrics.ScopeMetrics[0].Scope.Name)
 	}
 	if got := int64MetricValue(t, metrics, "db.client.connection.waiting"); got != 1 {
 		t.Fatalf("waiting acquisitions = %d, want 1", got)

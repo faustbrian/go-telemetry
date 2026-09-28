@@ -6,6 +6,9 @@ runtime. Source bytes and change authorities are pinned in the
 [monitoring policy](../specification/monitoring.json). Statuses are `resolved`,
 `unresolved`, or `superseded`; observable changes require compatibility,
 changelog, executable evidence, conformance, and decision-history review.
+References to OpenTelemetry Go v1.44.0 below describe the pinned historical
+maintained-peer source comparator, not the current runtime dependency. Current
+`go.mod` and `go.sum` select v1.45.0.
 
 ## TELEMETRY-DEC-001: OTLP signal and transport profile
 

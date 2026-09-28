@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
@@ -34,6 +34,9 @@ func TestInstrumenterRecordsOnlyFixedCacheSemantics(t *testing.T) {
 
 	span := harness.Spans()[0]
 	text := fmt.Sprint(span)
+	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/instrumentation/gocache" {
+		t.Fatalf("instrumentation scope = %q, want released identity", span.InstrumentationScope.Name)
+	}
 	if span.Name != "cache.get" || span.Status.Code != codes.Error || !strings.Contains(text, "cache.result") ||
 		!strings.Contains(text, "error") || strings.Contains(text, "secret") || strings.Contains(text, "customer:123") {
 		t.Fatalf("span recorded unsafe cache data: %s", text)

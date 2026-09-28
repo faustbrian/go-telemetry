@@ -33,16 +33,19 @@ independent runtimes remain available with `RegisterGlobal = false`.
 
 ## Shutdown
 
-The first `Shutdown` call creates a child timeout bounded by both caller
+The first usable `Shutdown` call creates a child timeout bounded by both caller
 context and `ShutdownTimeout`. Globals are restored only when they still point
 to this runtime. Metrics and traces are flushed, providers are stopped, and
 exporter failures captured across supported SDK versions are joined. Every
-later call returns the same result.
+later call returns the same result. The deadline reaches each provider and
+exporter but cannot preempt a custom implementation that ignores context
+cancellation.
 
 ## Failure isolation
 
 Queues, retry elapsed time, per-export timeout, metric cardinality, propagation
-bytes, baggage item count, and shutdown duration are finite. Instrumentation
+bytes, and baggage item count are finite. Shutdown propagates a finite deadline
+but depends on provider and exporter cancellation cooperation. Instrumentation
 does not block on an exporter; trace batching and metric readers isolate
 application work from Collector availability.
 

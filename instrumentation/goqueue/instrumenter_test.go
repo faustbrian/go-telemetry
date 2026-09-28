@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
@@ -35,6 +35,9 @@ func TestWrapHandlerDoesNotRecordMessagesOrErrors(t *testing.T) {
 
 	span := harness.Spans()[0]
 	text := fmt.Sprint(span)
+	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/instrumentation/goqueue" {
+		t.Fatalf("instrumentation scope = %q, want released identity", span.InstrumentationScope.Name)
+	}
 	if span.Name != "queue.process" || span.Status.Code != codes.Error {
 		t.Fatalf("span name/status = %q/%v, want queue.process/error", span.Name, span.Status.Code)
 	}

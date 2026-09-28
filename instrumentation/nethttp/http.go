@@ -29,6 +29,12 @@ type ServerConfig struct {
 	Operation      string
 	Route          string
 	TrustedInbound bool
+	// TrustInbound proves that the individual request crossed an authenticated
+	// trust boundary. It is required when TrustedInbound is true, is called for
+	// every request, must return promptly, and must be safe for concurrent use.
+	// A panic rejects the request with a categorical server error. It must not
+	// grant trust from caller-controlled request metadata alone.
+	TrustInbound   func(*http.Request) bool
 	TracerProvider trace.TracerProvider
 	MeterProvider  metric.MeterProvider
 	Propagator     otelpropagation.TextMapPropagator
@@ -49,6 +55,7 @@ type serverHandler struct {
 	tracer       trace.Tracer
 	propagator   otelpropagation.TextMapPropagator
 	trusted      bool
+	trustInbound func(*http.Request) bool
 	duration     metric.Float64Histogram
 	requests     metric.Int64Counter
 	active       metric.Int64UpDownCounter
@@ -66,6 +73,9 @@ func NewHandler(handler http.Handler, config ServerConfig) (http.Handler, error)
 	}
 	if len(config.Route) > 256 || strings.ContainsAny(config.Route, "?#") || (config.Route != "" && !strings.HasPrefix(config.Route, "/")) {
 		return nil, errors.New("HTTP route must be a fixed path template")
+	}
+	if config.TrustedInbound && config.TrustInbound == nil {
+		return nil, errors.New("trusted inbound propagation requires request proof")
 	}
 	tracerProvider, meterProvider, propagator := providers(
 		config.TracerProvider,
@@ -100,6 +110,7 @@ func NewHandler(handler http.Handler, config ServerConfig) (http.Handler, error)
 		tracer:       tracerProvider.Tracer(scopeName),
 		propagator:   propagator,
 		trusted:      config.TrustedInbound,
+		trustInbound: config.TrustInbound,
 		duration:     duration,
 		requests:     requests,
 		active:       active,
@@ -111,7 +122,16 @@ func NewHandler(handler http.Handler, config ServerConfig) (http.Handler, error)
 func (handler *serverHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	carrier := otelpropagation.HeaderCarrier(request.Header)
 	ctx := request.Context()
-	if extractor, ok := handler.propagator.(trustedExtractor); handler.trusted && ok {
+	trusted := false
+	if handler.trusted {
+		var panicked bool
+		trusted, panicked = handler.trustsInbound(request)
+		if panicked {
+			http.Error(writer, "trusted inbound proof failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if extractor, ok := handler.propagator.(trustedExtractor); trusted && ok {
 		ctx = extractor.ExtractTrusted(ctx, carrier)
 	} else {
 		ctx = handler.propagator.Extract(ctx, carrier)
@@ -163,6 +183,17 @@ func (handler *serverHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	}()
 
 	captured = httpsnoop.CaptureMetrics(handler.next, writer, request)
+}
+
+func (handler *serverHandler) trustsInbound(request *http.Request) (trusted, panicked bool) {
+	defer func() {
+		if recover() != nil {
+			trusted = false
+			panicked = true
+		}
+	}()
+
+	return handler.trustInbound(request), false
 }
 
 type trustedExtractor interface {

@@ -13,7 +13,7 @@ func BenchmarkRuntimeTracing(b *testing.B) {
 			name = "enabled"
 		}
 		b.Run(name, func(b *testing.B) {
-			config := DefaultConfig("benchmark", "1.0.0")
+			config := enabledConfig("benchmark", "1.0.0")
 			config.RegisterGlobal = false
 			config.Metrics.Enabled = false
 			config.Traces.Enabled = enabled
@@ -42,7 +42,7 @@ func BenchmarkTraceExporterBatching(b *testing.B) {
 	for _, batchSize := range []int{1, 64, 512} {
 		b.Run(fmt.Sprintf("batch-%d", batchSize), func(b *testing.B) {
 			exporter := &recordingSpanExporter{}
-			config := DefaultConfig("benchmark", "1.0.0")
+			config := enabledConfig("benchmark", "1.0.0")
 			config.RegisterGlobal = false
 			config.Metrics.Enabled = false
 			config.Traces.Sampler.Ratio = 1

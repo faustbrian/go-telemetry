@@ -6,9 +6,6 @@ Disable export when telemetry is irrelevant to the task:
 
 ```go
 config := telemetry.DefaultConfig("orders", "dev")
-config.RegisterGlobal = false
-config.Traces.Enabled = false
-config.Metrics.Enabled = false
 runtime, err := telemetry.Init(ctx, config)
 ```
 
@@ -44,6 +41,10 @@ config.Traces.Exporter.URLPath = "/v1/traces"
 config.Metrics.Exporter.Protocol = telemetry.ProtocolHTTPProtobuf
 config.Metrics.Exporter.Endpoint = "localhost:4318"
 config.Metrics.Exporter.URLPath = "/v1/metrics"
+config.Traces.Enabled = true
+config.Metrics.Enabled = true
+config.Traces.Exporter.TLS.Insecure = true
+config.Metrics.Exporter.TLS.Insecure = true
 ```
 
 The runnable examples accept the standard OpenTelemetry endpoint URL and

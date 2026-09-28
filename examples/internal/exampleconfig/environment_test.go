@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	telemetry "github.com/faustbrian/go-telemetry"
+	telemetry "github.com/faustbrian/go-telemetry/v2"
 )
 
 func TestApplyEnvironment(t *testing.T) {
@@ -20,7 +20,7 @@ func TestApplyEnvironment(t *testing.T) {
 		if err := ApplyEnvironment(&config); err != nil {
 			t.Fatalf("ApplyEnvironment() error = %v", err)
 		}
-		assertExporter(t, config.Traces.Exporter, telemetry.ProtocolGRPC, "localhost:4317", "", true)
+		assertExporter(t, config.Traces.Exporter, telemetry.ProtocolGRPC, "localhost:4317", "", false)
 	})
 
 	t.Run("grpc HTTP endpoint", func(t *testing.T) {

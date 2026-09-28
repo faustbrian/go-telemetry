@@ -21,6 +21,8 @@ config := telemetry.DefaultConfig("orders", buildVersion)
 config.Environment = "production"
 config.Service.Namespace = "commerce"
 config.Service.Instance = os.Getenv("POD_NAME")
+config.Traces.Enabled = true
+config.Metrics.Enabled = true
 config.Traces.Exporter.Endpoint = os.Getenv("OTEL_COLLECTOR_ENDPOINT")
 config.Metrics.Exporter.Endpoint = os.Getenv("OTEL_COLLECTOR_ENDPOINT")
 ```
@@ -67,13 +69,16 @@ a deadline shorter than Kubernetes' remaining grace period.
 
 ## TLS and credentials
 
-For a same-cluster plaintext endpoint, retain `TLS.Insecure = true` only when
+For a same-cluster plaintext endpoint, set `TLS.Insecure = true` only when
 network policy and workload identity protect the path. Otherwise mount a CA
 and optional client certificate from a Secret, set `TLS.Insecure = false`, and
 set `CAFile`, `CertificateFile`, `PrivateKeyFile`, and `ServerName`. Plaintext
-mode rejects TLS-only fields so credentials cannot be silently ignored. Never
-place bearer tokens in resource attributes; use exporter headers sourced from
-a Secret.
+mode rejects TLS-only fields so credentials cannot be silently ignored. When
+any TLS material path is set, supply the signal's `Exporter.TLS.FileReader`
+with a caller-owned, cancellation-aware reader that enforces the 1 MiB
+per-result budget. The library does not read mounted Secrets on its own; see
+the [security guide](security.md#tls). Never place bearer tokens in resource
+attributes; use exporter headers sourced from a Secret.
 
 ## Capacity
 

@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	telemetry "github.com/faustbrian/go-telemetry"
-	"github.com/faustbrian/go-telemetry/examples/internal/exampleconfig"
+	telemetry "github.com/faustbrian/go-telemetry/v2"
+	"github.com/faustbrian/go-telemetry/v2/examples/internal/exampleconfig"
 )
 
 func main() {
@@ -23,6 +23,8 @@ func main() {
 
 func run(ctx context.Context) error {
 	config := telemetry.DefaultConfig("example-worker", "dev")
+	config.Traces.Enabled = true
+	config.Metrics.Enabled = true
 	if err := exampleconfig.ApplyEnvironment(&config); err != nil {
 		return err
 	}

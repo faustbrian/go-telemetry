@@ -7,7 +7,7 @@ package telemetrypostgres
 import (
 	"context"
 
-	gopostgres "github.com/faustbrian/go-telemetry/instrumentation/gopostgres"
+	gopostgres "github.com/faustbrian/go-telemetry/v2/instrumentation/gopostgres"
 )
 
 // Config defines the finite set of query names telemetry may record.

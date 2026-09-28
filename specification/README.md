@@ -5,6 +5,10 @@ W3C Baggage, and OpenTelemetry Semantic Conventions 1.40.0. The
 [decision register](../docs/specification-decisions.md) defines the exact claim
 boundaries. [`manifest.tsv`](manifest.tsv) pins normative and maintained-peer
 sources; [`monitoring.json`](monitoring.json) monitors later publications.
+The OpenTelemetry Go v1.44.0 source pins are historical maintained-peer
+comparators, not the current runtime dependency. Current `go.mod` and `go.sum`
+pin v1.45.0; the executable provider profiles below run against that selected
+dependency.
 
 | Decision | Observable profile | Evidence |
 | --- | --- | --- |
@@ -16,7 +20,8 @@ sources; [`monitoring.json`](monitoring.json) monitors later publications.
 | TELEMETRY-DEC-006 | Owned resource identity and v1.40.0 schema | `TestBuildResourceOwnsServiceIdentity`, `FuzzResourceAttributes` |
 | TELEMETRY-DEC-007 | Privacy-minimized semantic instrumentation | HTTP, PostgreSQL, queue, and cache privacy tests |
 
-The OTLP tests prove provider agreement with the pinned OpenTelemetry Go and
-protobuf dependencies, not interoperability with every Collector vendor. The
-baggage and instrumentation profiles are deliberate defensive subsets and do
-not claim full W3C Baggage or complete semantic-convention emission.
+The OTLP tests prove provider agreement with the selected OpenTelemetry Go
+v1.45.0 and pinned protobuf dependencies, not interoperability with every
+Collector vendor. The baggage and instrumentation profiles are deliberate
+defensive subsets and do not claim full W3C Baggage or complete
+semantic-convention emission.

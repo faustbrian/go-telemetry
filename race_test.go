@@ -9,7 +9,7 @@ import (
 )
 
 func TestConcurrentGlobalInitialization(t *testing.T) {
-	config := DefaultConfig("race-test", "1.0.0")
+	config := enabledConfig("race-test", "1.0.0")
 	config.Metrics.Enabled = false
 	const attempts = 32
 	type result struct {
@@ -49,7 +49,7 @@ func TestConcurrentGlobalInitialization(t *testing.T) {
 func TestConcurrentInstrumentationFlushAndShutdown(t *testing.T) {
 	traceExporter := &recordingSpanExporter{}
 	metricExporter := &recordingMetricExporter{}
-	config := DefaultConfig("race-test", "1.0.0")
+	config := enabledConfig("race-test", "1.0.0")
 	config.RegisterGlobal = false
 	config.Traces.Sampler.Ratio = 1
 	config.Metrics.ExportInterval = time.Hour

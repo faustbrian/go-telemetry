@@ -4,7 +4,7 @@
 // package's released type, sentinel, lifecycle, and error identities.
 package telemetryservice
 
-import legacy "github.com/faustbrian/go-telemetry/telemetryservice"
+import legacy "github.com/faustbrian/go-telemetry/v2/telemetryservice"
 
 // ErrInvalidOptions marks invalid service adapter options.
 var ErrInvalidOptions = legacy.ErrInvalidOptions

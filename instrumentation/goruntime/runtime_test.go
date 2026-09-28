@@ -33,6 +33,9 @@ func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
 	if err := reader.Collect(context.Background(), &metrics); err != nil {
 		t.Fatalf("Collect() error = %v", err)
 	}
+	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/instrumentation/goruntime" {
+		t.Fatalf("instrumentation scope = %q, want released identity", metrics.ScopeMetrics[0].Scope.Name)
+	}
 	want := map[string]bool{
 		"go.memory.heap.used": false,
 		"go.memory.allocated": false,

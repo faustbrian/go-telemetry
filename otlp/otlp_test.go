@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"errors"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -124,8 +123,9 @@ func TestSecureExporterConstruction(t *testing.T) {
 func TestTLSConfigLoadsCAAndClientCertificate(t *testing.T) {
 	t.Parallel()
 
-	certificateFile, keyFile := writeCertificatePair(t)
+	certificateFile, keyFile, _ := writeCertificatePair(t)
 	config, err := buildTLSConfig(TLSConfig{
+		FileReader:         fixtureTLSReader{},
 		CAFile:             certificateFile,
 		CertificateFile:    certificateFile,
 		PrivateKeyFile:     keyFile,
@@ -151,26 +151,29 @@ func TestTLSConfigReportsMalformedMaterial(t *testing.T) {
 	if err := os.WriteFile(invalidCA, []byte("not a certificate"), 0o600); err != nil {
 		t.Fatalf("write invalid CA: %v", err)
 	}
-	if _, err := buildTLSConfig(TLSConfig{CAFile: invalidCA}); err == nil {
+	if _, err := buildTLSConfig(TLSConfig{CAFile: invalidCA, FileReader: fixtureTLSReader{}}); err == nil {
 		t.Fatal("buildTLSConfig() error = nil, want malformed CA error")
 	}
 	if _, err := buildTLSConfig(TLSConfig{
 		CertificateFile: invalidCA,
+		FileReader:      fixtureTLSReader{},
 		PrivateKeyFile:  invalidCA,
 	}); err == nil {
 		t.Fatal("buildTLSConfig() error = nil, want malformed client certificate error")
 	}
 }
 
-func TestTLSConfigReportsSystemPoolFailure(t *testing.T) {
+func TestTLSConfigUsesOnlyExplicitCustomCA(t *testing.T) {
 	t.Parallel()
 
-	certificateFile, _ := writeCertificatePair(t)
-	want := errors.New("system pool failed")
-	if _, err := buildTLSConfigWithSystemPool(TLSConfig{CAFile: certificateFile}, func() (*x509.CertPool, error) {
-		return nil, want
-	}); !errors.Is(err, want) {
-		t.Fatalf("buildTLSConfigWithSystemPool() error = %v, want %v", err, want)
+	certificateFile, _, certificatePEM := writeCertificatePair(t)
+	config, err := buildTLSConfig(TLSConfig{CAFile: certificateFile, FileReader: fixtureTLSReader{}})
+	wantRoots := x509.NewCertPool()
+	if !wantRoots.AppendCertsFromPEM(certificatePEM) {
+		t.Fatal("parse generated CA certificate")
+	}
+	if err != nil || config.RootCAs == nil || !config.RootCAs.Equal(wantRoots) {
+		t.Fatalf("custom CA roots = %#v, %v, want only supplied certificate", config, err)
 	}
 }
 
@@ -180,6 +183,7 @@ func TestExporterConstructionReportsTLSFiles(t *testing.T) {
 	config := validConfig(ProtocolGRPC)
 	config.TLS.Insecure = false
 	config.TLS.CAFile = "missing-ca.pem"
+	config.TLS.FileReader = fixtureTLSReader{}
 
 	if _, err := NewTraceExporter(context.Background(), config); err == nil {
 		t.Fatal("NewTraceExporter() error = nil, want TLS file error")
@@ -206,7 +210,7 @@ func validConfig(protocol Protocol) Config {
 	}
 }
 
-func writeCertificatePair(t *testing.T) (string, string) {
+func writeCertificatePair(t *testing.T) (string, string, []byte) {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2_048)
 	if err != nil {
@@ -237,5 +241,5 @@ func writeCertificatePair(t *testing.T) (string, string) {
 	if err := os.WriteFile(keyFile, keyPEM, 0o600); err != nil {
 		t.Fatalf("write key: %v", err)
 	}
-	return certificateFile, keyFile
+	return certificateFile, keyFile, certificatePEM
 }
