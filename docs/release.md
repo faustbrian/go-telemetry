@@ -19,9 +19,10 @@ change.
 
 ## Tagging
 
-Create a signed `v*` tag only from a verified commit. The release workflow
-reruns all gates and creates GitHub release notes from the verified tag. Never
-use a tag to bypass a failing branch check.
+Create a signed `v*` tag only from verified main after the hosted release
+rehearsal passes. Publish GitHub release notes from that exact tag. The CI
+workflow is not a tag-triggered release publisher; never use a tag to bypass
+a failing branch or rehearsal check.
 
 ## Post-release
 

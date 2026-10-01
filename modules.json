@@ -274,14 +274,14 @@
         }
       ],
       "purpose": "`telemetry` is a vendor-neutral OpenTelemetry runtime for Go services. It owns resource identity, trace and metric providers, OTLP exporters, propagation, sampling, global registration, flush, and shutdown while returning the standard OpenTelemetry APIs.",
-      "lifecycle": "planned",
+      "lifecycle": "stable",
       "kind": "public library",
-      "releasable": false,
+      "releasable": true,
       "family": "observability",
       "family_label": "Observability",
       "family_description": "Structured logging extensions and OpenTelemetry runtime lifecycle.",
       "family_order": 6,
-      "version": "unreleased",
+      "version": "2.0.0",
       "tag_prefix": "v",
       "owned_dependencies": [
         "github.com/faustbrian/go-cli",
@@ -379,8 +379,8 @@
           "github.com/faustbrian/go-telemetry/v2/testtelemetry": "Use in tests for deterministic in-memory providers and telemetry snapshots.",
           "github.com/faustbrian/go-telemetry/v2/trace": "Use for always-on, always-off, ratio, and parent-based trace sampling policies."
         },
-        "lifecycle_status": "planned",
-        "maturity": "preview",
+        "lifecycle_status": "active",
+        "maturity": "stable",
         "construction_styles": [
           "functional-options",
           "init",
@@ -446,7 +446,7 @@
         ],
         "documentation": {
           "readme": "README.md",
-          "api": "https://pkg.go.dev/github.com/faustbrian/go-telemetry",
+          "api": "https://pkg.go.dev/github.com/faustbrian/go-telemetry/v2",
           "adoption": "docs/README.md",
           "security": "docs/security.md",
           "compatibility": "docs/compatibility.md",
@@ -454,13 +454,13 @@
           "examples": "README.md",
           "faq": "docs/faq.md",
           "changelog": "CHANGELOG.md",
-          "pkg_go_dev": "https://pkg.go.dev/github.com/faustbrian/go-telemetry",
+          "pkg_go_dev": "https://pkg.go.dev/github.com/faustbrian/go-telemetry/v2",
           "ecosystem_index": "https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md"
         },
         "known_good_compatibility_sets": [],
         "delivery": {
-          "implementation": "not-started",
-          "hardening": "not-started",
+          "implementation": "in-progress",
+          "hardening": "in-progress",
           "release": "blocked"
         }
       },
