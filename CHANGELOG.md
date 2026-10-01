@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-01
+
 ### Changed
 
 - Complete the staged metric update by adopting the HTTP OTLP metric
@@ -245,7 +247,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/faustbrian/go-telemetry/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/faustbrian/go-telemetry/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/faustbrian/go-telemetry/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/faustbrian/go-telemetry/compare/v1.1.0...v1.1.1

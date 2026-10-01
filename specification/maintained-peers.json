@@ -4,7 +4,7 @@
   "peer": {
     "name": "OpenTelemetry Go",
     "version": "v1.44.0",
-    "module_evidence": "Historical v1.44.0 source comparator pinned by specification/manifest.tsv; current go.mod and go.sum pin v1.45.0",
+    "module_evidence": "Historical v1.44.0 source comparator pinned by specification/manifest.tsv; current go.mod and go.sum pin API, SDK, and metric exporters at v1.46.0 and trace exporters at v1.45.0",
     "trace_context_source": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/propagation/trace_context.go",
     "trace_context_sha256": "7a8bc1fd39f895371d4484a68dab709271d0607d7476e1c610891724768c0a7e",
     "baggage_source": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/propagation/baggage.go",

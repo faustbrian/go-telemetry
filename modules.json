@@ -281,7 +281,7 @@
       "family_label": "Observability",
       "family_description": "Structured logging extensions and OpenTelemetry runtime lifecycle.",
       "family_order": 6,
-      "version": "2.0.0",
+      "version": "2.0.1",
       "tag_prefix": "v",
       "owned_dependencies": [
         "github.com/faustbrian/go-cli",
@@ -330,7 +330,7 @@
       "conformance_corpora": [
         "OTLP HTTP/protobuf and gRPC trace and metric provider profiles",
         "W3C trace-context and baggage hostile-header profiles",
-        "OpenTelemetry Go v1.44.0 historical source comparison and v1.45.0 current provider profiles"
+        "OpenTelemetry Go v1.44.0 historical source comparison; current API, SDK, and metric exporters v1.46.0 with trace exporters v1.45.0"
       ],
       "provenance": [
         "specification/manifest.tsv",

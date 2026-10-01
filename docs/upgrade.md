@@ -1,8 +1,7 @@
 # Upgrade guide
 
-The current source is the `/v2` module. Consumers must remain on version
-1.2.0 until the public `v2.0.0` tag resolves, then follow the
-[version 2 migration](compatibility.md#version-2-migration).
+Version 2 is published under the `/v2` module path. To upgrade from version
+1, follow the [version 2 migration](compatibility.md#version-2-migration).
 
 ## Before upgrading
 
@@ -14,15 +13,19 @@ The current source is the `/v2` module. Consumers must remain on version
 
 ## OpenTelemetry dependencies
 
-Upgrade all OTel API, SDK, and OTLP exporter modules together. Run the
-compatibility script in a disposable checkout:
+Select a compatible OTel API, SDK, and exporter tuple and validate both
+transports. The [compatibility guide](compatibility.md#supported-matrix)
+describes the current tested tuple. To test a uniform version selection,
+run the compatibility script in a disposable checkout:
 
 ```sh
 ./scripts/test-otel-version.sh v1.45.0
 ```
 
 The script modifies `go.mod`; do not run it over unrelated uncommitted module
-changes. CI runs each matrix entry in an isolated checkout.
+changes. It selects one version for all API, SDK, and exporter modules,
+which may differ from the current mixed tuple; CI does not run a version
+matrix.
 
 ## Configuration changes
 
