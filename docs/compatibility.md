@@ -30,9 +30,11 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
 | PostgreSQL adapter | pgx/v5 5.10.x |
 
-GitHub Actions test every Go and OpenTelemetry combination. The module's
-`go.mod` pins the newest tested SDK line; consumers may select another listed
-line through minimal version selection.
+The current dependency tuple uses OpenTelemetry API, SDK, and both metric
+exporters at 1.46.0, with OTLP trace exporters at 1.45.0. GitHub Actions
+exercise that tuple on Go 1.27 Linux/amd64, including HTTP/protobuf and
+gRPC collector tests; they do not run every Go/OpenTelemetry combination.
+Other selections through minimal version selection need their own validation.
 
 Stable compatibility covers exported root, `otlp`, `trace`, `metric`,
 `propagation`, instrumentation, and `testtelemetry` APIs; default values;
@@ -41,11 +43,9 @@ error behavior.
 
 ## Version 2 migration
 
-The current source uses `github.com/faustbrian/go-telemetry/v2`. Consumers
-must stay on the version 1 import path until the immutable `v2.0.0` tag is
-published and resolves through the public Go proxy.
-
-After publication, migrate imports to `/v2`, explicitly enable required
+Version 2 is published as `github.com/faustbrian/go-telemetry/v2` and
+resolves through the public Go proxy. When upgrading from version 1,
+migrate imports to `/v2`, explicitly enable required
 signals and global registration, and opt into plaintext only for a protected
 local or same-trust-zone Collector:
 
@@ -78,11 +78,10 @@ handler; the callback must return promptly because it cannot be preempted. A
 pre-canceled shutdown call no longer consumes the single owned
 shutdown attempt; after shutdown begins, every call shares the terminal result.
 
-Direct-consumer migrations remain blocked on publication for `go-webhook`,
-`go-queue-control-plane`, and `go-scheduler`. Source, compatibility, or fixture
-consumers in `go-authorization`, `go-cloudevents`, `go-correlation`,
-`go-idempotency`, `go-library-tools`, `go-service`, and `go-tenancy` must also
-move their telemetry imports or fixtures only after version 2 is published.
+Update telemetry imports and module requirements together in each consuming
+module, including optional compatibility and integration fixtures. Version 1
+and `/v2` are distinct module paths; publication does not migrate consumers
+automatically.
 
 ## Target-oriented package migration
 
