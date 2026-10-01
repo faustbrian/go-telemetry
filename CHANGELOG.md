@@ -5,6 +5,11 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Keep reusable CI and its checked-out tooling on the same v1.8.5 source
+  while retaining the checksum-verified v1.7.2 CLI bootstrap.
+
 ## [2.0.0] - 2026-09-28
 
 ### Changed
