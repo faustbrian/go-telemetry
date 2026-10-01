@@ -7,6 +7,10 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Upgrade the OpenTelemetry API to 1.46.0 while retaining SDK and OTLP
+  exporters at 1.45.0; report the selected SDK version in resource metadata
+  even when the API version differs.
+
 - Keep reusable CI and its checked-out tooling on the same v1.8.5 source
   while retaining the checksum-verified v1.7.2 CLI bootstrap.
 

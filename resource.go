@@ -4,8 +4,8 @@ import (
 	"context"
 	"sort"
 
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 )
@@ -36,7 +36,7 @@ func BuildResource(ctx context.Context, config Config) (*resource.Resource, erro
 		semconv.ServiceName(config.Service.Name),
 		semconv.TelemetrySDKLanguageGo,
 		semconv.TelemetrySDKName("opentelemetry"),
-		semconv.TelemetrySDKVersion(otel.Version()),
+		semconv.TelemetrySDKVersion(sdk.Version()),
 	)
 	if config.Service.Version != "" {
 		attributes = append(attributes, semconv.ServiceVersion(config.Service.Version))
