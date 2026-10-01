@@ -7,6 +7,12 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Follow the API-only update by adopting OpenTelemetry SDK and the gRPC
+  metric exporter at 1.46.0. HTTP metric and OTLP trace exporters remain at
+  1.45.0, and resource metadata continues to identify the selected SDK.
+- Upgrade httpsnoop to 1.1.0 and protobuf to 1.36.12, with updated gRPC
+  gateway and generated protocol dependencies for OTLP transport.
+
 - Upgrade the OpenTelemetry API to 1.46.0 while retaining SDK and OTLP
   exporters at 1.45.0; report the selected SDK version in resource metadata
   even when the API version differs.
