@@ -3,7 +3,7 @@ module github.com/faustbrian/go-telemetry/v2
 go 1.27.0
 
 require (
-	github.com/faustbrian/go-service v1.0.0
+	github.com/faustbrian/go-service v1.1.0
 	github.com/felixge/httpsnoop v1.0.4
 	github.com/jackc/pgx/v5 v5.10.0
 	go.opentelemetry.io/otel v1.45.0
@@ -24,7 +24,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/faustbrian/go-cli v1.0.0 // indirect
-	github.com/faustbrian/go-correlation v1.0.0 // indirect
+	github.com/faustbrian/go-correlation v1.1.0 // indirect
 	github.com/faustbrian/go-identifier v1.0.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
