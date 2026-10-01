@@ -7,6 +7,10 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Complete the staged metric update by adopting the HTTP OTLP metric
+  exporter at 1.46.0. Both metric exporters now use 1.46.0; OTLP trace
+  exporters remain at 1.45.0.
+
 - Follow the API-only update by adopting OpenTelemetry SDK and the gRPC
   metric exporter at 1.46.0. HTTP metric and OTLP trace exporters remain at
   1.45.0, and resource metadata continues to identify the selected SDK.
