@@ -18,7 +18,7 @@ the absence of vulnerabilities.
 | v2.0.1 | `a64c883a7c44526bae5a9db59e8e7f55b0bed3ba` |
 
 The four inspected v1 sources share the historical controls described below.
-This is an explicit source list, not an assertion about uninspected versions
+This is an explicit source list, not an assertion about other versions
 or downstream dependency overrides. The v2 corrections were integrated at
 `6134f9eb3c8cdceb9469558416c82573a57b6a0d` and first published in v2.0.0.
 
