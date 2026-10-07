@@ -23,6 +23,9 @@ security fixes. Consumers that
 cannot migrate must assess the documented v2 behavior changes and their
 exposure on the unsupported v1 line.
 
+See the [published security disposition](docs/security/release-disposition.md)
+for inspected source versions, corrected boundaries and upgrade guidance.
+
 ## Security model
 
 `telemetry` treats inbound headers, HTTP metadata, SQL, cache keys, queue

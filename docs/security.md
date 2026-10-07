@@ -3,6 +3,9 @@
 The reporting process is in the repository-level [security policy](../SECURITY.md).
 This guide describes deployment controls.
 
+Historical source behavior, corrected boundaries and disclosure limits are
+documented in the [published security disposition](security/release-disposition.md).
+
 ## Threat model
 
 The versioned repository threat model, trust boundaries, abuse cases, and
