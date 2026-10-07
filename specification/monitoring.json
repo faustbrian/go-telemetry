@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at": "2026-08-30",
+  "reviewed_at": "2026-10-07",
   "review_interval_days": 90,
   "authorities": [
     {
@@ -15,7 +15,7 @@
       "id": "otlp-releases",
       "kind": "releases",
       "url": "https://github.com/open-telemetry/opentelemetry-proto/releases.atom",
-      "sha256": "ecb90b2f99924434ec3698396f6642bb9db3f66c6869329fee6e489bbaf2b073",
+      "sha256": "47c0efd3d1ec65c39af3544c01e98b0811d6df2feda2c969343908d0b99bcaf1",
       "specifications": ["OpenTelemetry Protocol 1.10.0"]
     },
     {
@@ -30,7 +30,7 @@
       "id": "trace-context-releases",
       "kind": "releases",
       "url": "https://www.w3.org/standards/history/trace-context/",
-      "sha256": "ab1a5ce3b8491194038e5b0b7c5a1b06bd2b1660d29b50caf841a46f7d687968",
+      "sha256": "70e2dad402936139fafff07cc28c6739e3d3bb8be4ca0550107cf21216533832",
       "specifications": ["W3C Trace Context Level 1 Recommendation 2021-11-23"]
     },
     {
@@ -45,7 +45,7 @@
       "id": "baggage-releases",
       "kind": "releases",
       "url": "https://www.w3.org/standards/history/baggage/",
-      "sha256": "24a8840f749c23a8d17304f76ad00b4dc287703a30d79e2335da565a8784cfa2",
+      "sha256": "2a4f46631488bc0765b1f66be41efbe37d302b8328f46846669d32759ed5ce1b",
       "specifications": ["W3C Baggage Candidate Recommendation 2024-05-30"]
     },
     {
