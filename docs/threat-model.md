@@ -2,8 +2,15 @@
 
 - **Version:** 2026-09-13
 - **Owner:** telemetry maintainers
+- **Next residual-risk review:** 2026-11-07, or sooner on a listed review
+  condition. This schedule does not extend a changed or overdue risk.
 - **Review trigger:** public API, exporter transport, propagation, resource,
   lifecycle, OpenTelemetry dependency, or trust-boundary changes
+
+Current model applicability check: 2026-10-07, published v2.0.1 source
+`a64c883a7c44526bae5a9db59e8e7f55b0bed3ba`. The model version above retains
+its original identity. Current security qualification and deployment behavior
+remain separate evidence boundaries; documentation is not a scanner result.
 
 ## Assets and boundaries
 
