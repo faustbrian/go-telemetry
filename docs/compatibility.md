@@ -28,7 +28,7 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | Go | 1.27.x |
 | OpenTelemetry Go API/SDK/exporters | 1.45.x minimum |
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
-| PostgreSQL adapter | pgx/v5 5.10.x |
+| PostgreSQL adapter | pgx/v5 5.10.x minimum; selected 5.11.0 |
 
 The current dependency tuple uses OpenTelemetry API/SDK and the HTTP metric
 exporter at 1.47.0, the gRPC metric exporter at 1.47.0, and OTLP trace
@@ -36,6 +36,15 @@ exporters at 1.45.0. GitHub Actions target that tuple on Go 1.27 Linux/amd64,
 including HTTP/protobuf and gRPC collector tests; they do not run every
 Go/OpenTelemetry combination. Other selections through minimal version
 selection need their own validation.
+
+The selected PostgreSQL adapter uses pgx 5.11.0. It fixes a missing query-end
+callback when `Exec` fails while deallocating cached prepared statements, so
+the owned tracer now closes that span and records the failed operation. The
+5.10 compatibility baseline does not include that upstream lifecycle fix;
+applications requiring those observations must select pgx 5.11 or later.
+Focused driver tests use an explicitly supplied disposable PostgreSQL fixture
+to exercise query privacy, cached-deallocation failure, and pool acquisition.
+Ordinary tests without that fixture exercise the existing callback contracts.
 
 The historical 1.45 minimum does not imply bug-for-bug equivalence with the
 selected tuple. SDK 1.45 and 1.46 round some integer counter values above the

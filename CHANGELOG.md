@@ -7,6 +7,11 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Adopt pgx/v5 5.11.0 while preserving PostgreSQL tracer APIs, instrumentation
+  identity, and privacy policy. Driver failures while deallocating cached
+  prepared statements now complete their query spans and error observations;
+  pgx 5.10.0 omitted that end callback.
+
 - Complete the staged metric adoption with the gRPC OTLP metric exporter at
   1.47.0, matching the selected API/SDK and HTTP metric exporter. Exponential
   histogram exports now preserve nonzero zero-bucket thresholds through the
