@@ -7,13 +7,24 @@ leaks. Use GitHub private vulnerability reporting for this repository. Include
 the affected version, configuration, reproduction, expected trust boundary,
 and whether secrets or untrusted identifiers were exported.
 
+Maintainers follow the immutable ecosystem
+[vulnerability management policy](https://github.com/faustbrian/go-library-tools/blob/5ad0adb193a46306b4500b8b59cee9ec110fdee3/docs/ecosystem/security/vulnerability-management.md)
+for severity, acknowledgement and remediation targets, private evidence,
+embargo, advisories and coordinated affected-module releases. Targets begin
+when sufficient private evidence exists to reproduce or confidently bound
+the report. Maintainers communicate evidence gaps and target changes; private
+reporter data and credentials do not enter public artifacts.
+
 ## Supported versions
 
-Security fixes target the latest published major. Version 1.2.x remains the
-supported line until v2.0.0 is published. After publication, v2.0.x is the
-supported line and v1 receives no further security fixes. Consumers that
+Security fixes target the latest published major. Version 2.0.x is the
+supported line following publication of v2.0.0; v1 receives no further
+security fixes. Consumers that
 cannot migrate must assess the documented v2 behavior changes and their
 exposure on the unsupported v1 line.
+
+See the [published security disposition](docs/security/release-disposition.md)
+for inspected source versions, corrected boundaries and upgrade guidance.
 
 ## Security model
 
