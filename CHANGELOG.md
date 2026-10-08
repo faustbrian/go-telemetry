@@ -7,6 +7,11 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Complete the staged metric adoption with the gRPC OTLP metric exporter at
+  1.47.0, matching the selected API/SDK and HTTP metric exporter. Exponential
+  histogram exports now preserve nonzero zero-bucket thresholds through the
+  upstream serialization fix; OTLP trace exporters remain at 1.45.0.
+
 - Adopt OpenTelemetry API/SDK and the HTTP metric exporter at 1.47.0 while
   retaining the gRPC metric exporter at 1.46.0 and trace exporters at 1.45.0.
   Keep resource identity tied to the selected SDK and preserve owned telemetry

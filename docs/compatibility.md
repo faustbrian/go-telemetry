@@ -31,7 +31,7 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | PostgreSQL adapter | pgx/v5 5.10.x |
 
 The current dependency tuple uses OpenTelemetry API/SDK and the HTTP metric
-exporter at 1.47.0, the gRPC metric exporter at 1.46.0, and OTLP trace
+exporter at 1.47.0, the gRPC metric exporter at 1.47.0, and OTLP trace
 exporters at 1.45.0. GitHub Actions target that tuple on Go 1.27 Linux/amd64,
 including HTTP/protobuf and gRPC collector tests; they do not run every
 Go/OpenTelemetry combination. Other selections through minimal version
