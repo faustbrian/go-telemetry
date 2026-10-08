@@ -330,7 +330,7 @@
       "conformance_corpora": [
         "OTLP HTTP/protobuf and gRPC trace and metric provider profiles",
         "W3C trace-context and baggage hostile-header profiles",
-        "OpenTelemetry Go v1.44.0 historical source comparison; current API, SDK, and metric exporters v1.46.0 with trace exporters v1.45.0"
+        "OpenTelemetry Go v1.44.0 historical source comparison; current API/SDK and HTTP metric exporter v1.47.0, gRPC metric exporter v1.46.0, and trace exporters v1.45.0"
       ],
       "provenance": [
         "specification/manifest.tsv",

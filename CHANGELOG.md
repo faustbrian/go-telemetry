@@ -5,6 +5,26 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Adopt OpenTelemetry API/SDK and the HTTP metric exporter at 1.47.0 while
+  retaining the gRPC metric exporter at 1.46.0 and trace exporters at 1.45.0.
+  Keep resource identity tied to the selected SDK and preserve owned telemetry
+  names, privacy policy, transport configuration, and provider lifecycle.
+- Preserve exact large integer counter values through the selected SDK's
+  aggregation fix. SDK 1.45 and 1.46 can round values above the exact float64
+  integer range before exporter serialization; SDK 1.47 fixes this upstream
+  defect. Applications requiring lossless large counters must use SDK 1.47.
+- The selected SDK limits nested span, event, link, and instrumentation-scope
+  attributes to depth 64. The HTTP metric exporter retains its existing 4 MiB
+  decompressed Collector response limit. Ordinary shallow attributes and normal
+  Collector success responses remain supported.
+- The upstream experimental `OTEL_GO_X_METRIC_EXPORT_BATCH_SIZE` setting no
+  longer controls metric batches. This runtime does not expose its replacement
+  reader batch-size option; applications relying on that setting must reassess
+  export sizing. These selected-dependency defaults do not narrow the documented
+  minimum OpenTelemetry version.
+
 ## [2.0.1] - 2026-10-01
 
 ### Changed

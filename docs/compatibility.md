@@ -30,11 +30,30 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
 | PostgreSQL adapter | pgx/v5 5.10.x |
 
-The current dependency tuple uses OpenTelemetry API, SDK, and both metric
-exporters at 1.46.0, with OTLP trace exporters at 1.45.0. GitHub Actions
-exercise that tuple on Go 1.27 Linux/amd64, including HTTP/protobuf and
-gRPC collector tests; they do not run every Go/OpenTelemetry combination.
-Other selections through minimal version selection need their own validation.
+The current dependency tuple uses OpenTelemetry API/SDK and the HTTP metric
+exporter at 1.47.0, the gRPC metric exporter at 1.46.0, and OTLP trace
+exporters at 1.45.0. GitHub Actions target that tuple on Go 1.27 Linux/amd64,
+including HTTP/protobuf and gRPC collector tests; they do not run every
+Go/OpenTelemetry combination. Other selections through minimal version
+selection need their own validation.
+
+The historical 1.45 minimum does not imply bug-for-bug equivalence with the
+selected tuple. SDK 1.45 and 1.46 round some integer counter values above the
+exact float64 integer range during aggregation; lossless large counters require
+SDK 1.47. This upstream defect is tracked by
+[OpenTelemetry issue 8980](https://github.com/open-telemetry/opentelemetry-go/issues/8980)
+and fixed in 1.47. The large-integer collector regression passes on the selected
+tuple and deliberately fails when the SDK is downgraded to 1.45; do not treat
+that downgrade as full-suite validation of the minimum.
+
+Selected SDK 1.47 defaults limit nested span, event, link, and scope attributes
+to depth 64, not resource attributes. The selected HTTP metric exporter retains
+the 4 MiB decompressed Collector response limit already used in 1.46. Normal
+success responses and ordinary shallow attributes remain compatible. The experimental upstream
+`OTEL_GO_X_METRIC_EXPORT_BATCH_SIZE` setting is no longer honored, and this
+runtime does not expose the replacement reader option. Applications using that
+setting must reassess export sizing. These supplier-specific bounds describe
+the selected tuple, not identical defaults across every supported selection.
 
 Stable compatibility covers exported root, `otlp`, `trace`, `metric`,
 `propagation`, instrumentation, and `testtelemetry` APIs; default values;
