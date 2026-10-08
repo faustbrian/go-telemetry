@@ -7,6 +7,11 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Changed
 
+- Adopt go-service 1.1.3 and its selected correlation 1.1.1, Identifier v2
+  2.0.0, and UUID 5.4.0 dependencies. Preserve the service component API,
+  telemetry lifecycle, and legacy/successor adapter identities; the upstream
+  Identifier module-path change does not change this module’s public v2 API.
+
 - Adopt pgx/v5 5.11.0 while preserving PostgreSQL tracer APIs, instrumentation
   identity, and privacy policy. Driver failures while deallocating cached
   prepared statements now complete their query spans and error observations;
