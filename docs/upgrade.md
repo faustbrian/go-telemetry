@@ -15,17 +15,21 @@ Version 2 is published under the `/v2` module path. To upgrade from version
 
 Select a compatible OTel API, SDK, and exporter tuple and validate both
 transports. The [compatibility guide](compatibility.md#supported-matrix)
-describes the current tested tuple. To test a uniform version selection,
-run the compatibility script in a disposable checkout:
+describes the current tested tuple. To qualify a uniform version selection,
+run the compatibility script from the repository root:
 
 ```sh
 ./scripts/test-otel-version.sh v1.45.0
 ```
 
-The script modifies `go.mod`; do not run it over unrelated uncommitted module
-changes. It selects one version for all API, SDK, and exporter modules,
-which may differ from the current mixed tuple; CI does not run a version
-matrix.
+The script uses disposable module files, verifies that every selected API,
+SDK, and exporter resolves to the requested version without replacements,
+and leaves `go.mod` and `go.sum` unchanged. Its 1.45/1.46 rows exercise common
+behavior with ordinary integer counters and zero-threshold histograms. They
+do not claim the selected 1.47 lossless large-counter and nonzero-threshold
+repairs. Ordinary tests retain those strict selected-version assertions;
+the uniform script selection may differ from the current mixed tuple.
+CI does not run a version matrix.
 
 ## Configuration changes
 

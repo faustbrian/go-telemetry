@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -59,8 +60,12 @@ func TestHTTPMetricExporterPreservesNumericPayload(t *testing.T) {
 		if instrument.Name != "adoption.operations" || instrument.Unit != "1" || sum == nil || !sum.IsMonotonic || len(sum.DataPoints) != 1 {
 			t.Fatalf("metric shape = %v", instrument)
 		}
-		if value := sum.DataPoints[0].GetAsInt(); value != 9007199254740993 {
-			t.Fatalf("integer metric = %d, want 9007199254740993", value)
+		want := int64(9007199254740993)
+		if minimumOTelProfile(t) {
+			want = 42
+		}
+		if value := sum.DataPoints[0].GetAsInt(); value != want {
+			t.Fatalf("integer metric = %d, want %d", value, want)
 		}
 	default:
 		t.Fatal("successful export delivered no metric request")
@@ -177,12 +182,29 @@ func metricHTTPFixture(t *testing.T) metricdata.ResourceMetrics {
 	if err != nil {
 		t.Fatalf("fixture counter: %v", err)
 	}
-	counter.Add(context.Background(), 9007199254740993)
+	value := int64(9007199254740993)
+	if minimumOTelProfile(t) {
+		value = 42
+	}
+	counter.Add(context.Background(), value)
 	var data metricdata.ResourceMetrics
 	if err := reader.Collect(context.Background(), &data); err != nil {
 		t.Fatalf("fixture collection: %v", err)
 	}
 	return data
+}
+
+func minimumOTelProfile(t *testing.T) bool {
+	t.Helper()
+	switch profile := os.Getenv("TELEMETRY_OTEL_TEST_PROFILE"); profile {
+	case "", "selected":
+		return false
+	case "minimum-common":
+		return true
+	default:
+		t.Fatalf("unknown OTel test profile %q", profile)
+		return false
+	}
 }
 
 func exportMetricHTTPFixture(ctx context.Context, config Config, data *metricdata.ResourceMetrics) error {

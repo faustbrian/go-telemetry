@@ -6,6 +6,14 @@ selection and deployment impact. It is not a claim that every application
 using an earlier version was exploitable, or that scanner success establishes
 the absence of vulnerabilities.
 
+## Selected build inputs
+
+Current development builds select Go 1.27.2 and x/net 0.60.0 to address
+reported standard-library and HTTP/2 findings. The Go 1.27 language floor
+is unchanged. Consumers must use a patched compiler and retain the patched
+dependency graph; source selection is not proof that deployed consumers
+have rebuilt, nor that every reported path is exploitable.
+
 ## Published sources inspected
 
 | Version | Source commit |

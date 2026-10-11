@@ -30,6 +30,11 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
 | PostgreSQL adapter | pgx/v5 5.10.x minimum; selected 5.11.0 |
 
+The module retains the Go 1.27 language floor. Security-qualified builds
+use Go 1.27.2 or a newer patched 1.27 compiler and `golang.org/x/net`
+0.60.0 or later; older compiler or dependency overrides do not inherit
+that qualification.
+
 The current dependency tuple uses OpenTelemetry API/SDK and the HTTP metric
 exporter at 1.47.0, the gRPC metric exporter at 1.47.0, and OTLP trace
 exporters at 1.45.0. GitHub Actions target that tuple on Go 1.27 Linux/amd64,
@@ -53,7 +58,12 @@ SDK 1.47. This upstream defect is tracked by
 [OpenTelemetry issue 8980](https://github.com/open-telemetry/opentelemetry-go/issues/8980)
 and fixed in 1.47. The large-integer collector regression passes on the selected
 tuple and deliberately fails when the SDK is downgraded to 1.45; do not treat
-that downgrade as full-suite validation of the minimum.
+that downgrade as full-suite validation of the minimum. The compatibility
+script verifies the requested resolved module graph and qualifies common
+behavior with ordinary integer counters. Its minimum histogram fixture uses
+a zero threshold; preserving a nonzero exponential-histogram zero threshold
+is a selected 1.47 exporter repair. Both profiles retain HTTP/gRPC transport,
+payload shape, retries, cancellation, and runtime lifecycle checks.
 
 Selected SDK 1.47 defaults limit nested span, event, link, and scope attributes
 to depth 64, not resource attributes. The selected HTTP metric exporter retains

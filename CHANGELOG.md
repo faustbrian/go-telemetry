@@ -5,6 +5,13 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Security
+
+- Select Go 1.27.2 for builds and x/net 0.60.0 for patched standard-library
+  and HTTP/2 dependencies. The Go 1.27 language floor and public v2 API
+  remain unchanged; consumers must use a patched compiler as well as the
+  updated dependency graph.
+
 ### Changed
 
 - Adopt go-service 1.1.3 and its selected correlation 1.1.1, Identifier v2
