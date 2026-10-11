@@ -60,4 +60,6 @@ paths are configured. Endpoint strings do not include a scheme when
 
 The in-process interoperability suite covers both transports, signals,
 compression, headers, retries, timeouts, and malformed responses. Run
-`make integration` after changing any Collector-facing setting.
+`make -f verification/package.mk integration` after changing any
+Collector-facing setting. This owned in-process suite does not replace an
+actual deployment fixture for restart or backend rollout claims.

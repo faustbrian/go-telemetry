@@ -9,14 +9,25 @@ metric values, and privacy assertions.
 ## Local gates
 
 ```sh
-make check       # ordinary format, vet, test, coverage, safety, and examples
-make race        # changes affecting concurrent lifecycle behavior
-make fuzz        # changes affecting hostile parsing boundaries
-make benchmark   # changes making performance or resource claims
+GOWORK=off go test ./... -count=1 -timeout=3m
+make check       # bounded public-verifier local route
+make check-full  # explicit original full qualification
 ```
 
-`make check` is the default local gate. Select race, fuzz, and benchmark
-campaigns only for the material risk exercised by the change.
+Ordinary PR, main and scheduled shared CI use the bounded route. Normal Go
+tests execute saved fuzz seeds; active exploration requires one selected target,
+for example:
+
+```sh
+GOWORK=off go test ./propagation -run '^$' -fuzz '^FuzzPropagationHeaders$' -fuzztime=2s -timeout=2m
+```
+
+Keep `make race`, `make fuzz` and `make benchmark` for a named material risk or
+explicit full/release boundary. Full fuzz preserves four 10,000-iteration
+targets; `make check-full` retains their 20-minute per-target limits and all
+configured examples and interoperability operations. The ordinary manifest
+declares no service or test-tag requirement. Live PostgreSQL integration still
+needs `TELEMETRY_TEST_POSTGRES_DSN`; a skipped test is not database proof.
 
 ## OTLP failures
 
@@ -25,12 +36,26 @@ temporary unavailability, HTTP rate limiting, slow endpoints, malformed
 responses, custom paths, compression, and authentication metadata. It validates
 protobuf requests for both traces and metrics.
 
+Run the focused owned suite with
+`make -f verification/package.mk integration`. It does not start or certify a
+production Collector. Use a deployment-owned fixture for Collector-facing
+rollout claims.
+
 ## Lifecycle failures
 
 Internal constructor seams inject resource, propagator, sampler, and metric-view
 failures. Tests prove partial exporter cleanup, duplicate global registration,
 external global replacement, concurrent initialization, repeated shutdown, and
 cross-SDK error aggregation.
+
+The bounded ordinary lifecycle selection is:
+
+```sh
+GOWORK=off go test -race . -run '^TestPreCanceledConcurrentShutdownSharesStartedResult$' -count=1 -timeout=2m
+```
+
+It asserts that concurrent shutdown callers receive the same actual terminal
+exporter error, not a pre-canceled caller's context error.
 
 ## Privacy and cardinality
 

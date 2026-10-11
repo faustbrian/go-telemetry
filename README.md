@@ -156,16 +156,13 @@ Runnable commands are in [`examples/service`](examples/service) and
 
 ## Development
 
-```sh
-make check
-make race        # changes affecting concurrent lifecycle behavior
-make fuzz        # changes affecting hostile parsing boundaries
-make benchmark   # changes making performance or resource claims
-```
-
-CI also runs the applicable linting, vulnerability, example, Collector
-protocol, race, and supported Go/OpenTelemetry checks. Coverage is evaluated
-against changed behavior and material risk, not a universal percentage.
+Use `GOWORK=off go test ./... -count=1 -timeout=3m` for standalone tests.
+`make check` and `make ci` use bounded public verification; `make check-full`
+retains explicit full assurance. In-process OTLP tests do not certify a deployed
+Collector, and live PostgreSQL tests require their separate fixture. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for lifecycle races, focused active fuzzing,
+and release boundaries. Coverage follows changed behavior and material risk,
+not a universal percentage.
 
 ## Stability
 

@@ -4,11 +4,18 @@
 
 - `CHANGELOG.md` contains every user-visible change.
 - Compatibility, upgrade, security, and operations docs match behavior.
-- `make check`, lint, `govulncheck`, and every race, fuzz, or benchmark gate
+- `make check-full`, lint, `govulncheck`, and every race, fuzz, or benchmark gate
   selected for a material release risk pass.
 - The Go/OpenTelemetry matrix and all GitHub Actions gates are green.
 - No cardinality, privacy, race, leak, deadlock, timeout, or unbounded-resource
   blocker remains.
+
+Ordinary PR, main and scheduled shared CI use bounded local verification, not
+full qualification. Use the explicit `release_dry_run` workflow input and
+module-selected `golib release check --module .` / `golib release dry-run --module .`
+for release validation. These commands do not publish; retain actual
+OpenTelemetry compatibility and selected Collector/database fixture evidence
+where the release claim depends on them.
 
 ## Versioning
 

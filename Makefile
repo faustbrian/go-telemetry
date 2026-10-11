@@ -3,9 +3,12 @@ SHELL := /usr/bin/env bash
 GOLIB ?= golib
 GO ?= go
 
-.PHONY: benchmark check ci cohesion fuzz inventory race repository-check specification-check
+.PHONY: benchmark check check-full ci cohesion fuzz inventory race repository-check specification-check specification-check-online
 
 check:
+	$(GOLIB) check --local --all
+
+check-full: specification-check-online
 	$(GOLIB) check --all
 
 ci: repository-check cohesion specification-check check
@@ -17,6 +20,9 @@ inventory repository-check:
 	$(GOLIB) repository check
 
 specification-check:
+	$(GOLIB) specification check
+
+specification-check-online:
 	$(GOLIB) specification check --online
 
 race:

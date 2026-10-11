@@ -47,7 +47,8 @@ logging remains independent.
 ## How do I test without a Collector?
 
 Use `testtelemetry` for deterministic providers. OTLP protocol tests already
-run in-process; use `make integration` when changing transport behavior.
+run in-process; use `make -f verification/package.mk integration` when changing
+transport behavior. This is not deployed Collector or live PostgreSQL proof.
 
 ## How is test coverage assessed?
 
