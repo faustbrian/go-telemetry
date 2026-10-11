@@ -63,13 +63,17 @@ func TestGRPCMetricExporterPreservesZeroThreshold(t *testing.T) {
 	})
 	data := metricHTTPFixture(t)
 	now := time.Now()
+	threshold, sum := 0.5, 2.1
+	if minimumOTelProfile(t) {
+		threshold, sum = 0, 2
+	}
 	data.ScopeMetrics[0].Metrics = []metricdata.Metrics{{
 		Name: "adoption.exponential", Unit: "1",
 		Data: metricdata.ExponentialHistogram[float64]{
 			Temporality: metricdata.CumulativeTemporality,
 			DataPoints: []metricdata.ExponentialHistogramDataPoint[float64]{{
 				StartTime: now.Add(-time.Second), Time: now,
-				Count: 2, Sum: 2.1, Scale: 0, ZeroCount: 1, ZeroThreshold: 0.5,
+				Count: 2, Sum: sum, Scale: 0, ZeroCount: 1, ZeroThreshold: threshold,
 				PositiveBucket: metricdata.ExponentialBucket{Offset: 0, Counts: []uint64{1}},
 			}},
 		},
@@ -90,10 +94,16 @@ func TestGRPCMetricExporterPreservesZeroThreshold(t *testing.T) {
 			t.Fatalf("exponential histogram = %v", metric)
 		}
 		point := histogram.DataPoints[0]
-		if point.ZeroThreshold != 0.5 {
+		wantSum := 2.1
+		if minimumOTelProfile(t) {
+			wantSum = 2
+			if point.ZeroThreshold != 0 {
+				t.Fatalf("common zero threshold = %v, want 0", point.ZeroThreshold)
+			}
+		} else if point.ZeroThreshold != 0.5 {
 			t.Fatalf("zero threshold = %v, want 0.5", point.ZeroThreshold)
 		}
-		if point.ZeroCount != 1 || point.Count != 2 || point.GetSum() != 2.1 || point.Scale != 0 || point.Positive.Offset != 0 || len(point.Positive.BucketCounts) != 1 || point.Positive.BucketCounts[0] != 1 {
+		if point.ZeroCount != 1 || point.Count != 2 || point.GetSum() != wantSum || point.Scale != 0 || point.Positive.Offset != 0 || len(point.Positive.BucketCounts) != 1 || point.Positive.BucketCounts[0] != 1 {
 			t.Fatalf("histogram payload = %v", point)
 		}
 	default:
@@ -145,7 +155,11 @@ func TestGRPCMetricExporterFailureModes(t *testing.T) {
 				}
 			}
 			point := requests[0].ResourceMetrics[0].ScopeMetrics[0].Metrics[0].GetSum().DataPoints[0]
-			if point.GetAsInt() != 9007199254740993 {
+			want := int64(9007199254740993)
+			if minimumOTelProfile(t) {
+				want = 42
+			}
+			if point.GetAsInt() != want {
 				t.Fatalf("exported integer = %d", point.GetAsInt())
 			}
 		})

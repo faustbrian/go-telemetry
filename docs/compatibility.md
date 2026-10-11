@@ -53,7 +53,12 @@ SDK 1.47. This upstream defect is tracked by
 [OpenTelemetry issue 8980](https://github.com/open-telemetry/opentelemetry-go/issues/8980)
 and fixed in 1.47. The large-integer collector regression passes on the selected
 tuple and deliberately fails when the SDK is downgraded to 1.45; do not treat
-that downgrade as full-suite validation of the minimum.
+that downgrade as full-suite validation of the minimum. The compatibility
+script verifies the requested resolved module graph and qualifies common
+behavior with ordinary integer counters. Its minimum histogram fixture uses
+a zero threshold; preserving a nonzero exponential-histogram zero threshold
+is a selected 1.47 exporter repair. Both profiles retain HTTP/gRPC transport,
+payload shape, retries, cancellation, and runtime lifecycle checks.
 
 Selected SDK 1.47 defaults limit nested span, event, link, and scope attributes
 to depth 64, not resource attributes. The selected HTTP metric exporter retains

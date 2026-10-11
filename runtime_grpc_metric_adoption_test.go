@@ -104,8 +104,14 @@ func TestRuntimeGRPCMetricExporterPreservesPayload(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	counter.Add(ctx, 9007199254740993, metricapi.WithAttributes(attribute.String("operation", "test")))
-	for _, want := range []int64{9007199254740993, 9007199254741000} {
+	initial := int64(9007199254740993)
+	wants := []int64{9007199254740993, 9007199254741000}
+	if minimumOTelProfile(t) {
+		initial = 42
+		wants = []int64{42, 49}
+	}
+	counter.Add(ctx, initial, metricapi.WithAttributes(attribute.String("operation", "test")))
+	for _, want := range wants {
 		if err := runtime.ForceFlush(ctx); err != nil {
 			t.Fatalf("metric flush: %v", err)
 		}
