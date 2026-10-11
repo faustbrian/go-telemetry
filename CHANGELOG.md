@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-11
+
 ### Security
 
 - Select Go 1.27.2 for builds and x/net 0.60.0 for patched standard-library
@@ -289,7 +291,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v2.0.2...HEAD
+[2.0.2]: https://github.com/faustbrian/go-telemetry/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/faustbrian/go-telemetry/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/faustbrian/go-telemetry/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/faustbrian/go-telemetry/compare/v1.1.1...v1.2.0
