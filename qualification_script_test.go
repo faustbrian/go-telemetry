@@ -76,10 +76,12 @@ case "$1 $2" in
   *) exit 9 ;;
 esac
 `
+			// #nosec G306 -- owner-only execute permission is required for this private fixture.
 			if err := os.WriteFile(filepath.Join(bin, "go"), []byte(fake), 0o700); err != nil {
 				t.Fatal(err)
 			}
 			capture := filepath.Join(root, "test-profile")
+			// #nosec G204 -- runs the fixed repository script without shell interpolation.
 			command := exec.CommandContext(t.Context(), "sh", script, "v1.45.0")
 			command.Dir = root
 			command.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"),
@@ -88,10 +90,12 @@ esac
 			if (err != nil) != scenario.wantErr {
 				t.Fatalf("qualification error = %v, want error %v\n%s", err, scenario.wantErr, output)
 			}
+			// #nosec G304 -- reads a fixed file in this test-owned private temporary directory.
 			module, err := os.ReadFile(filepath.Join(root, "go.mod"))
 			if err != nil || string(module) != original {
 				t.Fatalf("caller module changed: %v\n%s", err, module)
 			}
+			// #nosec G304 -- capture is a fixed file in this test-owned private temporary directory.
 			profile, err := os.ReadFile(capture)
 			if scenario.name == "uplift" || scenario.name == "replacement" {
 				if !os.IsNotExist(err) {
