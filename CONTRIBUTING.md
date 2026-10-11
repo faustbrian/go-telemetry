@@ -88,6 +88,29 @@ and [docs/release.md](docs/release.md) for focused lifecycle checks and delibera
 release qualification. Report unavailable or failed selected commands without
 claiming the bounded route establishes release readiness or deployed behavior.
 
+## Selected Weekly Assurance
+
+The owner-level [selected-assurance caller](.github/workflows/assurance.yml) is
+configured for main only, on Thursdays at 04:19 UTC. It selects one of the
+4 current declared root-module fuzz targets using the shared UTC-week
+rotation, with 30 seconds of active exploration.
+The selected risks are resource construction after validation, configuration
+validation, bounded trace-context propagation and bounded untrusted baggage.
+Targets run in `.` and `./propagation`; they do not certify exporter shutdown,
+live Collector/PostgreSQL interoperability or deployed resource behavior.
+Keep the lifecycle race, OTLP suites and applicable disposable live fixtures.
+
+Base-free ordinary checks execute deterministic seeds, not active exploration;
+committed-range CI selects affected active smoke. Manual assurance requires an
+exact anchored selector from the root fuzz operation in `.golib.yaml`, for
+example `^FuzzPropagationHeaders$`. Empty, unknown and malformed selections refuse.
+The shared job bounds setup and execution to ten minutes, its native session
+to five minutes, active workers and CPU to two, owned memory to 2 GiB, native
+output to 1 MiB and private-cache lifetime. Failure, cancellation, exhausted
+budgets and cleanup refusal remain attributable failures. This lane does not
+run mutation or replace Required, original full fuzz budgets, explicit
+`make check-full`, nested/service contracts or relevant release qualification.
+
 ## Adding A Module
 
 Follow [repository structure policy](AGENTS.md#repository-structure). New modules
