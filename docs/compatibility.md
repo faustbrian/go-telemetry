@@ -30,6 +30,11 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
 | PostgreSQL adapter | pgx/v5 5.10.x minimum; selected 5.11.0 |
 
+The module retains the Go 1.27 language floor. Security-qualified builds
+use Go 1.27.2 or a newer patched 1.27 compiler and `golang.org/x/net`
+0.60.0 or later; older compiler or dependency overrides do not inherit
+that qualification.
+
 The current dependency tuple uses OpenTelemetry API/SDK and the HTTP metric
 exporter at 1.47.0, the gRPC metric exporter at 1.47.0, and OTLP trace
 exporters at 1.45.0. GitHub Actions target that tuple on Go 1.27 Linux/amd64,
