@@ -20,12 +20,14 @@ err := errors.Join(server.Shutdown(shutdownCtx), runtime.Shutdown(shutdownCtx))
 
 The runtime applies the shorter of the caller deadline and
 `Config.ShutdownTimeout`. Repeated and concurrent calls execute shutdown once
-and return the same result. A call whose context is already canceled returns
-that context error without consuming shutdown, so the owner can retry once
-with a usable bounded context. A timeout after shutdown begins is terminal
-because providers may already be partially closed. The deadline is propagated
-to providers and exporters; it cannot preempt a custom exporter that ignores
-context cancellation.
+and return the same result. Before shutdown starts, a call whose context is
+already canceled returns that context error without consuming shutdown, so the
+owner can retry once with a usable bounded context. Once an attempt starts,
+even a canceled joiner waits for its result without applying a separate waiting
+deadline. A timeout after shutdown begins is terminal because providers may
+already be partially closed. The deadline is propagated to providers and
+exporters; it cannot preempt a custom exporter that ignores context
+cancellation.
 
 Each flush or provider-close operation receives an equal share of the remaining
 deadline. Unused time is available to later operations, but a slow flush cannot
@@ -45,6 +47,10 @@ required failure prevents startup; a best-effort failure starts without a
 runtime and remains observable through `Adapter.InitializationError`. The
 adapter does not retry initialization and does not contribute a readiness
 check. `Config.RegisterGlobal` remains the caller-owned global provider policy.
+Hooks require one ordered Start/Stop lifecycle; repeated startup/restart is not
+supported. Stop clears the runtime pointer and consumes its one attempt before
+calling Shutdown. A pre-canceled Stop therefore cannot be retried through this
+adapter even when Runtime itself rejects the attempt before starting.
 
 ## Globals
 

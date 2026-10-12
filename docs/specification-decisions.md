@@ -8,7 +8,8 @@ runtime. Source bytes and change authorities are pinned in the
 changelog, executable evidence, conformance, and decision-history review.
 References to OpenTelemetry Go v1.44.0 below describe the pinned historical
 maintained-peer source comparator, not the current runtime dependency. Current
-`go.mod` and `go.sum` select v1.45.0.
+`go.mod` and `go.sum` select API/SDK and metric exporters v1.47.0,
+trace exporters v1.45.0 and OTLP protobuf v1.11.0.
 
 ## TELEMETRY-DEC-001: OTLP signal and transport profile
 
@@ -169,12 +170,12 @@ maintained-peer source comparator, not the current runtime dependency. Current
 - **Credible interpretation:** Disable all baggage permanently
 - **Credible interpretation:** Disable baggage by default and require a trusted boundary, allow-list, item limit, and byte limit
 - **Peer behavior:** OpenTelemetry Go v1.44.0 implements W3C baggage grammar; it does not choose this package's trust boundary or application allow-list.
-- **Selected behavior:** Untrusted extraction always clears baggage. Trusted extraction and injection are opt-in, retain only allow-listed keys, enforce configured positive item and byte bounds, and drop oversized output rather than emitting partial members.
+- **Selected behavior:** Untrusted extraction always clears baggage, including existing context baggage. Trusted extraction and injection are opt-in and retain only allow-listed keys within configured positive byte and retained-item bounds; in-budget baggage is parsed before retained-item filtering, and oversized serialized output is cleared rather than emitting partial members.
 - **Rationale:** The profile deliberately prioritizes privacy and bounded authority over transparent propagation and does not claim full Candidate Recommendation propagation compliance.
 - **Security consequences:** Unknown keys, user identifiers, secrets, and untrusted baggage do not cross the package boundary by default.
-- **Resource consequences:** Parsed and emitted baggage is bounded by configured bytes and item count.
+- **Resource consequences:** The byte bound applies before SDK parsing of carrier values; the item cap applies to retained members after parsing. Carrier allocation and I/O are caller-owned.
 - **Compatibility consequences:** General W3C baggage peers can observe dropped members; trusted applications must declare their stable key contract.
-- **Wire consequences:** The baggage header is absent unless enabled and contains only complete allow-listed members within bounds.
+- **Wire consequences:** Injection writes an empty baggage value when disabled or oversized, otherwise complete allow-listed members within bounds. Empty-value deletion or emission depends on the carrier; allow-listing does not redact allowed values or properties.
 - **Executable evidence:** TestPolicySeparatesTrustedAndUntrustedInboundBaggage
 - **Executable evidence:** TestTrustedPolicyBoundsItemCountAndOutboundSize
 - **Executable evidence:** TestPolicyAcceptsExactOutboundHeaderLimit
@@ -244,10 +245,10 @@ maintained-peer source comparator, not the current runtime dependency. Current
 - **Credible interpretation:** Use custom names only
 - **Credible interpretation:** Emit stable low-cardinality semantic keys plus bounded package-specific metrics and omit sensitive values
 - **Peer behavior:** OpenTelemetry maintained instrumentations commonly emit richer protocol and network attributes; this package uses the same stable key vocabulary for its smaller owned profile.
-- **Selected behavior:** HTTP, PostgreSQL, queue, and cache instrumentation emits fixed operation, route-template, status-class, system, and error-class attributes plus bounded package metrics; it excludes raw paths, queries, hosts, headers, addresses, SQL, arguments, keys, messages, errors, and panic values.
+- **Selected behavior:** HTTP, PostgreSQL, queue, and cache wrappers emit fixed caller-configured operation and route labels, normalized HTTP methods, numeric status/body-size measurements, system and fixed outcome attributes plus package metrics. Their own telemetry excludes raw targets, headers, addresses, SQL, arguments, cache keys, messages, raw error text and panic values. Route validation checks length/path shape, custom transport status is recorded directly, and PgError.Code is recorded when five bytes without SQLSTATE grammar validation.
 - **Rationale:** Semantic interoperability does not require collecting sensitive or unbounded data that the package cannot safely govern.
-- **Security consequences:** Default telemetry omits payloads, credentials, raw identifiers, and error text.
-- **Resource consequences:** Attribute domains and metric cardinality remain bounded by fixed enums, configured allow-lists, and cardinality limits.
+- **Security consequences:** Wrapper-generated telemetry omits raw payloads and error text, but configured labels, resource values, allowed baggage and synthetic status codes remain caller trust boundaries. Custom instrumentation and returned/unwrapped SDK errors are not redacted by these wrappers.
+- **Resource consequences:** Enums and operation allow-lists constrain wrapper dimensions. SDK cardinality is per stream, not a bound on instrument count, arbitrary attributes or total process memory; collaborators own cancellation and resource policy.
 - **Compatibility consequences:** Consumers receive a documented subset rather than every attribute emitted by broader maintained instrumentations.
 - **Wire consequences:** OTLP attributes use stable semantic keys where selected and package-specific names for explicitly owned metrics.
 - **Executable evidence:** TestHandlerRecordsOnlyBoundedServerAttributes

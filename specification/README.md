@@ -1,14 +1,15 @@
 # Telemetry specification conformance
 
 The root module owns observable profiles for OTLP 1.10.0, W3C Trace Context,
-W3C Baggage, and OpenTelemetry Semantic Conventions 1.40.0. The
-[decision register](../docs/specification-decisions.md) defines the exact claim
+W3C Baggage, and OpenTelemetry Semantic Conventions 1.40.0. The [decision
+register](../docs/specification-decisions.md) defines the exact claim
 boundaries. [`manifest.tsv`](manifest.tsv) pins normative and maintained-peer
-sources; [`monitoring.json`](monitoring.json) monitors later publications.
-The OpenTelemetry Go v1.44.0 source pins are historical maintained-peer
+sources; [`monitoring.json`](monitoring.json) monitors later publications. The
+OpenTelemetry Go v1.44.0 source pins are historical maintained-peer
 comparators, not the current runtime dependency. Current `go.mod` and `go.sum`
-pin v1.45.0; the executable provider profiles below run against that selected
-dependency.
+pin API/SDK and metric exporters v1.47.0, trace exporters v1.45.0 and OTLP
+protobuf v1.11.0; the executable provider profiles below run against those
+selected dependencies.
 
 | Decision | Observable profile | Evidence |
 | --- | --- | --- |

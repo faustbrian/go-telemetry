@@ -1,4 +1,7 @@
-// Command service demonstrates HTTP service lifecycle and instrumentation.
+// Command service demonstrates explicit HTTP telemetry and signal-driven shutdown.
+// It binds HTTP_ADDR (default :8080), reads example environment settings and
+// enables both OTLP signals. Running it requires the intended Collector endpoint;
+// it is not a production server/readiness or guaranteed-delivery qualification.
 package main
 
 import (
@@ -56,6 +59,8 @@ func run(ctx context.Context) error {
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	// This example waits for signal cancellation; an early listener failure can
+	// leave the waiter alive until ctx is canceled or the process exits.
 	shutdown := make(chan error, 1)
 	go func() {
 		<-ctx.Done()

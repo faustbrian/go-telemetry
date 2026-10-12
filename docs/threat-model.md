@@ -28,7 +28,7 @@ supply unlimited data.
 | --- | --- |
 | Implicit network, background work, or process-global mutation | Defaults disable traces, metrics, and global registration; each is enabled explicitly. |
 | Collector impersonation or credential disclosure | TLS is the default; plaintext, custom CAs, client keys, and skip-verification are explicit. TLS material is validated before use. |
-| Malformed or oversized propagation | Combined header byte and baggage item limits are checked before parsing; hostile propagation fuzz targets run in the selected CI gate. |
+| Malformed or oversized propagation | Combined trace-context and separate baggage byte limits precede SDK parsing; retained baggage member limits follow parsing; hostile propagation fuzz targets run in the selected CI gate. |
 | Unauthenticated baggage authority | Baggage is disabled by default, keys are allow-listed, and HTTP trusted extraction requires request-specific authentication proof. |
 | Configuration memory exhaustion | Resource attributes, exporter headers, metric views, allowed attributes, and histogram boundaries have count or aggregate byte limits. |
 | TLS material memory exhaustion or implicit filesystem access | Configured paths require a caller-owned cancellation-aware reader, with a finite constructor timeout and a revalidated 1 MiB budget per result. Custom CA trust is explicit and does not load ambient system roots. |

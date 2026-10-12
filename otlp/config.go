@@ -1,5 +1,9 @@
 // Package otlp constructs explicitly configured OTLP trace and metric
-// exporters without reading vendor-specific settings.
+// exporters using standard OpenTelemetry SDK implementations. Wrappers supply
+// explicit transport options; upstream SDK/environment behavior remains upstream.
+// The owned profile is OTLP 1.10.0 trace/metric protobuf (TELEMETRY-DEC-001/002),
+// not all signals or guaranteed Collector/backend delivery. Exporter ownership
+// transfers to the caller, who must shut it down or attach it to one runtime.
 package otlp
 
 import (
@@ -31,26 +35,44 @@ const (
 
 // Config completely describes an OTLP exporter transport.
 type Config struct {
-	Protocol    Protocol
-	Endpoint    string
-	URLPath     string
-	Headers     map[string]string
+	// Protocol explicitly selects gRPC or HTTP/protobuf.
+	Protocol Protocol
+	// Endpoint is the SDK host[:port] target, not a full URL; at most 4096 UTF-8 bytes.
+	// This validation does not authorize the target or restrict network egress.
+	Endpoint string
+	// URLPath optionally replaces the HTTP signal path; ignored for gRPC.
+	// It is limited to 4096 UTF-8 bytes, not validated as a safe application route.
+	URLPath string
+	// Headers adds exporter request metadata; at most 64 entries and 64 KiB
+	// combined keys/values. Constructors copy the map; callers own credential policy.
+	Headers map[string]string
+	// Compression explicitly selects none or gzip.
 	Compression Compression
-	TLS         TLSConfig
-	Retry       RetryConfig
-	Timeout     time.Duration
+	// TLS supplies transport security and explicit TLS material access.
+	TLS TLSConfig
+	// Retry controls SDK retry policy; finite positive intervals are required when enabled.
+	Retry RetryConfig
+	// Timeout must be positive and bounds construction and SDK export attempts.
+	// A custom TLS reader must cooperate with the constructor context.
+	Timeout time.Duration
 }
 
 // TLSConfig controls server verification and optional client certificates.
 type TLSConfig struct {
 	// FileReader must honor ctx and maxBytes before retaining file contents.
 	// It is required for configured file paths; no ambient filesystem is read.
-	FileReader         TLSFileReader
-	Insecure           bool
-	CAFile             string
-	CertificateFile    string
-	PrivateKeyFile     string
-	ServerName         string
+	FileReader TLSFileReader
+	// Insecure selects plaintext and must not be combined with other TLS settings.
+	Insecure bool
+	// CAFile selects PEM roots; a custom trust pool replaces system roots.
+	CAFile string
+	// CertificateFile selects PEM client identity and requires PrivateKeyFile.
+	CertificateFile string
+	// PrivateKeyFile selects the matching PEM private key and requires CertificateFile.
+	PrivateKeyFile string
+	// ServerName overrides the TLS peer name; at most 253 UTF-8 bytes.
+	ServerName string
+	// InsecureSkipVerify explicitly bypasses peer certificate/name verification.
 	InsecureSkipVerify bool
 }
 
@@ -58,15 +80,25 @@ type TLSConfig struct {
 // Implementations must apply the inclusive byte budget before allocation,
 // propagate ctx to blocking I/O, and return promptly when it is canceled.
 type TLSFileReader interface {
+	// ReadFile reads caller-authorized material within the inclusive byte budget.
+	// Construction requests at most 1 MiB per file and rechecks the result; it
+	// cannot force a blocked implementation to return. Paths need not be contained
+	// by this package. Returned material is parsed, not securely erased.
 	ReadFile(ctx context.Context, path string, maxBytes int) ([]byte, error)
 }
 
 // RetryConfig bounds retry backoff and elapsed time.
 type RetryConfig struct {
-	Enabled         bool
+	// Enabled delegates retryable-failure handling to the selected SDK exporter.
+	// Retries are not durable delivery or an exactly-once guarantee.
+	Enabled bool
+	// InitialInterval is the positive initial backoff when Enabled.
 	InitialInterval time.Duration
-	MaxInterval     time.Duration
-	MaxElapsedTime  time.Duration
+	// MaxInterval is the positive backoff ceiling when Enabled.
+	// Validation does not require it to exceed InitialInterval.
+	MaxInterval time.Duration
+	// MaxElapsedTime is the positive retry horizon when Enabled.
+	MaxElapsedTime time.Duration
 }
 
 // Validate rejects incomplete, unsupported, or unbounded transport settings.

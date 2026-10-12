@@ -18,7 +18,12 @@ var (
 	errGRPCPath        = errors.New("OTLP gRPC endpoint must not contain a path")
 )
 
-// ApplyEnvironment applies the standard generic OTLP endpoint and protocol.
+// ApplyEnvironment reads the generic OTLP endpoint/protocol environment variables
+// into both example signals. It accepts absolute credential/query/fragment-free
+// HTTP(S) URLs and maps their scheme to explicit plaintext/TLS. A late gRPC path
+// rejection can leave endpoint/protocol fields changed: callers must abandon
+// failed configuration. It does not enable signals, copy Config or validate TLS.
+// This explicit example helper is not implicit core runtime environment loading.
 func ApplyEnvironment(config *telemetry.Config) error {
 	if config == nil {
 		return errNilConfig

@@ -23,12 +23,20 @@ const (
 
 // Config describes a sampler without replacing the OpenTelemetry sampler API.
 type Config struct {
-	Mode        Mode
-	Ratio       float64
+	// Mode selects always-on, always-off or trace-ID ratio root sampling.
+	Mode Mode
+	// Ratio is checked only in ratio mode and must be finite in [0,1].
+	Ratio float64
+	// ParentBased delegates sampled/unsampled parent decisions to the SDK;
+	// Mode and Ratio then select only the root policy. Sampling is not redaction.
 	ParentBased bool
 }
 
-// NewSampler constructs a standard OpenTelemetry SDK sampler.
+// NewSampler constructs a standard OpenTelemetry SDK sampler for a supported Mode.
+// Ratio is validated only in ratio mode; parent-based wrapping preserves the
+// SDK default decisions for local/remote sampled and unsampled parents. Head
+// sampling cannot select traces by eventual outcome or guarantee a traffic quota.
+// See TestParentBasedSamplerPreservesRemoteDecision; sampling is not privacy.
 func NewSampler(config Config) (trace.Sampler, error) {
 	var sampler trace.Sampler
 	switch config.Mode {

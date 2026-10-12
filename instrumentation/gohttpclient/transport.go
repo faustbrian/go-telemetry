@@ -1,5 +1,9 @@
 // Package gohttpclient preserves the original HTTP client instrumentation path.
 //
+// The alias retains httpclient/nethttp transport contracts: borrowed providers
+// and base transport, cloned request headers, shared body, and caller-owned
+// request deadlines and response-body closure.
+//
 // Deprecated: use github.com/faustbrian/go-telemetry/v2/instrumentation/httpclient.
 package gohttpclient
 

@@ -55,21 +55,33 @@ type options struct {
 	buildMetricOptions func(telemetrymetric.Config) ([]metricexport.Option, error)
 }
 
-// WithTraceExporter supplies a standard OpenTelemetry span exporter.
+// WithTraceExporter supplies a standard OpenTelemetry span exporter for an enabled
+// trace signal. Options apply left to right; the last wins and nil falls back to
+// OTLP construction. Once attached, the runtime shuts the exporter down, including
+// applicable partial-init cleanup. Unused/overridden exporters remain caller-owned;
+// do not share an attached exporter with another lifecycle owner.
 func WithTraceExporter(exporter trace.SpanExporter) Option {
 	return optionFunc(func(options *options) {
 		options.traceExporter = exporter
 	})
 }
 
-// WithMetricExporter supplies a standard OpenTelemetry metric exporter.
+// WithMetricExporter supplies a standard OpenTelemetry metric exporter for an
+// enabled metric signal. Options apply left to right; the last wins and nil uses
+// OTLP construction. The attached SDK reader owns export/flush/shutdown calls;
+// unused or overridden exporters are not closed. Do not share its lifecycle.
+// Config validation still applies and custom implementations must honor context.
 func WithMetricExporter(exporter metricexport.Exporter) Option {
 	return optionFunc(func(options *options) {
 		options.metricExporter = exporter
 	})
 }
 
-// Runtime owns the providers and their complete lifecycle.
+// Runtime owns its configured SDK providers, readers and attached exporters.
+// Accessors lend standard API handles; callers must coordinate application drain
+// with Shutdown rather than independently closing concrete providers. Disabled
+// signals use no-op providers. Runtime retains Config by value, not a deep copy.
+// The zero value is not a constructed runtime.
 type Runtime struct {
 	config Config
 
@@ -91,7 +103,13 @@ type Runtime struct {
 	shutdownErr  error
 }
 
-// Init validates config and explicitly initializes the telemetry runtime.
+// Init validates config, constructs resource/propagation and enabled providers,
+// then optionally registers globals. Nil options are ignored. It does not read
+// environment variables itself; selected SDK exporters may have upstream behavior.
+// Partial providers are cleaned up with one ShutdownTimeout budget detached from
+// caller cancellation (context values retained). Errors join cleanup failures and
+// may expose SDK/custom-exporter causes: they are not universally secret-safe.
+// A successful constructor does not establish Collector reachability or delivery.
 func Init(ctx context.Context, config Config, opts ...Option) (*Runtime, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -247,16 +265,19 @@ func otlpConfig(config ExporterConfig) telemetryotlp.Config {
 }
 
 // TracerProvider returns the standard OpenTelemetry tracer provider API.
+// The handle is borrowed; the runtime retains lifecycle ownership.
 func (r *Runtime) TracerProvider() traceapi.TracerProvider {
 	return r.tracerProvider
 }
 
 // MeterProvider returns the standard OpenTelemetry meter provider API.
+// The handle is borrowed; the runtime retains lifecycle ownership.
 func (r *Runtime) MeterProvider() metric.MeterProvider {
 	return r.meterProvider
 }
 
 // Propagator returns the runtime's standard OpenTelemetry propagator.
+// The handle is borrowed; the runtime retains lifecycle ownership.
 func (r *Runtime) Propagator() otelpropagation.TextMapPropagator {
 	return r.propagator
 }
@@ -271,7 +292,11 @@ func (r *Runtime) Meter(name string, options ...metric.MeterOption) metric.Meter
 	return r.meterProvider.Meter(name, options...)
 }
 
-// ForceFlush exports all telemetry queued by the runtime.
+// ForceFlush asks enabled providers to flush traces, then metrics, within one
+// caller/configuration timeout and joins their errors. It does not end active
+// spans, recover dropped telemetry, guarantee backend persistence or stop readers.
+// A slow trace flush may leave only an expired context for metrics; custom SDK
+// collaborators must honor cancellation. It is not serialized with Shutdown.
 func (r *Runtime) ForceFlush(ctx context.Context) error {
 	bounded, cancel := context.WithTimeout(ctx, r.config.ShutdownTimeout)
 	defer cancel()
@@ -288,7 +313,12 @@ func (r *Runtime) ForceFlush(ctx context.Context) error {
 // Shutdown unregisters globals owned by this runtime, flushes providers, and
 // shuts them down. A pre-canceled call before shutdown starts is rejected
 // without consuming the one attempt; after shutdown starts every call returns
-// the same aggregate result.
+// the same aggregate result, waiting for the first attempt even if their own
+// context is canceled. Meter flush/close precedes tracer flush/close; each step
+// receives an equal share of the remaining caller/configuration deadline.
+// Globals are restored only if still owned. Shutdown does not drain application
+// work, retry partial closure, or preempt noncooperative exporters. An exporter
+// panic reaches the initiating caller; joiners receive an aborted result.
 func (r *Runtime) Shutdown(ctx context.Context) error {
 	contextErr := ctx.Err()
 	r.shutdownMu.Lock()

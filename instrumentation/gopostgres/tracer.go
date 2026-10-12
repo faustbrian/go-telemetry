@@ -1,5 +1,8 @@
 // Package gopostgres provides a privacy-preserving pgx tracing bridge for
-// postgres. SQL text, arguments, and raw database errors are never recorded.
+// postgres. SQL text, arguments, and raw database errors are not recorded by
+// this tracer. Providers and pgx pools/connections remain caller-owned; the tracer
+// does not execute queries, close connections, retry or enforce their deadlines.
+// See TELEMETRY-DEC-007, tracer_test.go and opt-in pgx_integration_test.go.
 package gopostgres
 
 import (
@@ -29,9 +32,15 @@ var operationPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,127}$`)
 
 // Config defines the finite set of query names that telemetry may record.
 type Config struct {
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
 	TracerProvider trace.TracerProvider
-	MeterProvider  metric.MeterProvider
-	Operations     []string
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
+	// Operations is copied into a lookup set of at most 128 unique fixed names
+	// matching [A-Za-z][A-Za-z0-9_.-]{0,127}. Safe content remains caller policy.
+	Operations []string
 }
 
 // Tracer implements pgx.QueryTracer with bounded attributes.
@@ -108,7 +117,9 @@ type acquireState struct {
 type acquireStateKey struct{}
 
 // TraceAcquireStart begins a bounded pool-acquisition observation. The
-// returned context owns the matching state for TraceAcquireEnd.
+// returned context owns the matching state for TraceAcquireEnd. Each start must
+// have exactly one matching end with that context, including failed/canceled
+// acquisitions; cancellation alone does not decrement waiting or end the span.
 func (tracer *Tracer) TraceAcquireStart(ctx context.Context, _ *pgxpool.Pool, _ pgxpool.TraceAcquireStartData) context.Context {
 	attributes := metric.WithAttributes(attribute.String("db.system.name", "postgresql"))
 	tracer.waiting.Add(ctx, 1, attributes)
@@ -122,7 +133,9 @@ func (tracer *Tracer) TraceAcquireStart(ctx context.Context, _ *pgxpool.Pool, _ 
 }
 
 // TraceAcquireEnd completes pool acquisition without recording connection
-// identity or raw error details.
+// identity or raw error details. Missing start state is a no-op. Repeated end
+// calls are not deduplicated and would decrement/record again; pgx owns pairing.
+// A non-nil pool adds its current four-state statistics, not an atomic history.
 func (tracer *Tracer) TraceAcquireEnd(ctx context.Context, pool *pgxpool.Pool, data pgxpool.TraceAcquireEndData) {
 	state, ok := ctx.Value(acquireStateKey{}).(acquireState)
 	if !ok {
@@ -164,7 +177,9 @@ func (tracer *Tracer) TraceAcquireEnd(ctx context.Context, pool *pgxpool.Pool, d
 type operationContextKey struct{}
 
 // ContextWithOperation associates a trusted static query name with ctx. The
-// tracer records it only when it appears in Config.Operations.
+// tracer records it only when it appears in Config.Operations. The string is
+// retained in ctx even if unknown, so do not attach secrets or dynamically growing
+// values merely because the tracer falls back to its fixed name.
 func ContextWithOperation(ctx context.Context, operation string) context.Context {
 	return context.WithValue(ctx, operationContextKey{}, operation)
 }
@@ -178,6 +193,8 @@ type queryState struct {
 type queryStateKey struct{}
 
 // TraceQueryStart starts a client span without inspecting SQL or arguments.
+// Pass its returned context to exactly one TraceQueryEnd; the connection and
+// query payload are not retained. Cancellation does not end the span by itself.
 func (tracer *Tracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.TraceQueryStartData) context.Context {
 	operation := defaultOperation
 	if candidate, ok := ctx.Value(operationContextKey{}).(string); ok {
@@ -202,7 +219,11 @@ func (tracer *Tracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, _ pgx.Tr
 	})
 }
 
-// TraceQueryEnd closes the query span and records only SQLSTATE when present.
+// TraceQueryEnd closes its matching span and records duration/count/outcome.
+// Missing start state is a no-op; repeated end calls are not deduplicated.
+// A PgError.Code is emitted only when it has five bytes; no SQLSTATE grammar
+// check is performed, so synthetic errors must provide a safe protocol code.
+// Other error text, SQL and arguments are never formatted into this telemetry.
 func (tracer *Tracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {
 	state, ok := ctx.Value(queryStateKey{}).(queryState)
 	if !ok {

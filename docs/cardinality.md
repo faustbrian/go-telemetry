@@ -6,15 +6,21 @@ Collector, and backend.
 
 ## Budgets
 
-The runtime sets a hard per-instrument `CardinalityLimit`, defaulting to 1,000.
+The runtime sets an SDK per-stream `CardinalityLimit`, defaulting to 1,000.
 Choose a lower value for instruments with a deliberately small contract. The
 limit includes overflow handling, so dashboards must not assume every observed
 dimension becomes a separate series.
 
-Define attribute allow-lists with metric views. Recommended HTTP dimensions are
-normalized method, route template, and response status. Recommended cache and
-queue dimensions are the finite operation, outcome, and backend enums supplied
-by the adapters.
+The budget is not a process-memory limit and does not constrain caller-created
+instrument count, resource values or arbitrary span/event/link payloads.
+
+Define attribute allow-lists with metric views. `ViewConfig.Name` and `Unit`
+select instruments; they do not rename streams or change units. Empty allowed
+keys remove attributes only on matching streams; unmatched streams keep SDK
+defaults. `NoMinMax` applies only with nonempty explicit histogram boundaries.
+Recommended HTTP dimensions are normalized method, route template, and response
+status. Recommended cache and queue dimensions are the finite operation,
+outcome, and backend enums supplied by the adapters.
 
 ## Forbidden defaults
 
@@ -36,4 +42,4 @@ The `metric` package does this with ten unique inputs and a limit of three.
 
 Monitor active series, SDK overflow, Collector refusal, backend limits, and
 process memory. Treat an unexpected increase as a release blocker even when the
-hard cap prevents a crash.
+configured stream cap constrains series.

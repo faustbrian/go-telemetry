@@ -1,5 +1,9 @@
 // Package telemetryhttpclient adapts the privacy-preserving net/http client bridge to
 // http-client's standard RoundTripper composition seam.
+//
+// The base transport/provider handles are borrowed. Requests/headers are cloned,
+// bodies are shared, and response-body consumption is outside the recorded span.
+// Caller policy supplies deadlines, safe fixed labels and bounded propagation.
 package telemetryhttpclient
 
 import (

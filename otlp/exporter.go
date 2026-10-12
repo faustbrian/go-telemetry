@@ -16,7 +16,12 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// NewTraceExporter constructs a standard OpenTelemetry span exporter.
+// NewTraceExporter constructs an owned standard OpenTelemetry span exporter.
+// It validates configuration, checks caller cancellation, bounds TLS reads and
+// constructor work by Timeout, and copies Headers. No implicit file reader is
+// provided; secure mode uses TLS 1.2 or later. Successful construction is not a
+// delivery probe. TLS reader/parser diagnostics are categorical, but SDK
+// constructor/export failures need not be redacted. The caller owns Shutdown.
 func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExporter, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -68,7 +73,12 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 	return otlptracehttp.New(ctx, options...)
 }
 
-// NewMetricExporter constructs a standard OpenTelemetry metric exporter.
+// NewMetricExporter constructs an owned standard OpenTelemetry metric exporter.
+// It validates configuration, checks caller cancellation, bounds TLS reads and
+// constructor work by Timeout, and copies Headers. No implicit file reader is
+// provided; secure mode uses TLS 1.2 or later. Successful construction is not a
+// delivery probe. TLS reader/parser diagnostics are categorical, but SDK
+// constructor/export failures need not be redacted. The caller owns Shutdown.
 func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporter, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -170,6 +180,8 @@ func buildTLSConfigContext(ctx context.Context, config TLSConfig) (*tls.Config, 
 	return tlsConfig, ctx.Err()
 }
 
+// readTLSMaterial trusts the reader to enforce preallocation/I/O bounds and
+// rechecks cancellation and result length before parsing. Buffers are not wiped.
 func readTLSMaterial(ctx context.Context, config TLSConfig, path string) ([]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err

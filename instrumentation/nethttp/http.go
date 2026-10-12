@@ -1,5 +1,10 @@
 // Package nethttp instruments net/http servers and clients without recording
-// raw URLs, hosts, headers, bodies, client addresses, or arbitrary methods.
+// raw URLs, hosts, headers, bodies, client addresses, or arbitrary methods as
+// wrapper-generated telemetry attributes. Fixed names/routes must be safe caller
+// inputs; custom handlers, providers and propagators can emit additional data.
+// Providers/transports are borrowed, not shut down; application deadlines,
+// egress authorization, backend retention and SDK limits remain caller-owned.
+// See TELEMETRY-DEC-007 and http_test.go for the selected semantic subset.
 package nethttp
 
 import (
@@ -26,26 +31,45 @@ var operationPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,127}$`)
 
 // ServerConfig defines fixed, low-cardinality server instrumentation.
 type ServerConfig struct {
-	Operation      string
-	Route          string
+	// Operation is a fixed span name matching [A-Za-z][A-Za-z0-9_.-]{0,127}.
+	// Grammar does not prove it is low-cardinality or free of sensitive content.
+	Operation string
+	// Route is optional and fixed for every request; at most 256 bytes, starts
+	// with / and contains no ? or #. Validation does not prove it is a route template.
+	Route string
+	// TrustedInbound enables per-request TrustInbound proof. Trusted extraction
+	// is used only if the propagator implements ExtractTrusted and proof succeeds.
 	TrustedInbound bool
 	// TrustInbound proves that the individual request crossed an authenticated
 	// trust boundary. It is required when TrustedInbound is true, is called for
 	// every request, must return promptly, and must be safe for concurrent use.
 	// A panic rejects the request with a categorical server error. It must not
 	// grant trust from caller-controlled request metadata alone.
-	TrustInbound   func(*http.Request) bool
+	TrustInbound func(*http.Request) bool
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
 	TracerProvider trace.TracerProvider
-	MeterProvider  metric.MeterProvider
-	Propagator     otelpropagation.TextMapPropagator
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
+	// Propagator is borrowed; nil uses SDK TraceContext, not this module's
+	// bounded baggage policy. Custom propagators own parsing/privacy and concurrency.
+	Propagator otelpropagation.TextMapPropagator
 }
 
 // ClientConfig defines fixed, low-cardinality client instrumentation.
 type ClientConfig struct {
-	Operation      string
+	// Operation is the fixed span name, validated by the same grammar as ServerConfig.
+	Operation string
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
 	TracerProvider trace.TracerProvider
-	MeterProvider  metric.MeterProvider
-	Propagator     otelpropagation.TextMapPropagator
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
+	// Propagator is borrowed; nil uses SDK TraceContext. Supply the runtime
+	// policy for bounded propagation and stale baggage replacement.
+	Propagator otelpropagation.TextMapPropagator
 }
 
 type serverHandler struct {
@@ -63,7 +87,12 @@ type serverHandler struct {
 	responseSize metric.Int64Histogram
 }
 
-// NewHandler wraps handler with bounded tracing, metrics, and extraction.
+// NewHandler wraps a non-nil handler with fixed-attribute tracing, metrics and
+// extraction, preserving httpsnoop-supported ResponseWriter interfaces. It does
+// not start a server, own provider shutdown or enforce request timeouts. A proof
+// panic produces HTTP 500 without calling the handler. Handler panics are measured
+// as server failures and re-panicked; panic values are not recorded. Request size
+// uses known ContentLength, not body reads; response size counts captured writes.
 func NewHandler(handler http.Handler, config ServerConfig) (http.Handler, error) {
 	if handler == nil {
 		return nil, errors.New("HTTP handler is required")
@@ -200,7 +229,10 @@ type trustedExtractor interface {
 	ExtractTrusted(context.Context, otelpropagation.TextMapCarrier) context.Context
 }
 
-// Transport is a privacy-preserving instrumented HTTP round tripper.
+// Transport adds wrapper-generated method/status/duration telemetry to a borrowed
+// RoundTripper. It does not record request target or raw error text, but is not a
+// redaction boundary for the base transport or custom providers/propagator. It
+// adds no timeout or CloseIdleConnections forwarding; the caller owns the base.
 type Transport struct {
 	base       http.RoundTripper
 	operation  string
@@ -210,7 +242,10 @@ type Transport struct {
 	requests   metric.Int64Counter
 }
 
-// NewTransport wraps base with bounded tracing, metrics, and injection.
+// NewTransport wraps base with fixed-attribute tracing, metrics and injection.
+// Nil base uses http.DefaultTransport. Providers and base remain caller-owned;
+// concurrent requests require collaborators safe for concurrent use. Successful
+// construction creates instruments but does not test the network target.
 func NewTransport(base http.RoundTripper, config ClientConfig) (*Transport, error) {
 	if err := validateOperation(config.Operation); err != nil {
 		return nil, err
@@ -243,7 +278,13 @@ func NewTransport(base http.RoundTripper, config ClientConfig) (*Transport, erro
 	}, nil
 }
 
-// RoundTrip records only normalized method, bounded status, and duration.
+// RoundTrip rejects nil requests, clones request metadata and headers, injects
+// context into the clone, and delegates once. The body remains shared according
+// to http.Request.Clone semantics. Duration/span end cover RoundTrip, not reading
+// the response body; callers must close that body. Response/error pass through
+// unchanged and raw errors are not formatted into telemetry. Custom transports
+// must obey RoundTripper (non-nil response on nil error); their status code is
+// recorded without range normalization. Panics propagate without metric recovery.
 func (transport *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 	if request == nil {
 		return nil, errors.New("HTTP request is required")

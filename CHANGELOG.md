@@ -5,6 +5,15 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Clarify best-effort export, borrowed provider/transport ownership, configuration
+  aliasing, per-stream rather than whole-process limits, and wrapper privacy
+  boundaries. Document shutdown joiners and the service adapter's one-shot stop,
+  pgx callback pairing, actual HTTP/SQLSTATE validation and propagation clearing.
+  Align current specification prose with those contracts and selected dependency
+  versions without changing runtime behavior or historical authority pins.
+
 ## [2.0.3] - 2026-10-12
 
 ### Fixed

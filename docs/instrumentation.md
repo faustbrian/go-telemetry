@@ -1,7 +1,10 @@
 # Instrumentation
 
-All adapters accept standard providers. Pass runtime providers explicitly when
-`RegisterGlobal` is false.
+All adapters accept standard providers and borrow their lifecycle. Nil providers
+on the HTTP/cache/queue/pgx constructors choose no-ops, not process globals. Pass
+runtime providers explicitly even when globals are registered. The runtime
+callback adapter requires a non-nil provider and must be closed before its owner
+shuts down that provider.
 
 ## Go runtime
 
@@ -53,8 +56,13 @@ client := &http.Client{Transport: transport, Timeout: 10 * time.Second}
 ```
 
 `instrumentation/httpclient.NewTransport` exposes the same contract at the
-RoundTripper seam used by `http-client`. Outbound propagation replaces stale
-headers on a cloned request.
+RoundTripper seam used by `http-client`. With the runtime propagation policy,
+outbound injection replaces stale fields on cloned request headers. A nil
+propagator uses SDK TraceContext, not the bounded baggage policy. Request
+bodies remain shared, the returned response body remains caller-owned, and
+spans/duration end when RoundTrip returns rather than after the body is
+consumed. The wrapper adds no request timeout or CloseIdleConnections
+forwarding; callers own the base transport.
 
 ## postgres
 
@@ -70,7 +78,11 @@ ctx = gopostgres.ContextWithOperation(ctx, "users.by_id")
 ```
 
 Unknown operation names collapse to `postgresql.query`. SQL and arguments are
-ignored. Errors expose only bounded outcome and valid SQLSTATE.
+ignored. Wrapper telemetry records fixed outcomes and five-byte PgError.Code
+values, not raw errors; the code length is checked, not SQLSTATE grammar.
+Driver errors remain application-visible. Query/acquire end callbacks require
+the matching start context exactly once; cancellation is not automatic
+observation cleanup.
 
 The same tracer implements `pgxpool.AcquireTracer`. When it is assigned to
 `poolConfig.ConnConfig.Tracer`, pgxpool records acquisition duration and
@@ -81,13 +93,14 @@ without recording connection identity or raw acquisition errors.
 ## cache
 
 ```go
-ctx, end := cacheTelemetry.Start(ctx, gocache.OperationGet)
+ctx, end := cacheTelemetry.Begin(ctx, gocache.OperationGet)
 result, err := cache.Get(ctx, key)
 end(gocache.OutcomeHit, err)
 ```
 
 Map the target cache's result state to a finite `Outcome`. The adapter API has
-no key or value parameter, preventing accidental recording.
+no key or value parameter. Always call the one-shot end function on completion
+and panic paths; context cancellation does not end the observation itself.
 
 ## queue
 

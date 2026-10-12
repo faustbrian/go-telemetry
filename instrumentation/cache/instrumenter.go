@@ -2,6 +2,10 @@
 //
 // It is the target-oriented successor to instrumentation/gocache and preserves
 // that package's released type and instrumentation identities.
+//
+// Providers are borrowed. Begin returns a one-shot completion function that
+// callers must invoke; unknown labels collapse to other and raw errors are not
+// recorded. Alias methods retain the gocache lifecycle and instrumentation scope.
 package telemetrycache
 
 import gocache "github.com/faustbrian/go-telemetry/v2/instrumentation/gocache"

@@ -2,6 +2,9 @@
 //
 // It is the target-oriented successor to instrumentation/goruntime and
 // preserves that package's released type and instrumentation identity.
+//
+// The borrowed provider drives synchronous runtime callbacks. Close the returned
+// registration before provider shutdown; this package owns no background loop.
 package telemetryruntime
 
 import (

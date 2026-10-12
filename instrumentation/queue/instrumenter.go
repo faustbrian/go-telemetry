@@ -2,6 +2,10 @@
 //
 // It is the target-oriented successor to instrumentation/goqueue and preserves
 // that package's released type and instrumentation identities.
+//
+// It records fixed wrapper telemetry, preserves handler errors/panics, and owns
+// neither queue acknowledgement/retry nor provider shutdown. Handler/provider
+// concurrency and context cooperation remain caller-owned.
 package telemetryqueue
 
 import (

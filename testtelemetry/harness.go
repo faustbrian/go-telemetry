@@ -1,4 +1,7 @@
-// Package testtelemetry provides deterministic in-memory providers for tests.
+// Package testtelemetry provides isolated in-memory SDK providers for tests.
+// Trace IDs are sequential deterministic test data, not unpredictable production
+// identities. Completed spans accumulate until ResetSpans; metrics and instrument
+// count are not given application admission bounds here. The caller owns shutdown.
 package testtelemetry
 
 import (
@@ -35,34 +38,42 @@ func New() *Harness {
 	return &Harness{tracer: tracer, recorder: recorder, meter: meter, reader: reader}
 }
 
-// TracerProvider returns a standard OpenTelemetry tracer provider.
+// TracerProvider lends the standard OpenTelemetry tracer provider; Harness owns shutdown.
 func (h *Harness) TracerProvider() traceapi.TracerProvider {
 	return h.tracer
 }
 
-// MeterProvider returns a standard OpenTelemetry meter provider.
+// MeterProvider lends the standard OpenTelemetry meter provider; Harness owns shutdown.
 func (h *Harness) MeterProvider() metricapi.MeterProvider {
 	return h.meter
 }
 
-// Spans returns immutable snapshots of all ended spans.
+// Spans returns SDK SpanStub snapshots of spans ended at the recorder read.
+// The result excludes active spans and is not a deep immutable/security copy;
+// callers must not assume nested slices or SDK interfaces have independent ownership.
 func (h *Harness) Spans() tracetest.SpanStubs {
 	return tracetest.SpanStubsFromReadOnlySpans(h.recorder.Ended())
 }
 
-// ResetSpans removes all recorded spans.
+// ResetSpans clears the recorder, including its started/ended span inventory.
+// It does not reset sequential identifiers or metric aggregation; coordinate
+// concurrent span completion if a strict before/after boundary is needed.
 func (h *Harness) ResetSpans() {
 	h.recorder.Reset()
 }
 
-// Metrics synchronously collects current metric data.
+// Metrics synchronously collects into a fresh ResourceMetrics value using the
+// manual reader and caller context. Errors may accompany partial SDK data. The
+// returned tree is ordinary mutable SDK data, not a privacy/redaction boundary.
 func (h *Harness) Metrics(ctx context.Context) (metricdata.ResourceMetrics, error) {
 	var metrics metricdata.ResourceMetrics
 	err := h.reader.Collect(ctx, &metrics)
 	return metrics, err
 }
 
-// Shutdown releases both providers and aggregates failures.
+// Shutdown calls meter then tracer shutdown with the same context and joins
+// failures. It does not drain test goroutines or reserve budget per provider;
+// repeated-call semantics are delegated to the SDK providers.
 func (h *Harness) Shutdown(ctx context.Context) error {
 	return errors.Join(h.meter.Shutdown(ctx), h.tracer.Shutdown(ctx))
 }

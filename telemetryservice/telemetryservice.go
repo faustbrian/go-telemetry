@@ -5,7 +5,9 @@
 // registration through telemetry.Config and choose whether initialization is
 // required or best effort. Shutdown flushes and closes the runtime once using
 // the bounded policy implemented by telemetry.Runtime. The adapter performs no
-// retries and exposes the concrete runtime without hiding provider APIs.
+// retries and exposes the concrete runtime without hiding provider APIs. Hooks
+// require one ordered service lifecycle; mutexes protect accessors, not repeated
+// startup/restart. Global provider policy and application drain are caller-owned.
 package telemetryservice
 
 import (
@@ -34,13 +36,16 @@ const (
 	FailureBestEffort FailurePolicy = "best-effort"
 )
 
-// Options configure one telemetry lifecycle adapter.
+// Options configures one telemetry lifecycle adapter. Config maps/slices and
+// option collaborators are not deep-copied; do not mutate them during startup.
 type Options struct {
-	// Name is the secret-safe component name.
+	// Name is the caller-supplied component label. New rejects blank names,
+	// not sensitive content; the service receives this string unchanged.
 	Name string
 	// Config defines the runtime and explicitly selects global registration.
 	Config telemetry.Config
-	// RuntimeOptions provide caller-owned exporters or test facilities.
+	// RuntimeOptions are slice-copied; attached exporters follow runtime
+	// ownership, while unused/overridden exporters remain caller-owned.
 	RuntimeOptions []telemetry.Option
 	// Failure explicitly selects required or best-effort initialization.
 	Failure FailurePolicy
@@ -50,11 +55,12 @@ type Options struct {
 type OptionsError struct {
 	// Field identifies the rejected option.
 	Field string
-	// Reason describes the safe failure category.
+	// Reason describes the failure category; caller-constructed values are printed verbatim.
 	Reason string
 }
 
-// Error returns a secret-safe construction diagnostic.
+// Error formats Field and Reason verbatim with the option sentinel. New supplies
+// categorical values; manually constructed OptionsError values are not redacted.
 func (err *OptionsError) Error() string {
 	return fmt.Sprintf("%s: %s: %v", err.Field, err.Reason, ErrInvalidOptions)
 }
@@ -65,7 +71,8 @@ func (err *OptionsError) Unwrap() error { return ErrInvalidOptions }
 // InitializationError preserves the runtime construction failure without
 // formatting the potentially sensitive cause.
 type InitializationError struct {
-	// Cause is the runtime construction failure.
+	// Cause is the runtime construction failure, accessible through Unwrap and
+	// not sanitized for callers inspecting or formatting it directly.
 	Cause error
 }
 
@@ -92,7 +99,10 @@ type Adapter struct {
 	stopErr  error
 }
 
-// New validates and constructs an inert adapter.
+// New validates Name/Failure and constructs an inert adapter without validating
+// the runtime Config or doing I/O. It copies the RuntimeOptions slice, not the
+// options or Config nested data. Service must call Start then Stop once in order;
+// this adapter does not support repeated Start, Stop-before-Start or restart.
 func New(options Options) (*Adapter, error) {
 	if strings.TrimSpace(options.Name) == "" {
 		return nil, &OptionsError{Field: "Name", Reason: "must not be blank"}
@@ -112,7 +122,11 @@ func New(options Options) (*Adapter, error) {
 	}, nil
 }
 
-// Component returns the ordered service lifecycle component.
+// Component returns fresh hooks into this same adapter, not a new lifecycle.
+// Start initializes once under the service lifecycle contract; Stop clears the
+// active pointer before the one runtime Shutdown and retains its first result.
+// A pre-canceled Stop consumes the adapter stop attempt even if Runtime rejects
+// shutdown before starting. Drain later business components before invoking it.
 func (adapter *Adapter) Component() service.Component {
 	return service.Component{
 		Name:  adapter.name,
@@ -121,7 +135,9 @@ func (adapter *Adapter) Component() service.Component {
 	}
 }
 
-// Runtime returns the concrete runtime while it is active.
+// Runtime returns the borrowed runtime pointer while the adapter retains it.
+// A true result is not a health/reachability probe and can become stale as Stop
+// begins; callers must coordinate use with the owning service lifecycle.
 func (adapter *Adapter) Runtime() (*telemetry.Runtime, bool) {
 	adapter.mu.RLock()
 	defer adapter.mu.RUnlock()
@@ -129,7 +145,9 @@ func (adapter *Adapter) Runtime() (*telemetry.Runtime, bool) {
 	return adapter.runtime, adapter.runtime != nil
 }
 
-// InitializationError returns a retained best-effort initialization failure.
+// InitializationError returns the retained initialization failure for either
+// required or best-effort policy, or nil. The wrapper hides cause text in Error
+// but exposes the original cause through Unwrap; it is not a redacted cause tree.
 func (adapter *Adapter) InitializationError() error {
 	adapter.mu.RLock()
 	defer adapter.mu.RUnlock()

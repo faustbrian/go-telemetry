@@ -10,7 +10,9 @@ headers rather than appending to them.
 config.Propagation = propagation.DefaultConfig()
 ```
 
-Malformed or oversized headers are ignored; they do not fail the request.
+Malformed or oversized trace input leaves existing span context unchanged;
+it does not necessarily clear an existing parent or fail the request. Carrier
+Get/Set and their allocations/blocking behavior remain caller-owned.
 
 ## Trusted baggage
 
@@ -45,8 +47,8 @@ If the proof callback panics, the request ends with a categorical HTTP 500
 without invoking the business handler or returning the panic value.
 `TrustedInbound` has no effect on propagators that do not implement trusted
 extraction; they use the standard interface. Unknown baggage keys are always
-dropped. Never allow user IDs, request IDs, emails, tokens, or arbitrary tenant
-input.
+dropped by the runtime Policy, not by arbitrary custom propagators. Never allow
+user IDs, request IDs, emails, tokens, or arbitrary tenant input.
 
 ## Manual extraction
 
@@ -55,4 +57,8 @@ filters trusted baggage. Use the explicit method at messaging or RPC boundaries
 that are not covered by the HTTP adapter.
 
 Outbound baggage uses the same allow-list and bounds. If the serialized value
-exceeds the byte budget, the baggage header is cleared.
+exceeds the byte budget, the entire baggage value is cleared with Set(field, "").
+Whether an empty field is deleted from the wire depends on the carrier. Item
+bounds apply after in-budget baggage parsing, not to the number of parsed
+members. Allowed values/properties are not redacted, and trusted extraction
+performs no authentication of its own.

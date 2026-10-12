@@ -2,6 +2,10 @@
 //
 // It is the target-oriented successor to instrumentation/gopostgres and
 // preserves that package's released type and instrumentation identities.
+//
+// Providers/pools are borrowed. Query/acquire start contexts must be paired with
+// exactly one end; cancellation is not automatic completion. Fixed operation
+// names and safe five-byte SQLSTATE data remain caller-supplied contracts.
 package telemetrypostgres
 
 import (

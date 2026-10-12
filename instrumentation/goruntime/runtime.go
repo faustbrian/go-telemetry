@@ -1,5 +1,7 @@
 // Package goruntime exports bounded Go runtime metrics without starting a
-// background collector or registering global providers.
+// background collector or registering global providers. The SDK invokes its
+// callback during collection; it uses runtime.ReadMemStats rather than a context-
+// interruptible sampler. Providers and collection intervals remain caller-owned.
 package goruntime
 
 import (
@@ -23,7 +25,9 @@ type Instrumenter struct {
 
 // New registers observable Go heap, allocation, goroutine, GC-cycle, and
 // cumulative GC-pause instruments on provider. The caller owns the returned
-// registration and must close it before shutting down the provider.
+// registration and must close it before shutting down the provider. A callback
+// reads process-wide counters synchronously; unsigned heap/allocation values
+// saturate at MaxInt64. No RSS/CPU or per-tenant isolation is provided.
 func New(provider metric.MeterProvider) (*Instrumenter, error) {
 	if provider == nil {
 		return nil, errors.New("go runtime meter provider is required")

@@ -5,18 +5,25 @@ resource field as durable and accessible outside the application process.
 
 ## Default exclusions
 
-The supplied instrumentation does not record:
+The supplied wrappers do not record these as their own telemetry attributes:
 
 - HTTP raw paths, queries, hosts, headers, client addresses, bodies, or
   arbitrary methods
 - SQL text, query arguments, database messages, details, or hints
 - cache keys, values, encoded payloads, or loader errors
 - queue messages, handler errors, or panic values
-- arbitrary baggage, resource overrides, or uncontrolled operation names
+- untrusted inbound baggage or reserved resource overrides
+
+This is not a redaction boundary for application-created spans, attributes,
+custom providers, handlers, transports or propagators. Configured resource
+values, allowed baggage values/properties and fixed route/operation labels are
+exported as supplied. Syntax/length validation does not prove safe content.
 
 HTTP methods collapse to `_OTHER`; PostgreSQL operations require a construction
 time allow-list; cache/queue labels are finite enums. SQLSTATE may be recorded
-because it is a bounded protocol code and excludes query values.
+when a `PgError.Code` has five bytes. The tracer checks length, not SQLSTATE
+grammar; synthetic errors must provide safe protocol data. HTTP status is also
+recorded directly from the trusted handler/transport, not range-normalized.
 
 ## Data classification
 
@@ -40,8 +47,12 @@ Do not use baggage for secrets or identifiers.
 ## Error handling
 
 Raw `error.Error()` output often includes URLs, SQL, values, or credentials.
-Adapters use fixed error descriptions and bounded outcome enums. Applications
-adding custom events must classify errors rather than recording their text.
+Wrapper-generated span statuses use fixed descriptions and outcome enums.
+Returned SDK/exporter errors and unwrapped initialization causes can still
+carry sensitive text. `OptionsError` formats caller-supplied Field/Reason
+verbatim; only errors produced by the adapter constructor use categorical
+values. Applications adding custom events must classify errors rather than
+recording their text.
 
 ## Review evidence
 

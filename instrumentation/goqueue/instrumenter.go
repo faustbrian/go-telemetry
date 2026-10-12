@@ -1,5 +1,7 @@
 // Package goqueue provides dependency-neutral handler instrumentation for
-// queue. Message values and raw handler errors are never inspected.
+// queue. Message values and raw handler errors are never inspected by this
+// wrapper. Providers are borrowed; it owns no queue connection, acknowledgement,
+// retry, message propagation or provider shutdown policy.
 package goqueue
 
 import (
@@ -41,9 +43,15 @@ const (
 
 // Config selects the fixed backend and standard providers.
 type Config struct {
-	Backend        Backend
+	// Backend must be a supported finite enum; unknown values are rejected,
+	// not implicitly mapped to BackendOther.
+	Backend Backend
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
 	TracerProvider trace.TracerProvider
-	MeterProvider  metric.MeterProvider
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
 }
 
 // Instrumenter owns bounded queue handler instruments.
@@ -83,7 +91,12 @@ func New(config Config) (*Instrumenter, error) {
 }
 
 // WrapHandler instruments any queue-compatible handler signature without
-// importing or inspecting its message type.
+// importing or inspecting its message type. instrumenter and handler must be
+// usable and non-nil; the wrapper performs no eager nil validation. It passes the
+// derived span context and original message to the handler, returns its original
+// error and records a fixed failure status without formatting error/panic values.
+// Panics are recorded then re-panicked. Concurrent invocations require a safe
+// handler/provider; cancellation only reaches the handler through ctx.
 func WrapHandler[Message any](
 	instrumenter *Instrumenter,
 	handler func(context.Context, Message) error,

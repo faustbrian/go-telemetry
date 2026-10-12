@@ -28,7 +28,8 @@
     {
       "id": "TELEMETRY-DEC-005",
       "digests": [
-        "689aa1b13177ce2d06a7aa2b7279495bd1141337f8b224dc464fb09b59c2ddf9"
+        "689aa1b13177ce2d06a7aa2b7279495bd1141337f8b224dc464fb09b59c2ddf9",
+        "9b85d5127631029b5612e079d6220433c7d4ee1b4a5ba55ababeba7125a684ab"
       ]
     },
     {
@@ -40,7 +41,8 @@
     {
       "id": "TELEMETRY-DEC-007",
       "digests": [
-        "e46f296581c864efa8dffa9c07d16716d117a7b97d15d720da9330b3621098f1"
+        "e46f296581c864efa8dffa9c07d16716d117a7b97d15d720da9330b3621098f1",
+        "098cfb2fa3287d1249a0ef259e6a4b8e15694263c438ed1a1cac3eae82ea881a"
       ]
     }
   ]

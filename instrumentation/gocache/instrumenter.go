@@ -1,5 +1,7 @@
 // Package gocache provides dependency-neutral instrumentation for cache.
-// It intentionally accepts no cache keys or values.
+// It intentionally accepts no cache keys or values. Providers are borrowed and
+// own concurrency/cardinality/export/shutdown policy. The wrapper does not
+// enforce cache cancellation, perform operations or own cache resources.
 package gocache
 
 import (
@@ -53,8 +55,12 @@ const (
 
 // Config selects standard OpenTelemetry providers.
 type Config struct {
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
 	TracerProvider trace.TracerProvider
-	MeterProvider  metric.MeterProvider
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
 }
 
 // EndFunc completes one cache observation. It is safe to call concurrently
@@ -92,7 +98,11 @@ func New(config Config) (*Instrumenter, error) {
 	}, nil
 }
 
-// Begin begins one cache observation without accepting a key or value.
+// Begin starts an observation and returns its span context and one-shot EndFunc.
+// Unknown operation/outcome values collapse to other; a non-nil error overrides
+// outcome with error without inspecting it. The caller must invoke end on every
+// completion/panic path; canceled contexts do not automatically end observations.
+// EndFunc retains the derived context/span until released and uses elapsed wall time.
 func (instrumenter *Instrumenter) Begin(ctx context.Context, operation Operation) (context.Context, EndFunc) {
 	operation = normalizeOperation(operation)
 	attributes := []attribute.KeyValue{attribute.String("cache.operation.name", string(operation))}

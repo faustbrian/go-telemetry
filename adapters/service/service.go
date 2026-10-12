@@ -2,6 +2,10 @@
 //
 // It is the target-oriented successor to telemetryservice and preserves that
 // package's released type, sentinel, lifecycle, and error identities.
+//
+// The adapter requires one ordered Start/Stop lifecycle, owns the created runtime
+// and lends it to callers. Best-effort initialization retains the cause; stopping
+// is one-shot even when the runtime rejects a pre-canceled shutdown call.
 package telemetryservice
 
 import legacy "github.com/faustbrian/go-telemetry/v2/telemetryservice"

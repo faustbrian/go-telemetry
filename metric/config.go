@@ -23,21 +23,38 @@ const (
 
 // Config applies a hard per-stream cardinality budget and explicit views.
 type Config struct {
+	// CardinalityLimit selects the SDK per-stream budget, from 1 through 100000.
+	// Overflow aggregation is not a total memory or instrument-count limit.
 	CardinalityLimit int
-	Views            []ViewConfig
+	// Views contains at most 128 validated stream selectors; unmatched streams
+	// retain SDK defaults rather than acquiring an implicit attribute allow-list.
+	Views []ViewConfig
 }
 
 // ViewConfig controls one metric stream. AllowedAttributes is an allow-list;
 // an empty list records no attributes for the matching stream.
 type ViewConfig struct {
-	Name              string
-	Unit              string
+	// Name selects the instrument name, including SDK wildcard syntax;
+	// it does not rename the output stream. It must match the bounded name grammar.
+	Name string
+	// Unit optionally narrows instrument matching; it does not replace output units.
+	// At most 63 bytes are admitted.
+	Unit string
+	// AllowedAttributes lists at most 128 unique, nonempty UTF-8 keys of
+	// at most 255 bytes. Values are neither validated nor redacted.
 	AllowedAttributes []attribute.Key
-	Boundaries        []float64
-	NoMinMax          bool
+	// Boundaries supplies at most 256 finite, strictly increasing explicit histogram
+	// bounds; Options copies them. An empty slice leaves SDK aggregation unchanged.
+	Boundaries []float64
+	// NoMinMax disables histogram min/max only when Boundaries selects explicit buckets.
+	NoMinMax bool
 }
 
 // Options validates config and returns standard OpenTelemetry SDK options.
+// Views match by Name/Unit, filter keys and optionally select explicit histogram
+// buckets. Boundaries and the allow-key set are captured during construction;
+// caller configuration must not be mutated concurrently. These options do not
+// redact attribute values or constrain arbitrary instrument creation.
 func Options(config Config) ([]sdkmetric.Option, error) {
 	if config.CardinalityLimit <= 0 || config.CardinalityLimit > 100_000 {
 		return nil, errors.New("metric cardinality limit must be between 1 and 100000")
@@ -67,6 +84,8 @@ func Options(config Config) ([]sdkmetric.Option, error) {
 	return options, nil
 }
 
+// validate rejects aggregate inventories before inspecting entries; diagnostics
+// identify categories/indexes rather than echoing caller-controlled labels.
 func (config ViewConfig) validate() error {
 	var errs []error
 	if len(config.AllowedAttributes) > maxAllowedAttributes {

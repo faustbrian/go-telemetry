@@ -22,7 +22,11 @@ var reservedResourceKeys = map[string]struct{}{
 }
 
 // BuildResource constructs the resource used by every enabled signal. Service
-// identity always wins over custom attributes.
+// identity always wins over custom attributes. Reserved generic entries are
+// silently skipped here, whereas Config.Validate and Init reject them. Resource
+// values are copied into SDK attributes, not sanitized. No ambient resource
+// detectors are enabled. ctx cancellation is checked before construction.
+// See TELEMETRY-DEC-006 and the resource/security-admission tests.
 func BuildResource(ctx context.Context, config Config) (*resource.Resource, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err

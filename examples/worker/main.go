@@ -1,4 +1,7 @@
-// Command worker demonstrates a bounded worker telemetry lifecycle.
+// Command worker demonstrates explicit OTLP signals around a once-per-second
+// synthetic job and signal-driven shutdown. It reads example endpoint settings
+// and requires the intended Collector; it does not consume a real queue or prove
+// production cancellation, exporter delivery or a hard process termination bound.
 package main
 
 import (
