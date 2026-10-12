@@ -27,6 +27,11 @@ because providers may already be partially closed. The deadline is propagated
 to providers and exporters; it cannot preempt a custom exporter that ignores
 context cancellation.
 
+Each flush or provider-close operation receives an equal share of the remaining
+deadline. Unused time is available to later operations, but a slow flush cannot
+consume the budget reserved for closing another provider. The aggregate
+deadline is not extended. Partial-initialization cleanup follows the same rule.
+
 ## Service lifecycle adapter
 
 `adapters/service` initializes the runtime during component startup and always

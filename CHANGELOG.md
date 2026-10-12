@@ -5,6 +5,14 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-10-12
+
+### Fixed
+
+- Reserve shutdown time for every provider operation so a slow metric flush
+  cannot skip trace cleanup. Partial-initialization cleanup uses the same
+  bounded allocation; repeated calls still return the original joined result.
+
 ## [2.0.2] - 2026-10-11
 
 ### Security

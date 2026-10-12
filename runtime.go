@@ -206,14 +206,14 @@ func Init(ctx context.Context, config Config, opts ...Option) (*Runtime, error) 
 func (r *Runtime) cleanup(ctx context.Context) error {
 	bounded, cancel := boundedCleanupContext(ctx, r.config.ShutdownTimeout)
 	defer cancel()
-	var errs []error
+	var steps []func(context.Context) error
 	if r.sdkMeter != nil {
-		errs = append(errs, r.shutdownMeter(bounded))
+		steps = append(steps, r.shutdownMeter)
 	}
 	if r.sdkTracer != nil {
-		errs = append(errs, r.shutdownTracer(bounded))
+		steps = append(steps, r.shutdownTracer)
 	}
-	return errors.Join(errs...)
+	return runCleanupSteps(bounded, steps...)
 }
 
 func boundedCleanupContext(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
@@ -329,18 +329,33 @@ func (r *Runtime) Shutdown(ctx context.Context) error {
 		globalRuntime.Unlock()
 	}
 
-	var errs []error
+	var steps []func(context.Context) error
 	if r.sdkMeter != nil {
-		errs = append(errs, r.sdkMeter.ForceFlush(bounded))
-		errs = append(errs, r.shutdownMeter(bounded))
+		steps = append(steps, r.sdkMeter.ForceFlush, r.shutdownMeter)
 	}
 	if r.sdkTracer != nil {
-		errs = append(errs, r.sdkTracer.ForceFlush(bounded))
-		errs = append(errs, r.shutdownTracer(bounded))
+		steps = append(steps, r.sdkTracer.ForceFlush, r.shutdownTracer)
 	}
-	r.shutdownErr = errors.Join(errs...)
+	r.shutdownErr = runCleanupSteps(bounded, steps...)
 
 	return r.shutdownErr
+}
+
+// Reserve a share of the one bounded deadline for every remaining operation.
+// A slow flush must not spend the time needed to close later providers.
+func runCleanupSteps(ctx context.Context, steps ...func(context.Context) error) error {
+	deadline, _ := ctx.Deadline() // All callers supply a bounded context.
+	var errs []error
+	for index, step := range steps {
+		budget := time.Until(deadline) / time.Duration(len(steps)-index)
+		bounded, cancel := context.WithTimeout(ctx, budget)
+		err := func() error {
+			defer cancel()
+			return step(bounded)
+		}()
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
 }
 
 func (r *Runtime) shutdownTracer(ctx context.Context) error {
