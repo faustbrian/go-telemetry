@@ -208,3 +208,12 @@ active fuzz, benchmarks, compatibility matrix, online authority refresh or publi
 consumer/release campaign ran. Existing test evidence was inspected, not newly
 executed. Remote main and exact-source hosted CI remain coordinator-owned;
 this audit does not certify their state or any deployed telemetry outcome.
+
+## Objective Enforcement
+
+The checksum-pinned public Tools v2.4.0 verifier now supplies
+`make source-docs-check` as a prerequisite of the existing local and CI Make
+routes. Ordinary shared CI selects strict source-documentation checking and
+requires its result. Native prerequisites, operation budgets, security and
+release controls are retained. Hosted exact-head evidence is recorded by the
+coordination ledger; configuration alone does not establish green delivery.

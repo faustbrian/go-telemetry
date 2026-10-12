@@ -3,15 +3,15 @@ SHELL := /usr/bin/env bash
 GOLIB ?= golib
 GO ?= go
 
-.PHONY: benchmark check check-full ci cohesion fuzz inventory race repository-check specification-check specification-check-online
+.PHONY: source-docs-check benchmark check check-full ci cohesion fuzz inventory race repository-check specification-check specification-check-online
 
-check:
+check: source-docs-check
 	$(GOLIB) check --local --all
 
-check-full: specification-check-online
+check-full: source-docs-check specification-check-online
 	$(GOLIB) check --all
 
-ci: repository-check cohesion specification-check check
+ci: source-docs-check repository-check cohesion specification-check check
 
 cohesion:
 	$(GOLIB) cohesion check
@@ -36,3 +36,6 @@ fuzz:
 
 benchmark:
 	$(GO) test -run '^$$' -bench . -benchtime=100ms ./...
+
+source-docs-check:
+	$(GOLIB) source-docs check
