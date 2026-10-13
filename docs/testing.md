@@ -1,5 +1,8 @@
 # Testing and failure injection
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Fast deterministic tests
 
 `testtelemetry.New` provides sequential IDs, an in-memory span recorder, and a

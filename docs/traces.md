@@ -1,5 +1,8 @@
 # Traces
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Provider configuration
 
 Tracing uses a standard SDK tracer provider and bounded batch processor.

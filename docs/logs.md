@@ -1,5 +1,8 @@
 # Log signal stability
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 This module deliberately exposes no stable OpenTelemetry log provider,
 exporter, bridge, or global registration.
 

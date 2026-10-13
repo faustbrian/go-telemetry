@@ -1,5 +1,8 @@
 # Instrumentation
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 All adapters accept standard providers and borrow their lifecycle. Nil providers
 on the HTTP/cache/queue/pgx constructors choose no-ops, not process globals. Pass
 runtime providers explicitly even when globals are registered. The runtime

@@ -1,5 +1,8 @@
 # Release process
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Preconditions
 
 - `CHANGELOG.md` contains every user-visible change.

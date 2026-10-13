@@ -1,5 +1,8 @@
 # Local development
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## No Collector
 
 Disable export when telemetry is irrelevant to the task:

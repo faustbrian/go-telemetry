@@ -1,5 +1,8 @@
 # Privacy
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 Telemetry is an external data flow. Treat every exported attribute, event, and
 resource field as durable and accessible outside the application process.
 

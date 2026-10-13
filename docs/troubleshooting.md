@@ -1,5 +1,8 @@
 # Troubleshooting
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## No telemetry arrives
 
 1. Confirm the signal is enabled and `Init` succeeded.

@@ -1,5 +1,8 @@
 # Sampling
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Modes
 
 The `trace` package supports `always_on`, `always_off`, and deterministic

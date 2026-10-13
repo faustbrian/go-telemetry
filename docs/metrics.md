@@ -1,5 +1,8 @@
 # Metrics
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Provider and export
 
 Metrics use a standard SDK meter provider and periodic reader. The default

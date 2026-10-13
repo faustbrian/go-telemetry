@@ -1,5 +1,8 @@
 # Published security disposition
 
+[Documentation map](../index.md) · [Repository README](../../README.md)
+[Next: FAQ](../faq.md)
+
 Reviewed on 2026-10-07 by telemetry maintainers. This document distinguishes
 historical source behavior, corrected library controls, upstream dependency
 selection and deployment impact. It is not a claim that every application

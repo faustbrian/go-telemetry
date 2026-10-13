@@ -1,5 +1,8 @@
 # Architecture
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Boundaries
 
 Applications own `Config` and call `Init`. The root runtime owns the resource,

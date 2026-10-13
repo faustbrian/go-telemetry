@@ -1,5 +1,8 @@
 # Collector deployment
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 `telemetry` emits standard OTLP and expects a Collector to own routing,
 tail-sampling, enrichment, transformation, buffering, and vendor export.
 

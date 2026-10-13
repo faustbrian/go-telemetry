@@ -1,5 +1,8 @@
 # Kubernetes adoption
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Topology
 
 Send OTLP to a Collector sidecar, node agent, or cluster service. A cluster

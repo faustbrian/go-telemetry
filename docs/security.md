@@ -1,5 +1,8 @@
 # Security
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 The reporting process is in the repository-level [security policy](../SECURITY.md).
 This guide describes deployment controls.
 

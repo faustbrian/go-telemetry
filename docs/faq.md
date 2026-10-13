@@ -1,5 +1,8 @@
 # FAQ
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 ## Does this replace OpenTelemetry?
 
 No. It constructs and returns standard OpenTelemetry providers, tracers,

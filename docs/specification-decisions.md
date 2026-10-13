@@ -1,5 +1,8 @@
 # Telemetry specification decisions
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 This register records every material standards choice owned by the telemetry
 runtime. Source bytes and change authorities are pinned in the
 [manifest](../specification/manifest.tsv) and

@@ -1,9 +1,7 @@
 # telemetry
 
 [![CI](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
-[![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-risk_based-blue)](CONTRIBUTING.md#verification)
-[![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
+[![Documentation](https://img.shields.io/badge/docs-adoption_and_API-blue)](docs/index.md)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry/v2.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry/v2)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
@@ -18,6 +16,16 @@ The package targets an OpenTelemetry Collector. It does not wrap vendor SDKs,
 replace OpenTelemetry types, read configuration implicitly, or add log-signal
 stability promises.
 
+## Adoption entry points
+
+The root module is `github.com/faustbrian/go-telemetry/v2` (stable).
+It requires Go 1.27.0. Pin the published `v2.0.3` root tag
+with `go get github.com/faustbrian/go-telemetry/v2@v2.0.3`.
+Root subpackages share this module; they need no separate installation.
+
+Start with the [documentation map](docs/index.md) for package selection,
+examples, operational constraints, and contributor references.
+
 ## Requirements
 
 - Go 1.27
@@ -30,9 +38,9 @@ stability promises.
 go get github.com/faustbrian/go-telemetry/v2@v2.0.0
 ```
 
-The v2 module has breaking security defaults. Resolve the public `v2.0.0`
-tag before adopting it; until that tag is available, remain on the released
-v1 module. See the [migration notes](docs/compatibility.md#version-2-migration).
+The published v2 module has breaking security defaults. Existing v1 consumers
+must migrate explicitly; v1 and v2 retain separate module identities. See the
+[migration notes](docs/compatibility.md#version-2-migration).
 
 ## Quick start
 
@@ -148,8 +156,8 @@ Observable OTLP, W3C propagation, baggage, and semantic-convention choices are
 recorded in the [specification decision register](docs/specification-decisions.md).
 
 Shared construction, ownership, lifecycle, and composition expectations are in
-the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)
-and its [Observability family](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
+the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md)
+and its [Observability family](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/design-language.md#package-families-and-selection).
 
 Runnable commands are in [`examples/service`](examples/service) and
 [`examples/worker`](examples/worker).

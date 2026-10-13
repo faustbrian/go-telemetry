@@ -1,5 +1,8 @@
 # Threat model
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 - **Version:** 2026-09-13
 - **Owner:** telemetry maintainers
 - **Next residual-risk review:** 2026-11-07, or sooner on a listed review

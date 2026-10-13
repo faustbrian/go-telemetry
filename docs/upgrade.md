@@ -1,5 +1,8 @@
 # Upgrade guide
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 Version 2 is published under the `/v2` module path. To upgrade from version
 1, follow the [version 2 migration](compatibility.md#version-2-migration).
 

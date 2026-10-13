@@ -1,5 +1,8 @@
 # Graceful shutdown
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Order
 
 1. Stop accepting new requests or jobs.

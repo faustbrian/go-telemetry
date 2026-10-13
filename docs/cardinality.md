@@ -1,5 +1,8 @@
 # Cardinality
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 Metric cardinality is the product of every distinct attribute value
 combination. One unbounded identifier can exhaust memory in the service,
 Collector, and backend.

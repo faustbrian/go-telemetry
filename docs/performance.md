@@ -1,5 +1,8 @@
 # Performance
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 Telemetry must have finite CPU, allocation, memory, network, and shutdown cost.
 
 ## Baseline

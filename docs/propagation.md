@@ -1,5 +1,8 @@
 # Propagation
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: FAQ](faq.md)
+
 ## Default policy
 
 W3C `traceparent` and `tracestate` are accepted within an 8 KiB combined

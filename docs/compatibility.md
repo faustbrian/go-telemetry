@@ -1,5 +1,8 @@
 # Compatibility
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Architecture](architecture.md)
+
 V2 callers configuring CA, client-certificate, or private-key paths
 must supply `TLS.FileReader`, implementing `otlp.TLSFileReader` with
 `ReadFile(ctx context.Context, path string, maxBytes int) ([]byte, error)`.

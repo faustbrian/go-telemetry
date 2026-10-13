@@ -1,5 +1,8 @@
 # Telemetry specification conformance
 
+[Documentation map](../docs/index.md) · [Repository README](../README.md)
+[Next: Documentation map](../docs/index.md)
+
 The root module owns observable profiles for OTLP 1.10.0, W3C Trace Context,
 W3C Baggage, and OpenTelemetry Semantic Conventions 1.40.0. The [decision
 register](../docs/specification-decisions.md) defines the exact claim
