@@ -57,3 +57,17 @@ still lists the 2024 Candidate Recommendation Snapshot. Neither history page
 establishes a new Recommendation replacing the pinned owned profile. This
 monitoring acknowledgement does not certify security qualification or broaden
 the existing conformance claims; subsequent byte drift still fails closed.
+
+## Publication monitoring review, 2026-10-15
+
+All eight authorities were retrieved again. The four pinned normative sources
+and both OpenTelemetry release feeds remain byte-identical. Only the Trace
+Context and Baggage publication-history pages changed bytes. Their latest
+listed publications remain the 2021 Trace Context Recommendation and the
+2024 Baggage Candidate Recommendation Snapshot, respectively. The monitored
+Trace Context URL still redirects to the Level 1 history page.
+
+Only the two reviewed monitoring digests and review date change; normative
+pins, decision history, dependencies and runtime profiles remain unchanged.
+This acknowledgement does not claim newer conformance or release readiness,
+and later byte drift still requires review.

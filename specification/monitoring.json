@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at": "2026-10-07",
+  "reviewed_at": "2026-10-15",
   "review_interval_days": 90,
   "authorities": [
     {
@@ -30,7 +30,7 @@
       "id": "trace-context-releases",
       "kind": "releases",
       "url": "https://www.w3.org/standards/history/trace-context/",
-      "sha256": "70e2dad402936139fafff07cc28c6739e3d3bb8be4ca0550107cf21216533832",
+      "sha256": "5906c82cbc8ee304b3cdf141df797f7467b79b0d9669657ca17b0656e6b16ab6",
       "specifications": ["W3C Trace Context Level 1 Recommendation 2021-11-23"]
     },
     {
@@ -45,7 +45,7 @@
       "id": "baggage-releases",
       "kind": "releases",
       "url": "https://www.w3.org/standards/history/baggage/",
-      "sha256": "2a4f46631488bc0765b1f66be41efbe37d302b8328f46846669d32759ed5ce1b",
+      "sha256": "38bd59bf0c959ae6cce0d03dcd56462aeb76582efc9a7d0eb828a0cdfad3d10c",
       "specifications": ["W3C Baggage Candidate Recommendation 2024-05-30"]
     },
     {
