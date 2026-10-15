@@ -3,7 +3,7 @@ module github.com/faustbrian/go-telemetry/v2
 go 1.27.0
 
 require (
-	github.com/faustbrian/go-service v1.1.3
+	github.com/faustbrian/go-service v1.1.4
 	github.com/faustbrian/go-service/v2 v2.0.0
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/jackc/pgx/v5 v5.11.0
