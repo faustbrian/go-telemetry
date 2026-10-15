@@ -60,7 +60,7 @@ case "$1 $2" in
     for module in "$@"; do
       case "$module" in
         go.opentelemetry.io/otel*)
-          version=v1.45.0
+          version=v1.46.0
           replacement=direct
           if [ "$FAKE_MODE" = uplift ] && [ "$module" = go.opentelemetry.io/otel ]; then version=v1.47.0; fi
           if [ "$FAKE_MODE" = replacement ] && [ "$module" = go.opentelemetry.io/otel ]; then replacement=replaced; fi
@@ -82,7 +82,7 @@ esac
 			}
 			capture := filepath.Join(root, "test-profile")
 			// #nosec G204 -- runs the fixed repository script without shell interpolation.
-			command := exec.CommandContext(t.Context(), "sh", script, "v1.45.0")
+			command := exec.CommandContext(t.Context(), "sh", script, "v1.46.0")
 			command.Dir = root
 			command.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"),
 				"TMPDIR="+root, "FAKE_MODE="+scenario.name, "FAKE_CAPTURE="+capture)

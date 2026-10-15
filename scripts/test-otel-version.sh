@@ -41,5 +41,5 @@ do
 done
 printf 'Go toolchain: %s\n%s\n' "$(go env GOVERSION)" "$resolved"
 profile=selected
-case "$version" in v1.45.*|v1.46.*) profile=minimum-common ;; esac
+case "$version" in v1.46.*) profile=minimum-common ;; esac
 TELEMETRY_OTEL_TEST_PROFILE=$profile go test "-modfile=$modfile" ./...

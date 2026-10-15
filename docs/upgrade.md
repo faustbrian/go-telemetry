@@ -23,12 +23,12 @@ describes the current tested tuple. To qualify a uniform version selection,
 run the compatibility script from the repository root:
 
 ```sh
-./scripts/test-otel-version.sh v1.45.0
+./scripts/test-otel-version.sh v1.46.0
 ```
 
 The script uses disposable module files, verifies that every selected API,
 SDK, and exporter resolves to the requested version without replacements,
-and leaves `go.mod` and `go.sum` unchanged. Its 1.45/1.46 rows exercise common
+and leaves `go.mod` and `go.sum` unchanged. Its 1.46 row exercises common
 behavior with ordinary integer counters and zero-threshold histograms. They
 do not claim the selected 1.47 lossless large-counter and nonzero-threshold
 repairs. Ordinary tests retain those strict selected-version assertions;

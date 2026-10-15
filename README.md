@@ -29,7 +29,7 @@ examples, operational constraints, and contributor references.
 ## Requirements
 
 - Go 1.27
-- OpenTelemetry Go 1.45.x or later compatible releases
+- OpenTelemetry Go API 1.46.x or later with a qualified SDK/exporter tuple
 - an OTLP-compatible Collector for production export
 
 ## Installation

@@ -15,6 +15,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   selectors with consuming applications. Metric names, units and safe labels
   remain unchanged.
 - Bind the Service adapter's sole `Component()` directly to Service v2.
+- Qualify the uniform OpenTelemetry 1.46 profile; Correlation requires API
+  1.46, so the former uniform 1.45 minimum is no longer advertised.
 
 ### Removed
 

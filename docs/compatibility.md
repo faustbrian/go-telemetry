@@ -29,7 +29,8 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | Component | Supported |
 | --- | --- |
 | Go | 1.27.x |
-| OpenTelemetry Go API/SDK/exporters | 1.45.x minimum |
+| OpenTelemetry Go API | 1.46.x minimum |
+| SDK/exporters | Selected mixed tuple below; uniform compatibility profile 1.46.0 |
 | OTLP | gRPC and HTTP/protobuf Collector endpoints |
 | PostgreSQL adapter | pgx/v5 5.10.x minimum; selected 5.11.0 |
 
@@ -54,14 +55,16 @@ Focused driver tests use an explicitly supplied disposable PostgreSQL fixture
 to exercise query privacy, cached-deallocation failure, and pool acquisition.
 Ordinary tests without that fixture exercise the existing callback contracts.
 
-The historical 1.45 minimum does not imply bug-for-bug equivalence with the
+The Correlation dependency requires OpenTelemetry API 1.46.0, so the former
+uniform 1.45 profile cannot resolve in this module graph and is not supported.
+The uniform 1.46 profile does not imply bug-for-bug equivalence with the
 selected tuple. SDK 1.45 and 1.46 round some integer counter values above the
 exact float64 integer range during aggregation; lossless large counters require
 SDK 1.47. This upstream defect is tracked by
 [OpenTelemetry issue 8980](https://github.com/open-telemetry/opentelemetry-go/issues/8980)
 and fixed in 1.47. The large-integer collector regression passes on the selected
-tuple and deliberately fails when the SDK is downgraded to 1.45; do not treat
-that downgrade as full-suite validation of the minimum. The compatibility
+tuple and is excluded from the common 1.46 profile; do not treat that profile
+as qualification of the selected 1.47 repairs. The compatibility
 script verifies the requested resolved module graph and qualifies common
 behavior with ordinary integer counters. Its minimum histogram fixture uses
 a zero threshold; preserving a nonzero exponential-histogram zero threshold
