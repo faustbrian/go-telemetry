@@ -143,6 +143,10 @@ sampling, and propagation. The adapter exposes the concrete runtime, performs
 no retries, and delegates deadline-propagated flush, shutdown, and conditional
 global restoration to `Runtime.Shutdown`.
 
+Use `ComponentV2()` with `github.com/faustbrian/go-service/v2`; `Component()`
+retains its Service v1 type. Both bind the same runtime and callbacks. Register
+only one component per adapter; neither binding supports restart.
+
 Required initialization failures stop service startup. Best-effort failures
 permit startup and remain available through `InitializationError`; no
 readiness check is added because telemetry availability does not determine

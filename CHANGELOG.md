@@ -5,6 +5,14 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-15
+
+### Added
+
+- Add `ComponentV2` to the service adapter for native Service v2 composition,
+  retaining the Service v1 binding and one shared runtime lifecycle, failure
+  policy and shutdown result.
+
 ### Changed
 
 - Clarify best-effort export, borrowed provider/transport ownership, configuration
