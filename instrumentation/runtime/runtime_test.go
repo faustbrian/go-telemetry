@@ -3,6 +3,7 @@ package telemetryruntime
 import (
 	"context"
 	"errors"
+	"math"
 	"runtime"
 	"testing"
 
@@ -11,6 +12,8 @@ import (
 	metricexport "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 )
+
+const firstOverflowingInt64 = uint64(math.MaxInt64) + 1
 
 func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
 	t.Parallel()
@@ -29,6 +32,9 @@ func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
 	var metrics metricdata.ResourceMetrics
 	if err := reader.Collect(context.Background(), &metrics); err != nil {
 		t.Fatalf("Collect() error = %v", err)
+	}
+	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/runtime" {
+		t.Fatalf("instrumentation scope = %q, want canonical identity", metrics.ScopeMetrics[0].Scope.Name)
 	}
 	want := map[string]bool{
 		"go.memory.heap.used": false,
@@ -140,7 +146,7 @@ func TestNewRejectsMissingProviderAndReportsEveryInstrumentFailure(t *testing.T)
 	}
 }
 
-func TestNilClose(t *testing.T) {
+func TestNilCloseAndUnsignedBounds(t *testing.T) {
 	t.Parallel()
 
 	if err := (*Instrumenter)(nil).Close(); err != nil {
@@ -148,6 +154,18 @@ func TestNilClose(t *testing.T) {
 	}
 	if err := (&Instrumenter{}).Close(); err != nil {
 		t.Fatalf("unregistered Close() error = %v", err)
+	}
+	if got := boundedUint64(0); got != 0 {
+		t.Fatalf("bounded zero = %d", got)
+	}
+	if got := boundedUint64(uint64(math.MaxInt64)); got != math.MaxInt64 {
+		t.Fatalf("bounded maximum = %d", got)
+	}
+	if got := boundedUint64(firstOverflowingInt64); got != math.MaxInt64 {
+		t.Fatalf("bounded first overflow = %d", got)
+	}
+	if got := boundedUint64(math.MaxUint64); got != math.MaxInt64 {
+		t.Fatalf("bounded overflow = %d", got)
 	}
 }
 

@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-adoption_and_API-blue)](docs/index.md)
-[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry/v2.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry/v3.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry/v3)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -18,9 +18,9 @@ stability promises.
 
 ## Adoption entry points
 
-The root module is `github.com/faustbrian/go-telemetry/v2` (stable).
-It requires Go 1.27.0. Pin the published `v2.0.3` root tag
-with `go get github.com/faustbrian/go-telemetry/v2@v2.0.3`.
+The root module is `github.com/faustbrian/go-telemetry/v3` (stable).
+It requires Go 1.27.0. Pin the `v3.0.0` root tag
+with `go get github.com/faustbrian/go-telemetry/v3@v3.0.0`.
 Root subpackages share this module; they need no separate installation.
 
 Start with the [documentation map](docs/index.md) for package selection,
@@ -35,12 +35,12 @@ examples, operational constraints, and contributor references.
 ## Installation
 
 ```sh
-go get github.com/faustbrian/go-telemetry/v2@v2.0.0
+go get github.com/faustbrian/go-telemetry/v3@v3.0.0
 ```
 
-The published v2 module has breaking security defaults. Existing v1 consumers
-must migrate explicitly; v1 and v2 retain separate module identities. See the
-[migration notes](docs/compatibility.md#version-2-migration).
+Version 3 removes obsolete package owners, compatibility aliases and dual
+Service bindings. Migrate imports, component bindings and instrumentation-scope
+selectors together; see the [migration notes](docs/compatibility.md#version-3-migration).
 
 ## Quick start
 
@@ -51,7 +51,7 @@ import (
 	"context"
 	"log"
 
-	telemetry "github.com/faustbrian/go-telemetry/v2"
+	telemetry "github.com/faustbrian/go-telemetry/v3"
 )
 
 func main() {
@@ -87,7 +87,7 @@ owned by the runtime, and joins provider and exporter failures. As with the
 standard OpenTelemetry interfaces, a custom exporter must cooperate with
 context cancellation for that deadline to bound its call.
 
-## Version 2 safe defaults
+## Security defaults
 
 | Setting | Default |
 | --- | --- |
@@ -115,7 +115,6 @@ for an authenticated, policy-protected local or same-cluster connection.
 - `metric`: views, histogram boundaries, attribute allow-lists, and cardinality
 - `propagation`: bounded W3C trace context and trusted baggage policies
 - `instrumentation/nethttp`: private-by-default `net/http` server and client
-- `instrumentation/httpclient`: `http-client` RoundTripper adapter
 - `instrumentation/postgres`: pgx query tracer for `postgres`
 - `instrumentation/cache`: dependency-neutral `cache` observations
 - `instrumentation/queue`: dependency-neutral `queue` handler wrapper
@@ -123,12 +122,11 @@ for an authenticated, policy-protected local or same-cluster connection.
 - `adapters/service`: explicit `service` lifecycle initialization and shutdown
 - `testtelemetry`: deterministic in-memory providers and snapshots
 
-The former `instrumentation/go{cache,httpclient,postgres,queue,runtime}` and
-`telemetryservice` paths remain source-compatible. The HTTP client path is a
-forwarding facade; packages with released named-type or sentinel identity stay
-the explicit compatibility implementations used by their target-oriented
-successors. New code should use the target-oriented paths above; see the
-[compatibility guide](docs/compatibility.md) for the migration map.
+Each package above owns its implementation. Obsolete `go*` instrumentation,
+`telemetryservice` and HTTP-client facade packages are absent. Standard HTTP
+clients use `instrumentation/nethttp.NewTransport`; no alternate wrapper or
+legacy import path is retained. See the
+[migration guide](docs/compatibility.md#version-3-migration).
 
 Instrumentation never records raw URL paths, queries, hosts, headers, client
 addresses, SQL, query arguments, database error text, cache keys or values,
@@ -143,9 +141,9 @@ sampling, and propagation. The adapter exposes the concrete runtime, performs
 no retries, and delegates deadline-propagated flush, shutdown, and conditional
 global restoration to `Runtime.Shutdown`.
 
-Use `ComponentV2()` with `github.com/faustbrian/go-service/v2`; `Component()`
-retains its Service v1 type. Both bind the same runtime and callbacks. Register
-only one component per adapter; neither binding supports restart.
+`Component()` returns `github.com/faustbrian/go-service/v2.Component` directly.
+There is no Service v1 dependency or alternate component method. Register one
+component per adapter; the lifecycle does not support restart.
 
 Required initialization failures stop service startup. Best-effort failures
 permit startup and remain available through `InitializationError`; no

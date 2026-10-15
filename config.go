@@ -23,10 +23,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	telemetrymetric "github.com/faustbrian/go-telemetry/v2/metric"
-	telemetryotlp "github.com/faustbrian/go-telemetry/v2/otlp"
-	telemetrypropagation "github.com/faustbrian/go-telemetry/v2/propagation"
-	telemetrytrace "github.com/faustbrian/go-telemetry/v2/trace"
+	telemetrymetric "github.com/faustbrian/go-telemetry/v3/metric"
+	telemetryotlp "github.com/faustbrian/go-telemetry/v3/otlp"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v3/propagation"
+	telemetrytrace "github.com/faustbrian/go-telemetry/v3/trace"
 )
 
 const (

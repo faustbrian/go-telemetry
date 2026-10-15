@@ -3,7 +3,7 @@
 [Documentation map](index.md) · [Repository README](../README.md)
 [Next: Architecture](architecture.md)
 
-V2 callers configuring CA, client-certificate, or private-key paths
+Callers configuring CA, client-certificate, or private-key paths
 must supply `TLS.FileReader`, implementing `otlp.TLSFileReader` with
 `ReadFile(ctx context.Context, path string, maxBytes int) ([]byte, error)`.
 The runtime forwards that reader to both trace and metric exporters; direct
@@ -77,18 +77,15 @@ runtime does not expose the replacement reader option. Applications using that
 setting must reassess export sizing. These supplier-specific bounds describe
 the selected tuple, not identical defaults across every supported selection.
 
-Stable compatibility covers exported root, `otlp`, `trace`, `metric`,
+Within version 3, stable compatibility covers exported root, `otlp`, `trace`, `metric`,
 `propagation`, instrumentation, and `testtelemetry` APIs; default values;
 resource and metric names; propagation and privacy policies; and lifecycle
 error behavior.
 
-## Version 2 migration
+## Security and lifecycle requirements
 
-Version 2 is published as `github.com/faustbrian/go-telemetry/v2` and
-resolves through the public Go proxy. When upgrading from version 1,
-migrate imports to `/v2`, explicitly enable required
-signals and global registration, and opt into plaintext only for a protected
-local or same-trust-zone Collector:
+Explicitly enable required signals and global registration. Opt into
+plaintext only for a protected local or same-trust-zone Collector:
 
 ```go
 config := telemetry.DefaultConfig("orders", "2.0.0")
@@ -119,33 +116,42 @@ handler; the callback must return promptly because it cannot be preempted. A
 pre-canceled shutdown call no longer consumes the single owned
 shutdown attempt; after shutdown begins, every call shares the terminal result.
 
-Update telemetry imports and module requirements together in each consuming
-module, including optional compatibility and integration fixtures. Version 1
-and `/v2` are distinct module paths; publication does not migrate consumers
-automatically.
+## Version 3 migration
 
-## Target-oriented package migration
+Select `github.com/faustbrian/go-telemetry/v3@v3.0.0` and migrate every maintained
+consumer module, including examples and nested integration fixtures. Remove the
+old module requirement after its final import is migrated; verify the resolved
+module graph rather than relying on `go.sum` entries.
 
-The following released paths remain deprecated compatibility paths. They
-preserve public signatures, named-type and sentinel identity, defaults,
-instrumentation identity, ownership, concurrency, and error behavior. The HTTP
-client path forwards to its target-oriented implementation. Where moving a
-released named type or sentinel would change reflection or error identity, the
-released path remains the explicit compatibility implementation and the
-target-oriented path delegates to it.
+Version 3 has one implementation at each canonical path. The old paths are
+removed, not deprecated aliases or forwarding adapters:
 
-| Legacy path | Preferred path |
+| Removed path | Canonical v3 path |
 | --- | --- |
 | `instrumentation/gocache` | `instrumentation/cache` |
-| `instrumentation/gohttpclient` | `instrumentation/httpclient` |
+| `instrumentation/gohttpclient`, `instrumentation/httpclient` | `instrumentation/nethttp` |
 | `instrumentation/gopostgres` | `instrumentation/postgres` |
 | `instrumentation/goqueue` | `instrumentation/queue` |
 | `instrumentation/goruntime` | `instrumentation/runtime` |
 | `telemetryservice` | `adapters/service` |
 
-The migration changes imports only. Cache integrations may additionally move
-from `Instrumenter.Start` to its target-oriented successor
-`Instrumenter.Begin`; `Start` delegates to `Begin` and remains compatible.
+Use `cache.Instrumenter.Begin`; `Start` is removed. HTTP client construction
+uses `nethttp.NewTransport` with `nethttp.ClientConfig`. The Service adapter's
+sole `Component()` returns a Service v2 component directly; `ComponentV2()` and
+the Service v1 binding are removed. Keep required versus best-effort startup,
+provider ownership and application-before-telemetry drain policy explicit.
+
+The canonical packages now own named types, context keys and sentinels. Do not
+mix old and new tracer contexts or rely on former cross-package type/sentinel
+identity. There is no compatibility bridge between module generations.
+
+Instrumentation scopes now match their canonical major-qualified paths:
+`github.com/faustbrian/go-telemetry/v3/instrumentation/` followed by `cache`,
+`postgres`, `queue`, `runtime` or `nethttp`. Migrate Collector/dashboard/query
+selectors with the application. Metric names, units and categorical labels
+remain unchanged; do not dual-emit or sum duplicate pool gauges from the
+separate PostgreSQL observer. Library publication alone does not update live
+selectors or applications.
 
 Collector vendors are compatible when they implement standard OTLP. Vendor
 extensions, proprietary authentication helpers, and direct ingestion APIs are

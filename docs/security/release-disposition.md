@@ -101,9 +101,10 @@ or a blanket affected-version assessment of every consumer.
 
 ## Upgrade and disclosure disposition
 
-The supported line is v2, as stated in the [security policy](../../SECURITY.md).
-Upgrade to the latest supported release using
-`github.com/faustbrian/go-telemetry/v2` and Go 1.27. Review explicit signal and
+The inspected baseline is v2, using `github.com/faustbrian/go-telemetry/v2`.
+This historical source review is not qualification of version 3. Current support
+follows the [security policy](../../SECURITY.md); current adoption follows the
+[version 3 migration](../compatibility.md#version-3-migration). Review explicit signal and
 transport choices, finite configuration limits, caller-owned TLS readers,
 request-specific baggage proof and shutdown ownership before deployment.
 Version 1 is unsupported; no original-module patch is promised.

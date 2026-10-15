@@ -17,11 +17,11 @@ reporter data and credentials do not enter public artifacts.
 
 ## Supported versions
 
-Security fixes target the latest published major. Version 2.0.x is the
-supported line following publication of v2.0.0; v1 receives no further
-security fixes. Consumers that
-cannot migrate must assess the documented v2 behavior changes and their
-exposure on the unsupported v1 line.
+Security fixes target the latest published major; earlier major lines receive
+no further fixes. Follow the [current migration guide](docs/compatibility.md#version-3-migration)
+when adopting version 3, including canonical package imports, Service binding
+and instrumentation-scope selectors. Publication does not migrate consumers or
+establish that their deployed dependency graph has been rebuilt.
 
 See the [published security disposition](docs/security/release-disposition.md)
 for inspected source versions, corrected boundaries and upgrade guidance.

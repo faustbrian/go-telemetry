@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	telemetrymetric "github.com/faustbrian/go-telemetry/v2/metric"
-	telemetrypropagation "github.com/faustbrian/go-telemetry/v2/propagation"
-	telemetrytrace "github.com/faustbrian/go-telemetry/v2/trace"
+	telemetrymetric "github.com/faustbrian/go-telemetry/v3/metric"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v3/propagation"
+	telemetrytrace "github.com/faustbrian/go-telemetry/v3/trace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"

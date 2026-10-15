@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,6 +33,9 @@ func TestTracerRecordsPoolAcquireWaitAndOutcome(t *testing.T) {
 	metrics, err := harness.Metrics(context.Background())
 	if err != nil {
 		t.Fatalf("Metrics() during acquire error = %v", err)
+	}
+	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/postgres" {
+		t.Fatalf("instrumentation scope = %q, want canonical identity", metrics.ScopeMetrics[0].Scope.Name)
 	}
 	if got := int64MetricValue(t, metrics, "db.client.connection.waiting"); got != 1 {
 		t.Fatalf("waiting acquisitions = %d, want 1", got)
@@ -247,7 +250,7 @@ func TestConfigRejectsUnboundedOperationContracts(t *testing.T) {
 func TestConfigAcceptsMaximumOperationContract(t *testing.T) {
 	t.Parallel()
 
-	operations := make([]string, 128)
+	operations := make([]string, maxOperations)
 	for index := range operations {
 		operations[index] = fmt.Sprintf("operation.%d", index)
 	}
@@ -284,7 +287,7 @@ func TestTraceQueryEndOnlyEndsItsOwnedSpan(t *testing.T) {
 	childCtx, child := harness.TracerProvider().Tracer("test").Start(queryCtx, "child")
 	tracer.TraceQueryEnd(childCtx, nil, pgx.TraceQueryEndData{})
 	spans := harness.Spans()
-	if len(spans) != 1 || spans[0].Name != "postgresql.query" {
+	if len(spans) != 1 || spans[0].Name != defaultOperation {
 		t.Fatalf("ended spans = %+v, want only owned query span", spans)
 	}
 

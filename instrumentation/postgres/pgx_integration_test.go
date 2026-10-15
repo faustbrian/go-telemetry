@@ -1,4 +1,4 @@
-package gopostgres_test
+package telemetrypostgres_test
 
 import (
 	"context"
@@ -15,9 +15,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
-	"github.com/faustbrian/go-telemetry/v2/instrumentation/gopostgres"
-	postgres "github.com/faustbrian/go-telemetry/v2/instrumentation/postgres"
-	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
+	postgres "github.com/faustbrian/go-telemetry/v3/instrumentation/postgres"
+	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
 )
 
 // These driver-dispatch checks require an explicitly supplied disposable
@@ -51,7 +50,7 @@ func pgxFixtureHarness(t *testing.T) *testtelemetry.Harness {
 func TestPGXDriverClosesCachedDeallocationFailure(t *testing.T) {
 	config := pgxFixtureConfig(t)
 	harness := pgxFixtureHarness(t)
-	tracer, err := gopostgres.New(gopostgres.Config{
+	tracer, err := postgres.New(postgres.Config{
 		TracerProvider: harness.TracerProvider(), MeterProvider: harness.MeterProvider(),
 		Operations: []string{"fixture.query"},
 	})
@@ -84,7 +83,7 @@ func TestPGXDriverClosesCachedDeallocationFailure(t *testing.T) {
 	harness.ResetSpans()
 	parentCtx, parent := harness.TracerProvider().Tracer("fixture.parent").Start(ctx, "fixture.parent")
 	defer parent.End()
-	queryCtx, queryCancel := context.WithCancel(gopostgres.ContextWithOperation(parentCtx, "fixture.query"))
+	queryCtx, queryCancel := context.WithCancel(postgres.ContextWithOperation(parentCtx, "fixture.query"))
 	queryCancel()
 	_, err = conn.Exec(queryCtx, "select $1::text || 'private-pgx-target'", "private-pgx-argument")
 	if !errors.Is(err, context.Canceled) || !strings.Contains(err.Error(), "failed to deallocate cached statement(s)") {

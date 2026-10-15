@@ -1,4 +1,4 @@
-package gohttpclient
+package nethttp
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
 )
 
 func TestTransportComposesWithStandardRoundTripper(t *testing.T) {
@@ -20,7 +20,7 @@ func TestTransportComposesWithStandardRoundTripper(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader("")),
 			Request:    request,
 		}, nil
-	}), Config{
+	}), ClientConfig{
 		Operation:      "vendor.request",
 		TracerProvider: harness.TracerProvider(),
 		MeterProvider:  harness.MeterProvider(),
@@ -37,10 +37,4 @@ func TestTransportComposesWithStandardRoundTripper(t *testing.T) {
 	if spans := harness.Spans(); len(spans) != 1 || spans[0].Name != "vendor.request" {
 		t.Fatalf("spans = %+v, want vendor.request", spans)
 	}
-}
-
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (function roundTripperFunc) RoundTrip(request *http.Request) (*http.Response, error) {
-	return function(request)
 }

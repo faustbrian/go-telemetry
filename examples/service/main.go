@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	telemetry "github.com/faustbrian/go-telemetry/v2"
-	"github.com/faustbrian/go-telemetry/v2/examples/internal/exampleconfig"
-	"github.com/faustbrian/go-telemetry/v2/instrumentation/nethttp"
+	telemetry "github.com/faustbrian/go-telemetry/v3"
+	"github.com/faustbrian/go-telemetry/v3/examples/internal/exampleconfig"
+	"github.com/faustbrian/go-telemetry/v3/instrumentation/nethttp"
 )
 
 func main() {

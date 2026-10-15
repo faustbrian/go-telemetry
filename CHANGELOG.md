@@ -5,6 +5,24 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-15
+
+### Changed
+
+- Use the `/v3` module path and make canonical Service, cache, PostgreSQL,
+  queue and runtime packages own their implementations, types and sentinels.
+- Emit canonical major-qualified instrumentation scopes; migrate operational
+  selectors with consuming applications. Metric names, units and safe labels
+  remain unchanged.
+- Bind the Service adapter's sole `Component()` directly to Service v2.
+
+### Removed
+
+- Remove `telemetryservice`, go-prefixed instrumentation owners, both HTTP
+  client forwarding facades, `ComponentV2()` and cache `Start`.
+- Remove Service v1 and legacy identity-preservation tests. Use canonical
+  imports, `Begin`, and `nethttp.NewTransport` without compatibility shims.
+
 ## [2.1.0] - 2026-10-15
 
 ### Added

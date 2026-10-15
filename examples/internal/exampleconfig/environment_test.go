@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	telemetry "github.com/faustbrian/go-telemetry/v2"
+	telemetry "github.com/faustbrian/go-telemetry/v3"
 )
 
 func TestApplyEnvironment(t *testing.T) {

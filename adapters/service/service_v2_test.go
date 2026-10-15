@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	service "github.com/faustbrian/go-service/v2"
-	"github.com/faustbrian/go-telemetry/v2"
-	telemetryservice "github.com/faustbrian/go-telemetry/v2/adapters/service"
+	"github.com/faustbrian/go-telemetry/v3"
+	telemetryservice "github.com/faustbrian/go-telemetry/v3/adapters/service"
 )
 
 func TestServiceV2OwnsOneRuntimeAndPreservesShutdownFailure(t *testing.T) {
@@ -26,7 +26,7 @@ func TestServiceV2OwnsOneRuntimeAndPreservesShutdownFailure(t *testing.T) {
 	if _, active := adapter.Runtime(); active {
 		t.Fatal("construction acquired a runtime")
 	}
-	runtime, err := service.New(service.Config{Components: []service.Component{adapter.ComponentV2()}})
+	runtime, err := service.New(service.Config{Components: []service.Component{adapter.Component()}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,14 +42,14 @@ func TestServiceV2OwnsOneRuntimeAndPreservesShutdownFailure(t *testing.T) {
 	var callers sync.WaitGroup
 	for range 8 {
 		callers.Go(func() {
-			if err := adapter.ComponentV2().Stop(context.Background()); !errors.Is(err, shutdownErr) {
+			if err := adapter.Component().Stop(context.Background()); !errors.Is(err, shutdownErr) {
 				t.Errorf("repeated shutdown = %v", err)
 			}
 		})
 	}
 	callers.Wait()
 	if err := adapter.Component().Stop(context.Background()); !errors.Is(err, shutdownErr) {
-		t.Fatalf("v1 shutdown = %v", err)
+		t.Fatalf("sequential shutdown = %v", err)
 	}
 	if _, active := adapter.Runtime(); active {
 		t.Fatal("stopped runtime remains exposed")
@@ -68,7 +68,7 @@ func TestServiceV2PreservesRequiredAndBestEffortInitialization(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			runtime, err := service.New(service.Config{Components: []service.Component{adapter.ComponentV2()}})
+			runtime, err := service.New(service.Config{Components: []service.Component{adapter.Component()}})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -97,7 +97,7 @@ func TestServiceV2PreservesCanceledInitialization(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if err := adapter.ComponentV2().Start(ctx); !errors.Is(err, context.Canceled) {
+	if err := adapter.Component().Start(ctx); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled startup = %v", err)
 	}
 	if !errors.Is(adapter.InitializationError(), context.Canceled) {
@@ -106,7 +106,7 @@ func TestServiceV2PreservesCanceledInitialization(t *testing.T) {
 	if _, active := adapter.Runtime(); active {
 		t.Fatal("canceled initialization exposes a runtime")
 	}
-	if err := adapter.ComponentV2().Stop(context.Background()); err != nil {
+	if err := adapter.Component().Stop(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 }

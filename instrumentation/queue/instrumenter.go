@@ -1,56 +1,146 @@
-// Package telemetryqueue provides dependency-neutral queue instrumentation.
-//
-// It is the target-oriented successor to instrumentation/goqueue and preserves
-// that package's released type and instrumentation identities.
-//
-// It records fixed wrapper telemetry, preserves handler errors/panics, and owns
-// neither queue acknowledgement/retry nor provider shutdown. Handler/provider
-// concurrency and context cooperation remain caller-owned.
+// Package telemetryqueue provides dependency-neutral handler instrumentation for
+// queue. Message values and raw handler errors are never inspected by this
+// wrapper. Providers are borrowed; it owns no queue connection, acknowledgement,
+// retry, message propagation or provider shutdown policy.
 package telemetryqueue
 
 import (
 	"context"
+	"errors"
+	"time"
 
-	goqueue "github.com/faustbrian/go-telemetry/v2/instrumentation/goqueue"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
+	"go.opentelemetry.io/otel/trace"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
+const scopeName = "github.com/faustbrian/go-telemetry/v3/instrumentation/queue"
+
 // Backend is a finite queue backend label.
-type Backend = goqueue.Backend
+type Backend string
 
 const (
 	// BackendMemory identifies the in-memory queue.
-	BackendMemory = goqueue.BackendMemory
+	BackendMemory Backend = "memory"
 	// BackendRedis identifies the Redis list queue.
-	BackendRedis = goqueue.BackendRedis
+	BackendRedis Backend = "redis"
 	// BackendRedisStream identifies Redis Streams.
-	BackendRedisStream = goqueue.BackendRedisStream
+	BackendRedisStream Backend = "redis_stream"
 	// BackendValkeyStream identifies Valkey Streams.
-	BackendValkeyStream = goqueue.BackendValkeyStream
+	BackendValkeyStream Backend = "valkey_stream"
 	// BackendNATS identifies NATS.
-	BackendNATS = goqueue.BackendNATS
+	BackendNATS Backend = "nats"
 	// BackendNSQ identifies NSQ.
-	BackendNSQ = goqueue.BackendNSQ
+	BackendNSQ Backend = "nsq"
 	// BackendRabbitMQ identifies RabbitMQ.
-	BackendRabbitMQ = goqueue.BackendRabbitMQ
-	// BackendOther identifies an explicitly supported custom backend.
-	BackendOther = goqueue.BackendOther
+	BackendRabbitMQ Backend = "rabbitmq"
+	// BackendOther collapses an explicitly supported custom backend.
+	BackendOther Backend = "other"
 )
 
 // Config selects the fixed backend and standard providers.
-type Config = goqueue.Config
+type Config struct {
+	// Backend must be a supported finite enum; unknown values are rejected,
+	// not implicitly mapped to BackendOther.
+	Backend Backend
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
+	TracerProvider trace.TracerProvider
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
+}
 
 // Instrumenter owns bounded queue handler instruments.
-type Instrumenter = goqueue.Instrumenter
+type Instrumenter struct {
+	backend  Backend
+	tracer   trace.Tracer
+	duration metric.Float64Histogram
+	jobs     metric.Int64Counter
+}
 
 // New constructs a dependency-neutral queue instrumenter.
 func New(config Config) (*Instrumenter, error) {
-	return goqueue.New(config)
+	if !validBackend(config.Backend) {
+		return nil, errors.New("queue backend is unsupported")
+	}
+	if config.TracerProvider == nil {
+		config.TracerProvider = tracenoop.NewTracerProvider()
+	}
+	if config.MeterProvider == nil {
+		config.MeterProvider = metricnoop.NewMeterProvider()
+	}
+	meter := config.MeterProvider.Meter(scopeName)
+	duration, err := meter.Float64Histogram("messaging.process.duration", metric.WithUnit("s"))
+	if err != nil {
+		return nil, err
+	}
+	jobs, err := meter.Int64Counter("messaging.process.count", metric.WithUnit("{message}"))
+	if err != nil {
+		return nil, err
+	}
+	return &Instrumenter{
+		backend:  config.Backend,
+		tracer:   config.TracerProvider.Tracer(scopeName),
+		duration: duration,
+		jobs:     jobs,
+	}, nil
 }
 
-// WrapHandler instruments a queue-compatible handler signature.
+// WrapHandler instruments any queue-compatible handler signature without
+// importing or inspecting its message type. instrumenter and handler must be
+// usable and non-nil; the wrapper performs no eager nil validation. It passes the
+// derived span context and original message to the handler, returns its original
+// error and records a fixed failure status without formatting error/panic values.
+// Panics are recorded then re-panicked. Concurrent invocations require a safe
+// handler/provider; cancellation only reaches the handler through ctx.
 func WrapHandler[Message any](
 	instrumenter *Instrumenter,
 	handler func(context.Context, Message) error,
 ) func(context.Context, Message) error {
-	return goqueue.WrapHandler(instrumenter, handler)
+	return func(ctx context.Context, message Message) (handlerErr error) {
+		attributes := []attribute.KeyValue{
+			attribute.String("messaging.system", string(instrumenter.backend)),
+			attribute.String("messaging.operation.name", "process"),
+		}
+		ctx, span := instrumenter.tracer.Start(
+			ctx,
+			"queue.process",
+			trace.WithSpanKind(trace.SpanKindConsumer),
+			trace.WithAttributes(attributes...),
+		)
+		started := time.Now()
+		defer func() {
+			panicValue := recover()
+			outcome := "success"
+			if handlerErr != nil || panicValue != nil {
+				outcome = "error"
+				span.SetStatus(codes.Error, "queue handler failed")
+			}
+			resultAttributes := append(
+				append([]attribute.KeyValue(nil), attributes...),
+				attribute.String("error.type", outcome),
+			)
+			instrumenter.duration.Record(ctx, time.Since(started).Seconds(), metric.WithAttributes(resultAttributes...))
+			instrumenter.jobs.Add(ctx, 1, metric.WithAttributes(resultAttributes...))
+			span.End()
+			if panicValue != nil {
+				panic(panicValue)
+			}
+		}()
+		return handler(ctx, message)
+	}
+}
+
+func validBackend(backend Backend) bool {
+	switch backend {
+	case BackendMemory, BackendRedis, BackendRedisStream, BackendValkeyStream,
+		BackendNATS, BackendNSQ, BackendRabbitMQ, BackendOther:
+		return true
+	default:
+		return false
+	}
 }

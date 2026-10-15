@@ -1,59 +1,153 @@
-// Package telemetrycache provides dependency-neutral cache instrumentation.
-//
-// It is the target-oriented successor to instrumentation/gocache and preserves
-// that package's released type and instrumentation identities.
-//
-// Providers are borrowed. Begin returns a one-shot completion function that
-// callers must invoke; unknown labels collapse to other and raw errors are not
-// recorded. Alias methods retain the gocache lifecycle and instrumentation scope.
+// Package telemetrycache provides dependency-neutral instrumentation for cache.
+// It intentionally accepts no cache keys or values. Providers are borrowed and
+// own concurrency/cardinality/export/shutdown policy. The wrapper does not
+// enforce cache cancellation, perform operations or own cache resources.
 package telemetrycache
 
-import gocache "github.com/faustbrian/go-telemetry/v2/instrumentation/gocache"
+import (
+	"context"
+	"sync"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
+	"go.opentelemetry.io/otel/trace"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
+)
+
+const scopeName = "github.com/faustbrian/go-telemetry/v3/instrumentation/cache"
 
 // Operation is a bounded cache operation label.
-type Operation = gocache.Operation
+type Operation string
 
 const (
 	// OperationGet represents a cache lookup.
-	OperationGet = gocache.OperationGet
+	OperationGet Operation = "get"
 	// OperationSet represents a cache write.
-	OperationSet = gocache.OperationSet
+	OperationSet Operation = "set"
 	// OperationDelete represents cache invalidation.
-	OperationDelete = gocache.OperationDelete
+	OperationDelete Operation = "delete"
 	// OperationLoad represents cache-aside loading.
-	OperationLoad = gocache.OperationLoad
+	OperationLoad Operation = "load"
 	// OperationOther collapses unknown operations.
-	OperationOther = gocache.OperationOther
+	OperationOther Operation = "other"
 )
 
 // Outcome is a bounded cache result label.
-type Outcome = gocache.Outcome
+type Outcome string
 
 const (
 	// OutcomeSuccess represents a successful mutation.
-	OutcomeSuccess = gocache.OutcomeSuccess
+	OutcomeSuccess Outcome = "success"
 	// OutcomeHit represents a fresh cache hit.
-	OutcomeHit = gocache.OutcomeHit
+	OutcomeHit Outcome = "hit"
 	// OutcomeMiss represents a cache miss.
-	OutcomeMiss = gocache.OutcomeMiss
+	OutcomeMiss Outcome = "miss"
 	// OutcomeStale represents a stale cache hit.
-	OutcomeStale = gocache.OutcomeStale
+	OutcomeStale Outcome = "stale"
 	// OutcomeError represents a failed cache operation.
-	OutcomeError = gocache.OutcomeError
+	OutcomeError Outcome = "error"
 	// OutcomeOther collapses unknown outcomes.
-	OutcomeOther = gocache.OutcomeOther
+	OutcomeOther Outcome = "other"
 )
 
 // Config selects standard OpenTelemetry providers.
-type Config = gocache.Config
+type Config struct {
+	// TracerProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller retains provider/exporter lifecycle and privacy policy.
+	TracerProvider trace.TracerProvider
+	// MeterProvider is borrowed; nil selects a no-op, not the process global.
+	// The caller must configure any stream/cardinality limits and own shutdown.
+	MeterProvider metric.MeterProvider
+}
 
-// EndFunc completes one cache observation at most once.
-type EndFunc = gocache.EndFunc
+// EndFunc completes one cache observation. It is safe to call concurrently
+// and records at most once. Raw errors are used only as a boolean signal.
+type EndFunc func(Outcome, error)
 
 // Instrumenter creates bounded cache spans and metrics.
-type Instrumenter = gocache.Instrumenter
+type Instrumenter struct {
+	tracer     trace.Tracer
+	duration   metric.Float64Histogram
+	operations metric.Int64Counter
+}
 
 // New constructs a dependency-neutral cache instrumenter.
 func New(config Config) (*Instrumenter, error) {
-	return gocache.New(config)
+	if config.TracerProvider == nil {
+		config.TracerProvider = tracenoop.NewTracerProvider()
+	}
+	if config.MeterProvider == nil {
+		config.MeterProvider = metricnoop.NewMeterProvider()
+	}
+	meter := config.MeterProvider.Meter(scopeName)
+	duration, err := meter.Float64Histogram("cache.operation.duration", metric.WithUnit("s"))
+	if err != nil {
+		return nil, err
+	}
+	operations, err := meter.Int64Counter("cache.operation.count", metric.WithUnit("{operation}"))
+	if err != nil {
+		return nil, err
+	}
+	return &Instrumenter{
+		tracer:     config.TracerProvider.Tracer(scopeName),
+		duration:   duration,
+		operations: operations,
+	}, nil
+}
+
+// Begin starts an observation and returns its span context and one-shot EndFunc.
+// Unknown operation/outcome values collapse to other; a non-nil error overrides
+// outcome with error without inspecting it. The caller must invoke end on every
+// completion/panic path; canceled contexts do not automatically end observations.
+// EndFunc retains the derived context/span until released and uses elapsed wall time.
+func (instrumenter *Instrumenter) Begin(ctx context.Context, operation Operation) (context.Context, EndFunc) {
+	operation = normalizeOperation(operation)
+	attributes := []attribute.KeyValue{attribute.String("cache.operation.name", string(operation))}
+	ctx, span := instrumenter.tracer.Start(
+		ctx,
+		"cache."+string(operation),
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(attributes...),
+	)
+	started := time.Now()
+	var once sync.Once
+	return ctx, func(outcome Outcome, operationErr error) {
+		once.Do(func() {
+			if operationErr != nil {
+				outcome = OutcomeError
+				span.SetStatus(codes.Error, "cache operation failed")
+			} else {
+				outcome = normalizeOutcome(outcome)
+			}
+			resultAttributes := append(
+				append([]attribute.KeyValue(nil), attributes...),
+				attribute.String("cache.result", string(outcome)),
+			)
+			span.SetAttributes(attribute.String("cache.result", string(outcome)))
+			instrumenter.duration.Record(ctx, time.Since(started).Seconds(), metric.WithAttributes(resultAttributes...))
+			instrumenter.operations.Add(ctx, 1, metric.WithAttributes(resultAttributes...))
+			span.End()
+		})
+	}
+}
+
+func normalizeOperation(operation Operation) Operation {
+	switch operation {
+	case OperationGet, OperationSet, OperationDelete, OperationLoad:
+		return operation
+	default:
+		return OperationOther
+	}
+}
+
+func normalizeOutcome(outcome Outcome) Outcome {
+	switch outcome {
+	case OutcomeSuccess, OutcomeHit, OutcomeMiss, OutcomeStale, OutcomeError:
+		return outcome
+	default:
+		return OutcomeOther
+	}
 }

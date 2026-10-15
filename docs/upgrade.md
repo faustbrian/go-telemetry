@@ -3,8 +3,9 @@
 [Documentation map](index.md) · [Repository README](../README.md)
 [Next: Architecture](architecture.md)
 
-Version 2 is published under the `/v2` module path. To upgrade from version
-1, follow the [version 2 migration](compatibility.md#version-2-migration).
+Version 3 uses the `/v3` module path. Follow the
+[version 3 migration](compatibility.md#version-3-migration) for removed packages,
+component methods and changed instrumentation-scope selectors.
 
 ## Before upgrading
 
@@ -41,7 +42,7 @@ propagation allow-lists, and instrumentation operation names as operational
 contracts. Roll them out independently from application behavior where
 possible.
 
-Version 2 does not read configured TLS paths from the filesystem itself. If
+The runtime does not read configured TLS paths from the filesystem itself. If
 either signal configures `CAFile`, `CertificateFile`, or `PrivateKeyFile`, set
 that signal's `Exporter.TLS.FileReader` to a caller-owned implementation of
 `otlp.TLSFileReader`; direct `otlp` callers set `TLSConfig.FileReader`.
@@ -57,7 +58,7 @@ include all required authorities in the supplied PEM.
 
 ## Rollback
 
-Restore the previous module version and configuration together. OpenTelemetry
-wire data remains OTLP, so no vendor SDK migration is needed. When metric views
-or names change, keep dashboards compatible with both versions during the
-rollout window.
+Restore the previous application/module version, configuration and operational
+scope selectors together. OpenTelemetry wire data remains OTLP. A rollback is
+a return to an earlier release, not an in-process compatibility layer or dual
+instrumentation engine.

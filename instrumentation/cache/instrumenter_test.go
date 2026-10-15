@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/v2/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
@@ -26,15 +26,17 @@ func TestInstrumenterRecordsOnlyFixedCacheSemantics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	//lint:ignore SA1019 Compatibility behavior intentionally exercises Start.
-	ctx, end := instrumenter.Start(context.Background(), OperationGet) //nolint:staticcheck
+	ctx, end := instrumenter.Begin(context.Background(), OperationGet)
 	if ctx == nil {
-		t.Fatal("Start() context = nil")
+		t.Fatal("Begin() context = nil")
 	}
 	end(OutcomeMiss, errors.New("secret cache key customer:123 failed"))
 
 	span := harness.Spans()[0]
 	text := fmt.Sprint(span)
+	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/cache" {
+		t.Fatalf("instrumentation scope = %q, want canonical identity", span.InstrumentationScope.Name)
+	}
 	if span.Name != "cache.get" || span.Status.Code != codes.Error || !strings.Contains(text, "cache.result") ||
 		!strings.Contains(text, "error") || strings.Contains(text, "secret") || strings.Contains(text, "customer:123") {
 		t.Fatalf("span recorded unsafe cache data: %s", text)
@@ -50,35 +52,6 @@ func TestInstrumenterRecordsOnlyFixedCacheSemantics(t *testing.T) {
 	}
 }
 
-func TestBeginIsCanonicalAndStartDelegates(t *testing.T) {
-	t.Parallel()
-
-	for _, begin := range []func(context.Context, Operation) (context.Context, EndFunc){
-		func(ctx context.Context, operation Operation) (context.Context, EndFunc) {
-			instrumenter, err := New(Config{TracerProvider: testtelemetry.New().TracerProvider()})
-			if err != nil {
-				t.Fatalf("New() error = %v", err)
-			}
-			return instrumenter.Begin(ctx, operation)
-		},
-		func(ctx context.Context, operation Operation) (context.Context, EndFunc) {
-			instrumenter, err := New(Config{TracerProvider: testtelemetry.New().TracerProvider()})
-			if err != nil {
-				t.Fatalf("New() error = %v", err)
-			}
-			//lint:ignore SA1019 Compatibility behavior intentionally exercises Start.
-			return instrumenter.Start(ctx, operation) //nolint:staticcheck
-		},
-	} {
-		ctx, end := begin(context.Background(), OperationGet)
-		if ctx == nil || end == nil {
-			t.Fatal("begin returned a nil context or completion")
-		}
-		end(OutcomeHit, nil)
-		end(OutcomeError, errors.New("ignored after first completion"))
-	}
-}
-
 func TestInstrumenterCollapsesUnknownValues(t *testing.T) {
 	t.Parallel()
 
@@ -87,8 +60,7 @@ func TestInstrumenterCollapsesUnknownValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	//lint:ignore SA1019 Compatibility behavior intentionally exercises Start.
-	_, end := instrumenter.Start(context.Background(), Operation("secret-operation")) //nolint:staticcheck
+	_, end := instrumenter.Begin(context.Background(), Operation("secret-operation"))
 	end(Outcome("secret-outcome"), nil)
 	span := harness.Spans()[0]
 	if span.Name != "cache.other" || strings.Contains(fmt.Sprint(span), "secret") {
@@ -100,7 +72,7 @@ func TestEndIsConcurrencySafeAndIdempotent(t *testing.T) {
 	t.Parallel()
 
 	harness := testtelemetry.New()
-	instrumenter, err := New(Config{TracerProvider: harness.TracerProvider()})
+	instrumenter, err := New(Config{TracerProvider: harness.TracerProvider(), MeterProvider: harness.MeterProvider()})
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -116,6 +88,33 @@ func TestEndIsConcurrencySafeAndIdempotent(t *testing.T) {
 	wait.Wait()
 	if len(harness.Spans()) != 1 {
 		t.Fatalf("spans = %d, want exactly 1", len(harness.Spans()))
+	}
+	metrics, err := harness.Metrics(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(metrics.ScopeMetrics) != 1 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/cache" {
+		t.Fatal("completion emitted a noncanonical or duplicate instrumentation scope")
+	}
+	var operations int64
+	var durations uint64
+	for _, measurement := range metrics.ScopeMetrics[0].Metrics {
+		switch measurement.Name {
+		case "cache.operation.count":
+			for _, point := range measurement.Data.(metricdata.Sum[int64]).DataPoints {
+				operations += point.Value
+			}
+		case "cache.operation.duration":
+			if measurement.Unit != "s" {
+				t.Fatal("completion duration is not measured in seconds")
+			}
+			for _, point := range measurement.Data.(metricdata.Histogram[float64]).DataPoints {
+				durations += point.Count
+			}
+		}
+	}
+	if operations != 1 || durations != 1 {
+		t.Fatalf("concurrent completion recorded operations=%d duration samples=%d", operations, durations)
 	}
 }
 

@@ -39,7 +39,7 @@ certify every current main revision or a deployed application.
 - [Performance](performance.md).
 - [Release process](release.md).
 - [Published security disposition](security/release-disposition.md).
-- [Source documentation audit](source-documentation-audit.md).
+- [Contributor source-documentation validation](../CONTRIBUTING.md).
 - [Telemetry specification decisions](specification-decisions.md).
 - [Telemetry specification conformance](../specification/README.md).
 

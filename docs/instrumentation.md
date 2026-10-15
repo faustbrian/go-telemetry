@@ -12,7 +12,7 @@ shuts down that provider.
 ## Go runtime
 
 ```go
-runtimeMetrics, err := goruntime.New(runtime.MeterProvider())
+runtimeMetrics, err := telemetryruntime.New(runtime.MeterProvider())
 defer runtimeMetrics.Close()
 ```
 
@@ -58,8 +58,8 @@ transport, err := nethttp.NewTransport(http.DefaultTransport, nethttp.ClientConf
 client := &http.Client{Transport: transport, Timeout: 10 * time.Second}
 ```
 
-`instrumentation/httpclient.NewTransport` exposes the same contract at the
-RoundTripper seam used by `http-client`. With the runtime propagation policy,
+`instrumentation/nethttp.NewTransport` is the single RoundTripper seam for
+standard HTTP clients and `http-client`. With the runtime propagation policy,
 outbound injection replaces stale fields on cloned request headers. A nil
 propagator uses SDK TraceContext, not the bounded baggage policy. Request
 bodies remain shared, the returned response body remains caller-owned, and
@@ -70,14 +70,14 @@ forwarding; callers own the base transport.
 ## postgres
 
 ```go
-tracer, err := gopostgres.New(gopostgres.Config{
+tracer, err := telemetrypostgres.New(telemetrypostgres.Config{
     TracerProvider: runtime.TracerProvider(),
     MeterProvider: runtime.MeterProvider(),
     Operations: []string{"users.by_id", "users.create"},
 })
 pgxConfig.Tracer = tracer
 
-ctx = gopostgres.ContextWithOperation(ctx, "users.by_id")
+ctx = telemetrypostgres.ContextWithOperation(ctx, "users.by_id")
 ```
 
 Unknown operation names collapse to `postgresql.query`. SQL and arguments are
@@ -96,9 +96,9 @@ without recording connection identity or raw acquisition errors.
 ## cache
 
 ```go
-ctx, end := cacheTelemetry.Begin(ctx, gocache.OperationGet)
+ctx, end := cacheTelemetry.Begin(ctx, telemetrycache.OperationGet)
 result, err := cache.Get(ctx, key)
-end(gocache.OutcomeHit, err)
+end(telemetrycache.OutcomeHit, err)
 ```
 
 Map the target cache's result state to a finite `Outcome`. The adapter API has
@@ -108,7 +108,7 @@ and panic paths; context cancellation does not end the observation itself.
 ## queue
 
 ```go
-instrumented := goqueue.WrapHandler(queueTelemetry, handler)
+instrumented := telemetryqueue.WrapHandler(queueTelemetry, handler)
 queue.WithFn(instrumented)
 ```
 
