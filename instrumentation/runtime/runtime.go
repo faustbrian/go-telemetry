@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-const scopeName = "github.com/faustbrian/go-telemetry/v3/instrumentation/runtime"
+const scopeName = "github.com/faustbrian/go-telemetry/v4/instrumentation/runtime"
 
 // Instrumenter owns the registered Go runtime callback.
 type Instrumenter struct {

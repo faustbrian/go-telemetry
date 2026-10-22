@@ -3,14 +3,20 @@
 All user-visible changes to this project are documented here. The format is
 based on Keep a Changelog, and releases follow Semantic Versioning.
 
-## Unreleased
+## [Unreleased]
+
+### Changed
+
+- Move the module to `github.com/faustbrian/go-telemetry/v4` and bind the
+  Service adapter's `Component()` to `github.com/faustbrian/go-service/v3`.
+- Instrumentation scopes follow the module path:
+  `github.com/faustbrian/go-telemetry/v4/instrumentation/...`. Metric names,
+  units and categorical labels are unchanged.
 
 ### Security
 
-- Build with Go 1.27.3 to address GO-2026-6809 in `crypto/x509`.
-  Consumers should use Go 1.27.3 or newer.
-
-## [Unreleased]
+- Pin the repository toolchain to Go 1.27.3, which fixes GO-2026-6809 in
+  `crypto/x509`. Consumers choose their own toolchain.
 
 ## [3.0.0] - 2026-10-15
 

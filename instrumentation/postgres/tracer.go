@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	scopeName        = "github.com/faustbrian/go-telemetry/v3/instrumentation/postgres"
+	scopeName        = "github.com/faustbrian/go-telemetry/v4/instrumentation/postgres"
 	defaultOperation = "postgresql.query"
 	maxOperations    = 128
 )

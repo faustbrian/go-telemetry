@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-telemetry/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-adoption_and_API-blue)](docs/index.md)
-[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry/v3.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry/v3)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-telemetry/v4.svg)](https://pkg.go.dev/github.com/faustbrian/go-telemetry/v4)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-telemetry?sort=semver)](https://github.com/faustbrian/go-telemetry/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -18,9 +18,9 @@ stability promises.
 
 ## Adoption entry points
 
-The root module is `github.com/faustbrian/go-telemetry/v3` (stable).
-It requires Go 1.27.0. Pin the `v3.0.0` root tag
-with `go get github.com/faustbrian/go-telemetry/v3@v3.0.0`.
+The root module is `github.com/faustbrian/go-telemetry/v4` (stable).
+It requires Go 1.27.0. Pin the `v4.0.0` root tag
+with `go get github.com/faustbrian/go-telemetry/v4@v4.0.0`.
 Root subpackages share this module; they need no separate installation.
 
 Start with the [documentation map](docs/index.md) for package selection,
@@ -35,7 +35,7 @@ examples, operational constraints, and contributor references.
 ## Installation
 
 ```sh
-go get github.com/faustbrian/go-telemetry/v3@v3.0.0
+go get github.com/faustbrian/go-telemetry/v4@v4.0.0
 ```
 
 Version 3 removes obsolete package owners, compatibility aliases and dual
@@ -51,7 +51,7 @@ import (
 	"context"
 	"log"
 
-	telemetry "github.com/faustbrian/go-telemetry/v3"
+	telemetry "github.com/faustbrian/go-telemetry/v4"
 )
 
 func main() {
@@ -141,7 +141,7 @@ sampling, and propagation. The adapter exposes the concrete runtime, performs
 no retries, and delegates deadline-propagated flush, shutdown, and conditional
 global restoration to `Runtime.Shutdown`.
 
-`Component()` returns `github.com/faustbrian/go-service/v2.Component` directly.
+`Component()` returns `github.com/faustbrian/go-service/v3.Component` directly.
 There is no Service v1 dependency or alternate component method. Register one
 component per adapter; the lifecycle does not support restart.
 

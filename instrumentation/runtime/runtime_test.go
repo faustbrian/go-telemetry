@@ -33,7 +33,7 @@ func TestInstrumenterExportsRequiredGoRuntimeSignals(t *testing.T) {
 	if err := reader.Collect(context.Background(), &metrics); err != nil {
 		t.Fatalf("Collect() error = %v", err)
 	}
-	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/runtime" {
+	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v4/instrumentation/runtime" {
 		t.Fatalf("instrumentation scope = %q, want canonical identity", metrics.ScopeMetrics[0].Scope.Name)
 	}
 	want := map[string]bool{

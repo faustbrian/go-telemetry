@@ -119,6 +119,18 @@ handler; the callback must return promptly because it cannot be preempted. A
 pre-canceled shutdown call no longer consumes the single owned
 shutdown attempt; after shutdown begins, every call shares the terminal result.
 
+## Version 4 migration
+
+Select `github.com/faustbrian/go-telemetry/v4@v4.0.0` together with
+`github.com/faustbrian/go-service/v3`. The Service adapter's `Component()` now
+returns a Service v3 component; v3 is no longer maintained. Instrumentation
+scopes become `github.com/faustbrian/go-telemetry/v4/instrumentation/`
+followed by `cache`, `postgres`, `queue`, `runtime` or `nethttp`, so migrate
+Collector, dashboard and query selectors with the application. Applications
+moving from v1 or v2 migrate their selectors once, directly to the v4 scopes,
+and apply the version 3 path changes below. Metric names, units and
+categorical labels are unchanged.
+
 ## Version 3 migration
 
 Select `github.com/faustbrian/go-telemetry/v3@v3.0.0` and migrate every maintained

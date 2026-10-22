@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	telemetrypropagation "github.com/faustbrian/go-telemetry/v3/propagation"
-	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
+	telemetrypropagation "github.com/faustbrian/go-telemetry/v4/propagation"
+	"github.com/faustbrian/go-telemetry/v4/testtelemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
@@ -53,7 +53,7 @@ func TestHandlerRecordsOnlyBoundedServerAttributes(t *testing.T) {
 		t.Fatalf("spans = %d, want 1", len(spans))
 	}
 	span := spans[0]
-	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/nethttp" {
+	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/v4/instrumentation/nethttp" {
 		t.Fatalf("instrumentation scope = %q, want canonical identity", span.InstrumentationScope.Name)
 	}
 	if span.Name != "users.show" || span.Parent.SpanID().String() != "00f067aa0ba902b7" {

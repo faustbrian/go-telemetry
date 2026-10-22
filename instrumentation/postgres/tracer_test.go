@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v4/testtelemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,7 +34,7 @@ func TestTracerRecordsPoolAcquireWaitAndOutcome(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Metrics() during acquire error = %v", err)
 	}
-	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/postgres" {
+	if len(metrics.ScopeMetrics) == 0 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v4/instrumentation/postgres" {
 		t.Fatalf("instrumentation scope = %q, want canonical identity", metrics.ScopeMetrics[0].Scope.Name)
 	}
 	if got := int64MetricValue(t, metrics, "db.client.connection.waiting"); got != 1 {

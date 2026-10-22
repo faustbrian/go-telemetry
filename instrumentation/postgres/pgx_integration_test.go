@@ -15,8 +15,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
-	postgres "github.com/faustbrian/go-telemetry/v3/instrumentation/postgres"
-	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
+	postgres "github.com/faustbrian/go-telemetry/v4/instrumentation/postgres"
+	"github.com/faustbrian/go-telemetry/v4/testtelemetry"
 )
 
 // These driver-dispatch checks require an explicitly supplied disposable

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/faustbrian/go-telemetry/v3/testtelemetry"
+	"github.com/faustbrian/go-telemetry/v4/testtelemetry"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
@@ -34,7 +34,7 @@ func TestInstrumenterRecordsOnlyFixedCacheSemantics(t *testing.T) {
 
 	span := harness.Spans()[0]
 	text := fmt.Sprint(span)
-	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/cache" {
+	if span.InstrumentationScope.Name != "github.com/faustbrian/go-telemetry/v4/instrumentation/cache" {
 		t.Fatalf("instrumentation scope = %q, want canonical identity", span.InstrumentationScope.Name)
 	}
 	if span.Name != "cache.get" || span.Status.Code != codes.Error || !strings.Contains(text, "cache.result") ||
@@ -93,7 +93,7 @@ func TestEndIsConcurrencySafeAndIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(metrics.ScopeMetrics) != 1 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v3/instrumentation/cache" {
+	if len(metrics.ScopeMetrics) != 1 || metrics.ScopeMetrics[0].Scope.Name != "github.com/faustbrian/go-telemetry/v4/instrumentation/cache" {
 		t.Fatal("completion emitted a noncanonical or duplicate instrumentation scope")
 	}
 	var operations int64

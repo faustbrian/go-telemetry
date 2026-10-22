@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	telemetry "github.com/faustbrian/go-telemetry/v3"
+	telemetry "github.com/faustbrian/go-telemetry/v4"
 )
 
 var (

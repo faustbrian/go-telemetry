@@ -6,12 +6,12 @@ import (
 	"sync"
 	"testing"
 
-	service "github.com/faustbrian/go-service/v2"
-	"github.com/faustbrian/go-telemetry/v3"
-	telemetryservice "github.com/faustbrian/go-telemetry/v3/adapters/service"
+	service "github.com/faustbrian/go-service/v3"
+	"github.com/faustbrian/go-telemetry/v4"
+	telemetryservice "github.com/faustbrian/go-telemetry/v4/adapters/service"
 )
 
-func TestServiceV2OwnsOneRuntimeAndPreservesShutdownFailure(t *testing.T) {
+func TestServiceOwnsOneRuntimeAndPreservesShutdownFailure(t *testing.T) {
 	shutdownErr := errors.New("exporter shutdown failed")
 	exporter := &failingSpanExporter{err: shutdownErr}
 	config := localConfig()
@@ -59,7 +59,7 @@ func TestServiceV2OwnsOneRuntimeAndPreservesShutdownFailure(t *testing.T) {
 	}
 }
 
-func TestServiceV2PreservesRequiredAndBestEffortInitialization(t *testing.T) {
+func TestServicePreservesRequiredAndBestEffortInitialization(t *testing.T) {
 	for _, policy := range []telemetryservice.FailurePolicy{telemetryservice.FailureRequired, telemetryservice.FailureBestEffort} {
 		t.Run(string(policy), func(t *testing.T) {
 			config := localConfig()
@@ -90,7 +90,7 @@ func TestServiceV2PreservesRequiredAndBestEffortInitialization(t *testing.T) {
 	}
 }
 
-func TestServiceV2PreservesCanceledInitialization(t *testing.T) {
+func TestServicePreservesCanceledInitialization(t *testing.T) {
 	adapter, err := telemetryservice.New(telemetryservice.Options{Name: "telemetry", Config: localConfig(), Failure: telemetryservice.FailureRequired})
 	if err != nil {
 		t.Fatal(err)
