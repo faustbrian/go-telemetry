@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-22
+
 ### Changed
 
 - Move the module to `github.com/faustbrian/go-telemetry/v4` and bind the
@@ -15,8 +17,9 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ### Security
 
-- Pin the repository toolchain to Go 1.27.3, which fixes GO-2026-6809 in
-  `crypto/x509`. Consumers choose their own toolchain.
+- Record the repository's Go 1.27.3 toolchain, which fixes GO-2026-6809 in
+  `crypto/x509`, as the security-qualified build. Consumers should build with
+  Go 1.27.3 or newer.
 
 ## [3.0.0] - 2026-10-15
 
@@ -349,7 +352,9 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/faustbrian/go-telemetry/compare/v3.0.0...v4.0.0
+[3.0.0]: https://github.com/faustbrian/go-telemetry/compare/v2.1.0...v3.0.0
 [2.0.2]: https://github.com/faustbrian/go-telemetry/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/faustbrian/go-telemetry/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/faustbrian/go-telemetry/compare/v1.2.0...v2.0.0

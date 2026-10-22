@@ -35,7 +35,7 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | PostgreSQL adapter | pgx/v5 5.10.x minimum; selected 5.11.0 |
 
 The module retains the Go 1.27 language floor. Security-qualified builds
-use Go 1.27.2 or a newer patched 1.27 compiler and `golang.org/x/net`
+use Go 1.27.3 or a newer patched 1.27 compiler and `golang.org/x/net`
 0.60.0 or later; older compiler or dependency overrides do not inherit
 that qualification.
 
@@ -80,7 +80,7 @@ runtime does not expose the replacement reader option. Applications using that
 setting must reassess export sizing. These supplier-specific bounds describe
 the selected tuple, not identical defaults across every supported selection.
 
-Within version 3, stable compatibility covers exported root, `otlp`, `trace`, `metric`,
+Within version 4, stable compatibility covers exported root, `otlp`, `trace`, `metric`,
 `propagation`, instrumentation, and `testtelemetry` APIs; default values;
 resource and metric names; propagation and privacy policies; and lifecycle
 error behavior.
@@ -123,7 +123,7 @@ shutdown attempt; after shutdown begins, every call shares the terminal result.
 
 Select `github.com/faustbrian/go-telemetry/v4@v4.0.0` together with
 `github.com/faustbrian/go-service/v3`. The Service adapter's `Component()` now
-returns a Service v3 component; v3 is no longer maintained. Instrumentation
+returns a Service v3 component; telemetry v3 is no longer maintained. Instrumentation
 scopes become `github.com/faustbrian/go-telemetry/v4/instrumentation/`
 followed by `cache`, `postgres`, `queue`, `runtime` or `nethttp`, so migrate
 Collector, dashboard and query selectors with the application. Applications
@@ -133,7 +133,10 @@ categorical labels are unchanged.
 
 ## Version 3 migration
 
-Select `github.com/faustbrian/go-telemetry/v3@v3.0.0` and migrate every maintained
+These are the package changes version 3 introduced; version 4 keeps them. When
+moving from v1 or v2, apply them together with the version 4 migration above
+and select `github.com/faustbrian/go-telemetry/v4` directly. At the time,
+version 3 was adopted by selecting `github.com/faustbrian/go-telemetry/v3@v3.0.0` and migrating every maintained
 consumer module, including examples and nested integration fixtures. Remove the
 old module requirement after its final import is migrated; verify the resolved
 module graph rather than relying on `go.sum` entries.

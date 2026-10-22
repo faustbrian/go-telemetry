@@ -18,8 +18,8 @@ reporter data and credentials do not enter public artifacts.
 ## Supported versions
 
 Security fixes target the latest published major; earlier major lines receive
-no further fixes. Follow the [current migration guide](docs/compatibility.md#version-3-migration)
-when adopting version 3, including canonical package imports, Service binding
+no further fixes. Follow the [current migration guide](docs/compatibility.md#version-4-migration)
+when adopting version 4, including canonical package imports, Service binding
 and instrumentation-scope selectors. Publication does not migrate consumers or
 establish that their deployed dependency graph has been rebuilt.
 

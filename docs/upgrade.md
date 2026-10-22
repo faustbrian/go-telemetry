@@ -3,9 +3,10 @@
 [Documentation map](index.md) · [Repository README](../README.md)
 [Next: Architecture](architecture.md)
 
-Version 3 uses the `/v3` module path. Follow the
-[version 3 migration](compatibility.md#version-3-migration) for removed packages,
-component methods and changed instrumentation-scope selectors.
+Version 4 uses the `/v4` module path. Follow the
+[version 4 migration](compatibility.md#version-4-migration), then the
+[version 3 package changes](compatibility.md#version-3-migration), for removed
+packages, component methods and changed instrumentation-scope selectors.
 
 ## Before upgrading
 

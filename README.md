@@ -38,9 +38,10 @@ examples, operational constraints, and contributor references.
 go get github.com/faustbrian/go-telemetry/v4@v4.0.0
 ```
 
-Version 3 removes obsolete package owners, compatibility aliases and dual
-Service bindings. Migrate imports, component bindings and instrumentation-scope
-selectors together; see the [migration notes](docs/compatibility.md#version-3-migration).
+Version 4 binds go-service v3, and version 3 removed obsolete package owners,
+compatibility aliases and dual Service bindings. Migrate imports, component
+bindings and instrumentation-scope selectors together; see the
+[migration notes](docs/compatibility.md#version-4-migration).
 
 ## Quick start
 
@@ -126,7 +127,7 @@ Each package above owns its implementation. Obsolete `go*` instrumentation,
 `telemetryservice` and HTTP-client facade packages are absent. Standard HTTP
 clients use `instrumentation/nethttp.NewTransport`; no alternate wrapper or
 legacy import path is retained. See the
-[migration guide](docs/compatibility.md#version-3-migration).
+[migration guide](docs/compatibility.md#version-4-migration).
 
 Instrumentation never records raw URL paths, queries, hosts, headers, client
 addresses, SQL, query arguments, database error text, cache keys or values,

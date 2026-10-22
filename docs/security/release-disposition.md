@@ -11,7 +11,7 @@ the absence of vulnerabilities.
 
 ## Selected build inputs
 
-Current development builds select Go 1.27.2 and x/net 0.60.0 to address
+Current development builds select Go 1.27.3 and x/net 0.60.0 to address
 reported standard-library and HTTP/2 findings. The Go 1.27 language floor
 is unchanged. Consumers must use a patched compiler and retain the patched
 dependency graph; source selection is not proof that deployed consumers
@@ -104,7 +104,7 @@ or a blanket affected-version assessment of every consumer.
 The inspected baseline is v2, using `github.com/faustbrian/go-telemetry/v2`.
 This historical source review is not qualification of version 3. Current support
 follows the [security policy](../../SECURITY.md); current adoption follows the
-[version 3 migration](../compatibility.md#version-3-migration). Review explicit signal and
+[version 4 migration](../compatibility.md#version-4-migration). Review explicit signal and
 transport choices, finite configuration limits, caller-owned TLS readers,
 request-specific baggage proof and shutdown ownership before deployment.
 Version 1 is unsupported; no original-module patch is promised.
