@@ -133,7 +133,9 @@ categorical labels are unchanged.
 
 ## Version 3 migration
 
-These are the package changes version 3 introduced; version 4 keeps them. When
+These are the package changes version 3 introduced; version 4 keeps them,
+except the Service binding (now Service v3) and the scope major (now v4),
+which the version 4 migration supersedes. When
 moving from v1 or v2, apply them together with the version 4 migration above
 and select `github.com/faustbrian/go-telemetry/v4` directly. At the time,
 version 3 was adopted by selecting `github.com/faustbrian/go-telemetry/v3@v3.0.0` and migrating every maintained
