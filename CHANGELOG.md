@@ -3,6 +3,13 @@
 All user-visible changes to this project are documented here. The format is
 based on Keep a Changelog, and releases follow Semantic Versioning.
 
+## Unreleased
+
+### Security
+
+- Build with Go 1.27.3 to address GO-2026-6809 in `crypto/x509`.
+  Consumers should use Go 1.27.3 or newer.
+
 ## [Unreleased]
 
 ## [3.0.0] - 2026-10-15
