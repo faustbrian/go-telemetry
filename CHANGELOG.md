@@ -5,6 +5,15 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add `Runtime.ShutdownAttempt` to distinguish rejected calls from an admitted
+  shared shutdown without inferring ownership from context errors.
+- Add opt-in `adapters/service.Options.RetainRejectedShutdown` so a pre-canceled
+  or expired stop retains the runtime for an explicit bounded retry. Existing
+  one-shot adapter behavior and runtime deadlines remain unchanged; an admitted
+  partial shutdown is still terminal and is not retried.
+
 ## [4.0.0] - 2026-10-22
 
 ### Changed

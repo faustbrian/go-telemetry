@@ -146,6 +146,12 @@ global restoration to `Runtime.Shutdown`.
 There is no Service v1 dependency or alternate component method. Register one
 component per adapter; the lifecycle does not support restart.
 
+For owners that must retain a rejected shutdown, opt into
+`Options.RetainRejectedShutdown`. This preserves the runtime for an explicit
+bounded retry only if core shutdown never started; it does not extend the
+process deadline or retry partial shutdown. The default remains one-shot. See
+[shutdown ownership](docs/graceful-shutdown.md#service-lifecycle-adapter).
+
 Required initialization failures stop service startup. Best-effort failures
 permit startup and remain available through `InitializationError`; no
 readiness check is added because telemetry availability does not determine

@@ -320,16 +320,29 @@ func (r *Runtime) ForceFlush(ctx context.Context) error {
 // work, retry partial closure, or preempt noncooperative exporters. An exporter
 // panic reaches the initiating caller; joiners receive an aborted result.
 func (r *Runtime) Shutdown(ctx context.Context) error {
+	_, err := r.ShutdownAttempt(ctx)
+	return err
+}
+
+// ShutdownAttempt performs Shutdown and reports whether the shared shutdown
+// attempt started. A false result means this call was rejected before admission
+// and the owner may retry with a usable bounded context. A true result means
+// the call initiated or joined the one terminal attempt, not that every resource
+// closed successfully; err retains its aggregate outcome. Admission is decided
+// atomically with concurrent Shutdown calls, including borrowed-runtime callers.
+// Like Shutdown, joiners wait for that attempt even if their context is canceled,
+// and neither method can preempt a noncooperative exporter.
+func (r *Runtime) ShutdownAttempt(ctx context.Context) (started bool, err error) {
 	contextErr := ctx.Err()
 	r.shutdownMu.Lock()
 	if done := r.shutdownDone; done != nil {
 		r.shutdownMu.Unlock()
 		<-done
-		return r.shutdownErr
+		return true, r.shutdownErr
 	}
 	if contextErr != nil {
 		r.shutdownMu.Unlock()
-		return contextErr
+		return false, contextErr
 	}
 	r.shutdownDone = make(chan struct{})
 	done := r.shutdownDone
@@ -368,7 +381,7 @@ func (r *Runtime) Shutdown(ctx context.Context) error {
 	}
 	r.shutdownErr = runCleanupSteps(bounded, steps...)
 
-	return r.shutdownErr
+	return true, r.shutdownErr
 }
 
 // Reserve a share of the one bounded deadline for every remaining operation.
