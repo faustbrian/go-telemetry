@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-10-28
+
 ### Added
 
 - Add `Runtime.ShutdownAttempt` to distinguish rejected calls from an admitted
@@ -361,7 +363,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/faustbrian/go-telemetry/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/faustbrian/go-telemetry/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/faustbrian/go-telemetry/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/faustbrian/go-telemetry/compare/v2.0.3...v2.1.0
