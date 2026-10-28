@@ -113,7 +113,7 @@ func TestLegacyStopStillConsumesRejectedAttempt(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	for _, ctx := range []context.Context{ctx, context.Background()} {
-		if err := adapter.Component().Stop(ctx); err != context.Canceled {
+		if err := adapter.Component().Stop(ctx); !errors.Is(err, context.Canceled) {
 			t.Fatalf("legacy rejection result = %v", err)
 		}
 	}

@@ -2,6 +2,7 @@ package telemetry_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func TestShutdownAttemptReportsAdmissionWithoutChangingResult(t *testing.T) {
 	}
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
 	defer cancel()
-	if started, err := runtime.ShutdownAttempt(ctx); started || err != context.DeadlineExceeded {
+	if started, err := runtime.ShutdownAttempt(ctx); started || !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("rejected attempt = %v, %v", started, err)
 	}
 	if started, err := runtime.ShutdownAttempt(context.Background()); !started || err != nil {
