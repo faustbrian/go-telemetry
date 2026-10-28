@@ -6,8 +6,8 @@
 // required or best effort. Shutdown flushes and closes the runtime once using
 // the bounded policy implemented by telemetry.Runtime. The adapter performs no
 // retries and exposes the concrete runtime without hiding provider APIs. Hooks
-// require one ordered service lifecycle; mutexes protect accessors, not repeated
-// startup/restart. Global provider policy and application drain are caller-owned.
+// require one ordered service lifecycle; optional rejected-stop retention does
+// not enable startup/restart. Global provider policy and drain are caller-owned.
 package telemetryservice
 
 import (
@@ -49,6 +49,11 @@ type Options struct {
 	RuntimeOptions []telemetry.Option
 	// Failure explicitly selects required or best-effort initialization.
 	Failure FailurePolicy
+	// RetainRejectedShutdown keeps ownership when Stop is rejected before core
+	// shutdown starts. The caller may then retry Stop with a usable bounded
+	// context. It never retries automatically or adds a shutdown allowance.
+	// The default retains the legacy one-shot Stop, including rejected calls.
+	RetainRejectedShutdown bool
 }
 
 // OptionsError identifies one rejected option.
@@ -86,10 +91,11 @@ func (err *InitializationError) Unwrap() error { return err.Cause }
 
 // Adapter owns one telemetry runtime and its lifecycle state.
 type Adapter struct {
-	name           string
-	config         telemetry.Config
-	runtimeOptions []telemetry.Option
-	failure        FailurePolicy
+	name                   string
+	config                 telemetry.Config
+	runtimeOptions         []telemetry.Option
+	failure                FailurePolicy
+	retainRejectedShutdown bool
 
 	mu      sync.RWMutex
 	runtime *telemetry.Runtime
@@ -101,7 +107,7 @@ type Adapter struct {
 
 // New validates Name/Failure and constructs an inert adapter without validating
 // the runtime Config or doing I/O. It copies the RuntimeOptions slice, not the
-// options or Config nested data. Service must call Start then Stop once in order;
+// options or Config nested data. Service must call Start then Stop in order;
 // this adapter does not support repeated Start, Stop-before-Start or restart.
 func New(options Options) (*Adapter, error) {
 	if strings.TrimSpace(options.Name) == "" {
@@ -115,18 +121,22 @@ func New(options Options) (*Adapter, error) {
 	}
 
 	return &Adapter{
-		name:           options.Name,
-		config:         options.Config,
-		runtimeOptions: append([]telemetry.Option(nil), options.RuntimeOptions...),
-		failure:        options.Failure,
+		name:                   options.Name,
+		config:                 options.Config,
+		runtimeOptions:         append([]telemetry.Option(nil), options.RuntimeOptions...),
+		failure:                options.Failure,
+		retainRejectedShutdown: options.RetainRejectedShutdown,
 	}, nil
 }
 
 // Component returns fresh hooks into this same adapter, not a new lifecycle.
-// Start initializes once under the service lifecycle contract; Stop clears the
-// active pointer before the one runtime Shutdown and retains its first result.
-// A pre-canceled Stop consumes the adapter stop attempt even if Runtime rejects
-// shutdown before starting. Drain later business components before invoking it.
+// Start initializes once under the service lifecycle contract. By default Stop
+// clears the active pointer before Runtime.Shutdown and retains its first result;
+// a pre-canceled Stop consumes the adapter stop attempt even if
+// Runtime rejects shutdown before starting. With RetainRejectedShutdown, Stop
+// retains the runtime through a rejected call and until an admitted attempt
+// returns; repeated admitted calls share that terminal result. A terminal error
+// is not retried. Drain later business components before invoking these hooks.
 func (adapter *Adapter) Component() service.Component {
 	return service.Component{
 		Name:  adapter.name,
@@ -181,6 +191,9 @@ func (adapter *Adapter) start(ctx context.Context) error {
 }
 
 func (adapter *Adapter) stop(ctx context.Context) error {
+	if adapter.retainRejectedShutdown {
+		return adapter.stopRetainingRejected(ctx)
+	}
 	adapter.stopOnce.Do(func() {
 		adapter.mu.Lock()
 		runtime := adapter.runtime
@@ -192,4 +205,24 @@ func (adapter *Adapter) stop(ctx context.Context) error {
 	})
 
 	return adapter.stopErr
+}
+
+func (adapter *Adapter) stopRetainingRejected(ctx context.Context) error {
+	adapter.mu.RLock()
+	runtime, previous := adapter.runtime, adapter.stopErr
+	adapter.mu.RUnlock()
+	if runtime == nil {
+		return previous
+	}
+
+	// Only core admission can distinguish rejection from a started attempt that
+	// returned a context error, including shutdown through a borrowed Runtime.
+	started, err := runtime.ShutdownAttempt(ctx)
+	if started {
+		adapter.mu.Lock()
+		adapter.runtime = nil
+		adapter.stopErr = err
+		adapter.mu.Unlock()
+	}
+	return err
 }

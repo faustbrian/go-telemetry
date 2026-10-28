@@ -55,6 +55,22 @@ supported. Stop clears the runtime pointer and consumes its one attempt before
 calling Shutdown. A pre-canceled Stop therefore cannot be retried through this
 adapter even when Runtime itself rejects the attempt before starting.
 
+Set `Options.RetainRejectedShutdown = true` when the owning lifecycle must retain
+an unclosed runtime after such a rejection. In this mode `Runtime()` remains
+available until an admitted shutdown attempt returns. Rejected calls return the
+context error without consuming ownership; the owner can explicitly retry Stop
+only with a usable context within its existing process budget. No retry or fresh
+allowance is created automatically. An admitted attempt, including a partial
+failure, remains terminal and repeated Stop calls return that same result.
+
+`Runtime.ShutdownAttempt(ctx)` exposes the same atomic admission decision for
+other lifecycle owners. Its `started` result is false only when this call was
+rejected before admission. A true result means it initiated or joined the shared
+terminal attempt, not that provider cleanup succeeded. Inspect the returned
+error. Do not infer admission from `errors.Is(err, context.Canceled)` or a
+separate context check: an already-started shutdown can return the same error,
+and a borrower can concurrently initiate shutdown.
+
 ## Globals
 
 When `RegisterGlobal` is true, shutdown restores previous tracer, meter, and
