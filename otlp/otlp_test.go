@@ -45,11 +45,30 @@ func TestConfigValidationRejectsInvalidTransportSettings(t *testing.T) {
 			config.TLS.InsecureSkipVerify = true
 		},
 		"HTTP client with gRPC": func(config *Config) {
-			config.HTTPClient = &http.Client{}
+			config.HTTPClient = &http.Client{Timeout: time.Second}
+		},
+		"HTTP client with CA": func(config *Config) {
+			config.Protocol = ProtocolHTTPProtobuf
+			config.TLS = TLSConfig{CAFile: "collector-ca.pem", FileReader: fixtureTLSReader{}}
+			config.HTTPClient = &http.Client{Timeout: time.Second}
+		},
+		"HTTP client with client certificate": func(config *Config) {
+			config.Protocol = ProtocolHTTPProtobuf
+			config.TLS = TLSConfig{CertificateFile: "client.pem", PrivateKeyFile: "client-key.pem", FileReader: fixtureTLSReader{}}
+			config.HTTPClient = &http.Client{Timeout: time.Second}
 		},
 		"HTTP client with server name": func(config *Config) {
 			config.Protocol = ProtocolHTTPProtobuf
 			config.TLS = TLSConfig{ServerName: "collector.internal"}
+			config.HTTPClient = &http.Client{Timeout: time.Second}
+		},
+		"HTTP client skipping verification": func(config *Config) {
+			config.Protocol = ProtocolHTTPProtobuf
+			config.TLS = TLSConfig{InsecureSkipVerify: true}
+			config.HTTPClient = &http.Client{Timeout: time.Second}
+		},
+		"HTTP client without timeout": func(config *Config) {
+			config.Protocol = ProtocolHTTPProtobuf
 			config.HTTPClient = &http.Client{}
 		},
 	}

@@ -3,6 +3,7 @@ package telemetry
 import (
 	"fmt"
 	"math"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -161,6 +162,18 @@ func TestConfigValidationRejectsUnsafeValues(t *testing.T) {
 		"plaintext with TLS": func(config *Config) {
 			config.Traces.Exporter.TLS.Insecure = true
 			config.Traces.Exporter.TLS.CAFile = "collector-ca.pem"
+		},
+		"both parent sampling policies": func(config *Config) {
+			config.Traces.Sampler.ParentBased = true
+			config.Traces.Sampler.ParentDropOnly = true
+		},
+		"HTTP client with gRPC": func(config *Config) {
+			config.Traces.Exporter.Protocol = ProtocolGRPC
+			config.Traces.Exporter.HTTPClient = &http.Client{Timeout: time.Second}
+		},
+		"HTTP client without timeout": func(config *Config) {
+			config.Traces.Exporter.Protocol = ProtocolHTTPProtobuf
+			config.Traces.Exporter.HTTPClient = &http.Client{}
 		},
 		"empty resource key": func(config *Config) { config.Resource[""] = "value" },
 		"long resource key":  func(config *Config) { config.Resource[strings.Repeat("k", 256)] = "value" },

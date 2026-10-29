@@ -53,14 +53,17 @@ type Config struct {
 	TLS TLSConfig
 	// Retry controls SDK retry policy; finite positive intervals are required when enabled.
 	Retry RetryConfig
-	// Timeout must be positive and bounds construction and SDK export attempts.
-	// A custom TLS reader must cooperate with the constructor context.
+	// Timeout must be positive and bounds construction and SDK export attempts;
+	// with HTTPClient it bounds construction only. A custom TLS reader must
+	// cooperate with the constructor context.
 	Timeout time.Duration
 	// HTTPClient optionally replaces the SDK's HTTP client for HTTP/protobuf, so
-	// the caller owns proxy, dialing, redirect, TLS and per-attempt timeout policy;
-	// the SDK client otherwise reads proxies from the environment. TLS.Insecure
-	// still selects the http scheme. It is rejected for gRPC and with any other
-	// TLS setting, which the client would silently ignore.
+	// the caller owns proxy, dialing, redirect and TLS policy; the SDK client
+	// otherwise reads proxies from the environment, as does a client whose
+	// Transport is nil. The SDK then ignores Timeout for export attempts, so the
+	// client's own Timeout must be positive. TLS.Insecure still selects the http
+	// scheme; any other TLS setting, and gRPC, are rejected. The exporter keeps
+	// the client for its lifetime and does not close its idle connections.
 	HTTPClient *http.Client
 }
 
@@ -158,6 +161,9 @@ func (c Config) Validate() error {
 	if c.HTTPClient != nil && (c.Protocol != ProtocolHTTPProtobuf || c.TLS.CAFile != "" || c.TLS.CertificateFile != "" ||
 		c.TLS.PrivateKeyFile != "" || c.TLS.ServerName != "" || c.TLS.InsecureSkipVerify) {
 		errs = append(errs, errors.New("OTLP HTTP client requires HTTP/protobuf and owns TLS beyond the scheme"))
+	}
+	if c.HTTPClient != nil && c.HTTPClient.Timeout <= 0 {
+		errs = append(errs, errors.New("OTLP HTTP client timeout must be positive"))
 	}
 	if (c.TLS.CertificateFile == "") != (c.TLS.PrivateKeyFile == "") {
 		errs = append(errs, errors.New("OTLP client certificate and private key must be configured together"))

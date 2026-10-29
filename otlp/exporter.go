@@ -19,8 +19,8 @@ import (
 // NewTraceExporter constructs an owned standard OpenTelemetry span exporter.
 // It validates configuration, checks caller cancellation, bounds TLS reads and
 // constructor work by Timeout, and copies Headers. No implicit file reader is
-// provided; secure mode uses TLS 1.2 or later. Successful construction is not a
-// delivery probe. TLS reader/parser diagnostics are categorical, but SDK
+// provided; secure mode uses TLS 1.2 or later unless HTTPClient owns TLS.
+// Successful construction is not a delivery probe. TLS reader/parser diagnostics are categorical, but SDK
 // constructor/export failures need not be redacted. The caller owns Shutdown.
 func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExporter, error) {
 	if err := ctx.Err(); err != nil {
@@ -79,8 +79,8 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 // NewMetricExporter constructs an owned standard OpenTelemetry metric exporter.
 // It validates configuration, checks caller cancellation, bounds TLS reads and
 // constructor work by Timeout, and copies Headers. No implicit file reader is
-// provided; secure mode uses TLS 1.2 or later. Successful construction is not a
-// delivery probe. TLS reader/parser diagnostics are categorical, but SDK
+// provided; secure mode uses TLS 1.2 or later unless HTTPClient owns TLS.
+// Successful construction is not a delivery probe. TLS reader/parser diagnostics are categorical, but SDK
 // constructor/export failures need not be redacted. The caller owns Shutdown.
 func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporter, error) {
 	if err := ctx.Err(); err != nil {

@@ -3,6 +3,10 @@ package telemetry
 import (
 	"context"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -824,5 +828,45 @@ func TestInitAppliesParentDropOnlySampling(t *testing.T) {
 				t.Fatalf("sampled = %v, want %v", got, test.want)
 			}
 		})
+	}
+}
+
+type countingRoundTripper struct {
+	requests atomic.Int64
+	next     http.RoundTripper
+}
+
+func (transport *countingRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	transport.requests.Add(1)
+	return transport.next.RoundTrip(request)
+}
+
+func TestInitExportsTracesThroughTheConfiguredHTTPClient(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = io.Copy(io.Discard, request.Body)
+		writer.Header().Set("content-type", "application/x-protobuf")
+	}))
+	defer server.Close()
+
+	transport := &countingRoundTripper{next: &http.Transport{Proxy: nil}}
+	config := enabledConfig("orders", "1.2.3")
+	config.RegisterGlobal = false
+	config.Metrics.Enabled = false
+	config.Traces.Sampler = SamplerConfig{Mode: telemetrytrace.ModeAlwaysOn}
+	config.Traces.Exporter.Protocol = ProtocolHTTPProtobuf
+	config.Traces.Exporter.Endpoint = strings.TrimPrefix(server.URL, "http://")
+	config.Traces.Exporter.TLS = TLSConfig{Insecure: true}
+	config.Traces.Exporter.HTTPClient = &http.Client{Transport: transport, Timeout: time.Second}
+	runtime, err := Init(context.Background(), config)
+	if err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	_, span := runtime.TracerProvider().Tracer("test").Start(context.Background(), "request")
+	span.End()
+	if err := runtime.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown() error = %v", err)
+	}
+	if transport.requests.Load() == 0 {
+		t.Fatal("trace export did not use the configured HTTP client")
 	}
 }

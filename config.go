@@ -141,8 +141,9 @@ type ExporterConfig struct {
 	TLS TLSConfig
 	// Retry controls SDK retry policy; finite positive intervals are required when enabled.
 	Retry RetryConfig
-	// Timeout must be positive and bounds construction and SDK export attempts.
-	// A custom TLS reader must cooperate with the constructor context.
+	// Timeout must be positive and bounds construction and SDK export attempts;
+	// with HTTPClient it bounds construction only. A custom TLS reader must
+	// cooperate with the constructor context.
 	Timeout time.Duration
 	// HTTPClient optionally replaces the SDK HTTP client for HTTP/protobuf; see
 	// otlp.Config.HTTPClient.
@@ -205,8 +206,8 @@ type SamplerConfig struct {
 	// ParentBased delegates sampled/unsampled parent decisions to the SDK;
 	// Mode and Ratio then select only the root policy. Sampling is not redaction.
 	ParentBased bool
-	// ParentDropOnly honors an unsampled parent but applies Mode and Ratio to a
-	// sampled parent, so callers cannot raise sampling. It excludes ParentBased.
+	// ParentDropOnly caps untrusted remote callers at the local policy; see
+	// trace.Config.ParentDropOnly. It excludes ParentBased, which DefaultConfig sets.
 	ParentDropOnly bool
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand/v2"
 
 	"go.opentelemetry.io/otel/sdk/trace"
 	traceapi "go.opentelemetry.io/otel/trace"
@@ -31,18 +32,25 @@ type Config struct {
 	// ParentBased delegates sampled/unsampled parent decisions to the SDK;
 	// Mode and Ratio then select only the root policy. Sampling is not redaction.
 	ParentBased bool
-	// ParentDropOnly honors an unsampled parent but applies Mode and Ratio to a
-	// sampled parent as to a root, so a caller can lower sampling but never
-	// raise it above the local policy. It excludes ParentBased.
+	// ParentDropOnly treats remote callers as untrusted: an unsampled remote
+	// parent drops, and a sampled remote parent is sampled again by an
+	// independent random draw at the local policy, so a caller can lower but
+	// never raise sampling, whatever trace ID it sends. Local parents keep their
+	// decision and roots use Mode and Ratio. It excludes ParentBased.
 	ParentDropOnly bool
 }
 
 // NewSampler constructs a standard OpenTelemetry SDK sampler for a supported Mode.
 // Ratio is validated only in ratio mode; parent-based wrapping preserves the
-// SDK default decisions for local/remote sampled and unsampled parents. Head
+// SDK default decisions for local/remote sampled and unsampled parents, and
+// ParentDropOnly caps sampled remote parents at the local policy. Head
 // sampling cannot select traces by eventual outcome or guarantee a traffic quota.
 // See TestParentBasedSamplerPreservesRemoteDecision; sampling is not privacy.
 func NewSampler(config Config) (trace.Sampler, error) {
+	return newSampler(config, rand.Float64)
+}
+
+func newSampler(config Config, draw func() float64) (trace.Sampler, error) {
 	var sampler trace.Sampler
 	switch config.Mode {
 	case ModeAlwaysOn:
@@ -63,23 +71,32 @@ func NewSampler(config Config) (trace.Sampler, error) {
 	case config.ParentBased:
 		sampler = trace.ParentBased(sampler)
 	case config.ParentDropOnly:
-		sampler = parentDropOnly{local: sampler}
+		sampler = trace.ParentBased(sampler, trace.WithRemoteParentSampled(remoteCap{config: config, draw: draw}))
 	}
 	return sampler, nil
 }
 
-// parentDropOnly drops a trace whose parent is unsampled and otherwise defers
-// to the local policy, which sees the same trace ID for roots and children.
-type parentDropOnly struct{ local trace.Sampler }
-
-func (sampler parentDropOnly) ShouldSample(parameters trace.SamplingParameters) trace.SamplingResult {
-	parent := traceapi.SpanContextFromContext(parameters.ParentContext)
-	if parent.IsValid() && !parent.IsSampled() {
-		return trace.SamplingResult{Decision: trace.Drop, Tracestate: parent.TraceState()}
-	}
-	return sampler.local.ShouldSample(parameters)
+// remoteCap decides a sampled remote parent by a fresh draw rather than its
+// trace ID: ratio sampling reads the trace ID, which a remote caller chooses,
+// so the caller could otherwise force sampling with a low ID.
+type remoteCap struct {
+	config Config
+	draw   func() float64
 }
 
-func (sampler parentDropOnly) Description() string {
-	return "ParentDropOnly{" + sampler.local.Description() + "}"
+func (sampler remoteCap) ShouldSample(parameters trace.SamplingParameters) trace.SamplingResult {
+	sampled := sampler.config.Mode == ModeAlwaysOn ||
+		sampler.config.Mode == ModeRatio && sampler.draw() < sampler.config.Ratio
+	decision := trace.Drop
+	if sampled {
+		decision = trace.RecordAndSample
+	}
+	return trace.SamplingResult{
+		Decision:   decision,
+		Tracestate: traceapi.SpanContextFromContext(parameters.ParentContext).TraceState(),
+	}
+}
+
+func (sampler remoteCap) Description() string {
+	return fmt.Sprintf("RemoteParentCap{%s,%g}", sampler.config.Mode, sampler.config.Ratio)
 }

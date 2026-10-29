@@ -112,7 +112,7 @@ for an authenticated, policy-protected local or same-cluster connection.
 
 - root: configuration, resources, provider lifecycle, globals, and errors
 - `otlp`: explicit OTLP/gRPC and OTLP/HTTP exporter construction
-- `trace`: always-on, always-off, ratio, and parent-based samplers
+- `trace`: always-on, always-off, ratio, parent-based and parent-drop-only samplers
 - `metric`: views, histogram boundaries, attribute allow-lists, and cardinality
 - `propagation`: bounded W3C trace context and trusted baggage policies
 - `instrumentation/nethttp`: private-by-default `net/http` server and client
