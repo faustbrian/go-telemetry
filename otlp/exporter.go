@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"net/url"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -14,6 +16,7 @@ import (
 	metricexport "go.opentelemetry.io/otel/sdk/metric"
 	traceexport "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // NewTraceExporter constructs an owned standard OpenTelemetry span exporter.
@@ -35,16 +38,20 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 	if err != nil {
 		return nil, err
 	}
+	endpoint, err := endpointURL(config, defaultTracePath)
+	if err != nil {
+		return nil, err
+	}
 	if config.Protocol == ProtocolGRPC {
 		options := []otlptracegrpc.Option{
-			otlptracegrpc.WithEndpointURL(endpointURL(config, "")),
+			otlptracegrpc.WithEndpointURL(endpoint),
 			otlptracegrpc.WithHeaders(cloneHeaders(config.Headers)),
 			otlptracegrpc.WithTimeout(config.Timeout),
 			otlptracegrpc.WithRetry(otlptracegrpc.RetryConfig(config.Retry)),
 			otlptracegrpc.WithCompressor(grpcCompressor(config.Compression)),
 		}
 		if config.TLS.Insecure {
-			options = append(options, otlptracegrpc.WithInsecure())
+			options = append(options, otlptracegrpc.WithTLSCredentials(insecure.NewCredentials()))
 		} else {
 			options = append(options, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 		}
@@ -56,15 +63,14 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 		compression = otlptracehttp.GzipCompression
 	}
 	options := []otlptracehttp.Option{
-		otlptracehttp.WithEndpointURL(endpointURL(config, defaultTracePath)),
+		otlptracehttp.WithEndpointURL(endpoint),
 		otlptracehttp.WithHeaders(cloneHeaders(config.Headers)),
 		otlptracehttp.WithTimeout(config.Timeout),
 		otlptracehttp.WithRetry(otlptracehttp.RetryConfig(config.Retry)),
 		otlptracehttp.WithCompression(compression),
 	}
-	if !config.TLS.Insecure {
-		options = append(options, otlptracehttp.WithTLSClientConfig(tlsConfig))
-	}
+	// A nil TLS config in plaintext mode clears any environment TLS material.
+	options = append(options, otlptracehttp.WithTLSClientConfig(tlsConfig))
 	if config.HTTPClient != nil {
 		options = append(options, otlptracehttp.WithHTTPClient(config.HTTPClient))
 	}
@@ -90,9 +96,13 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 	if err != nil {
 		return nil, err
 	}
+	endpoint, err := endpointURL(config, defaultMetricPath)
+	if err != nil {
+		return nil, err
+	}
 	if config.Protocol == ProtocolGRPC {
 		options := []otlpmetricgrpc.Option{
-			otlpmetricgrpc.WithEndpointURL(endpointURL(config, "")),
+			otlpmetricgrpc.WithEndpointURL(endpoint),
 			otlpmetricgrpc.WithHeaders(cloneHeaders(config.Headers)),
 			otlpmetricgrpc.WithTimeout(config.Timeout),
 			otlpmetricgrpc.WithRetry(otlpmetricgrpc.RetryConfig(config.Retry)),
@@ -101,7 +111,7 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 			otlpmetricgrpc.WithAggregationSelector(metricexport.DefaultAggregationSelector),
 		}
 		if config.TLS.Insecure {
-			options = append(options, otlpmetricgrpc.WithInsecure())
+			options = append(options, otlpmetricgrpc.WithTLSCredentials(insecure.NewCredentials()))
 		} else {
 			options = append(options, otlpmetricgrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 		}
@@ -113,7 +123,7 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 		compression = otlpmetrichttp.GzipCompression
 	}
 	options := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpointURL(endpointURL(config, defaultMetricPath)),
+		otlpmetrichttp.WithEndpointURL(endpoint),
 		otlpmetrichttp.WithHeaders(cloneHeaders(config.Headers)),
 		otlpmetrichttp.WithTimeout(config.Timeout),
 		otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig(config.Retry)),
@@ -121,9 +131,8 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 		otlpmetrichttp.WithTemporalitySelector(metricexport.DefaultTemporalitySelector),
 		otlpmetrichttp.WithAggregationSelector(metricexport.DefaultAggregationSelector),
 	}
-	if !config.TLS.Insecure {
-		options = append(options, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
-	}
+	// A nil TLS config in plaintext mode clears any environment TLS material.
+	options = append(options, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
 	if config.HTTPClient != nil {
 		options = append(options, otlpmetrichttp.WithHTTPClient(config.HTTPClient))
 	}
@@ -133,27 +142,49 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 // The SDK exporters read OTEL_EXPORTER_OTLP_* from the process environment
 // first and apply explicit options second, so every setting an environment
 // variable can carry is passed explicitly: the endpoint URL fixes host, path
-// and scheme (and so TLS), and compression and metric temporality and
-// aggregation are always set. Config is then the only input.
+// and scheme, TLS material is always set (nil in plaintext mode), and
+// compression and metric temporality and aggregation are always set.
 const (
 	defaultTracePath  = "/v1/traces"
 	defaultMetricPath = "/v1/metrics"
 )
 
+// errInvalidEndpoint reports an Endpoint or URLPath that does not form an
+// exact host:port URL; the SDK would otherwise silently keep the environment
+// or default endpoint.
+var errInvalidEndpoint = errors.New("OTLP endpoint or path does not form a valid URL")
+
 // endpointURL renders Endpoint as a URL whose scheme selects TLS, with the
-// configured HTTP signal path or the given default. gRPC passes no path.
-func endpointURL(config Config, defaultPath string) string {
+// configured HTTP signal path (a leading slash is added, as the SDK did) or
+// defaultPath. gRPC ignores the path. It fails unless the URL parses back to
+// exactly the configured host and path.
+func endpointURL(config Config, defaultPath string) (string, error) {
 	scheme := "https"
 	if config.TLS.Insecure {
 		scheme = "http"
 	}
 	path := config.URLPath
-	if path == "" || defaultPath == "" {
+	switch {
+	case path == "":
 		path = defaultPath
+	case !strings.HasPrefix(path, "/"):
+		path = "/" + path
 	}
-	return scheme + "://" + config.Endpoint + path
+	if config.Protocol == ProtocolGRPC {
+		path = ""
+	}
+	rendered := (&url.URL{Scheme: scheme, Host: config.Endpoint, Path: path}).String()
+	parsed, err := url.Parse(rendered)
+	if err != nil || parsed.Host != config.Endpoint || parsed.Path != path ||
+		parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", errInvalidEndpoint
+	}
+	return rendered, nil
 }
 
+// grpcCompressor names the configured compression. The SDK reports "none" as
+// an unrecognized compressor through otel.Handle before selecting no
+// compression; Init's content-free handler discards that report.
 func grpcCompressor(compression Compression) string {
 	if compression == CompressionGZIP {
 		return "gzip"

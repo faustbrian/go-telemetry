@@ -3,6 +3,7 @@ package telemetry
 import (
 	"sync"
 
+	"github.com/go-logr/logr"
 	"go.opentelemetry.io/otel"
 )
 
@@ -15,12 +16,18 @@ type contentFreeErrorHandler struct{}
 
 func (contentFreeErrorHandler) Handle(error) {}
 
-var installErrorHandler sync.Once
+var installDiagnostics sync.Once
 
-// installContentFreeErrorHandler replaces the SDK's default error handler for
-// the process. It is never restored on Shutdown, because restoring the default
-// would reintroduce the leak; an application that wants SDK error signals must
-// install its own content-free handler after Init.
-func installContentFreeErrorHandler() {
-	installErrorHandler.Do(func() { otel.SetErrorHandler(contentFreeErrorHandler{}) })
+// installContentFreeDiagnostics replaces the SDK's process-wide error handler
+// and internal logger. The logger receives raw environment values the SDK
+// parses (URLs with credentials, header values). Both run before any exporter
+// is built, whether or not RegisterGlobal is set and even if Init then fails,
+// and are never restored, because restoring the defaults would reintroduce the
+// leak. An application that wants SDK diagnostics must install its own
+// content-free handler or logger after Init; one installed before is replaced.
+func installContentFreeDiagnostics() {
+	installDiagnostics.Do(func() {
+		otel.SetErrorHandler(contentFreeErrorHandler{})
+		otel.SetLogger(logr.Discard())
+	})
 }
