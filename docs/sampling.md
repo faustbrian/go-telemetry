@@ -19,7 +19,8 @@ Ratios range from 0 through 1. The default is parent-based 10% root sampling.
 ## Cross-service consistency
 
 Keep parent-based sampling enabled for normal distributed traces. A service
-must not override a sampled parent's decision based on its local ratio. The
+with trusted callers must not override a sampled parent's decision based on its
+local ratio; see "Untrusted callers" for the exception. The
 test suite proves sampled and unsampled remote decisions across hops.
 
 ## Untrusted callers

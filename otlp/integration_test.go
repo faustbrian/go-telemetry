@@ -350,3 +350,24 @@ func TestHTTPExportersSendThroughTheCallerHTTPClient(t *testing.T) {
 		t.Fatalf("caller transport requests = %d after traces, %d after metrics", afterTraces, transport.requests.Load())
 	}
 }
+
+func TestHTTPExporterUsesTheCallerTLSClientOverHTTPS(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_ = readOTLPBody(t, request)
+		writer.Header().Set("content-type", "application/x-protobuf")
+		response, _ := proto.Marshal(&collectortrace.ExportTraceServiceResponse{})
+		_, _ = writer.Write(response)
+	}))
+	defer server.Close()
+
+	transport := &countingTransport{next: server.Client().Transport}
+	config := integrationConfig(ProtocolHTTPProtobuf, strings.TrimPrefix(server.URL, "https://"))
+	config.TLS = TLSConfig{}
+	config.HTTPClient = &http.Client{Transport: transport, Timeout: time.Second}
+	exportTrace(t, config)
+	if transport.requests.Load() == 0 {
+		t.Fatal("HTTPS export did not use the caller transport")
+	}
+}
