@@ -5,6 +5,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-10-29
+
 ### Added
 
 - Add `trace.Config.ParentDropOnly` and `SamplerConfig.ParentDropOnly` for
@@ -376,7 +378,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/faustbrian/go-telemetry/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/faustbrian/go-telemetry/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/faustbrian/go-telemetry/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/faustbrian/go-telemetry/compare/v2.1.0...v3.0.0
