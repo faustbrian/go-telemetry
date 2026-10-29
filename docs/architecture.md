@@ -32,7 +32,7 @@ runtime, so they can use custom providers and cannot create cycles.
 Configuration validation precedes construction. If a later component fails,
 already-created exporters and providers are shut down and all cleanup failures
 are joined. Global registration occurs last. Content-free SDK diagnostics are
-installed first and process-wide, independent of `RegisterGlobal`, so export
+installed right after validation and process-wide, independent of `RegisterGlobal`, so export
 errors never print collector URLs, addresses or response bodies. Only one
 runtime may own globals;
 independent runtimes remain available with `RegisterGlobal = false`.

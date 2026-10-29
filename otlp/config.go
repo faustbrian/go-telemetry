@@ -3,6 +3,9 @@
 // every transport option explicitly, so OTEL_EXPORTER_OTLP_* environment
 // variables cannot change endpoints, TLS, headers, compression or metric
 // temporality and aggregation. Proxy variables apply without HTTPClient.
+// Only Init replaces the SDK's process-wide error handler and logger; callers
+// that build exporters without Init must install content-free ones themselves,
+// or SDK diagnostics, including parsed environment values, reach stderr.
 // The owned profile is OTLP 1.10.0 trace/metric protobuf (TELEMETRY-DEC-001/002),
 // not all signals or guaranteed Collector/backend delivery. Exporter ownership
 // transfers to the caller, who must shut it down or attach it to one runtime.

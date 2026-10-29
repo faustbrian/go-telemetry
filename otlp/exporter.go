@@ -155,17 +155,17 @@ const (
 var errInvalidEndpoint = errors.New("OTLP endpoint or path does not form a valid URL")
 
 // endpointURL renders Endpoint as a URL whose scheme selects TLS, with the
-// configured HTTP signal path (a leading slash is added, as the SDK did) or
-// defaultPath. gRPC ignores the path. It fails unless the URL parses back to
+// configured HTTP signal path (trimmed, with a leading slash added, as the SDK
+// did) or defaultPath for an empty or "." path. gRPC ignores the path. It fails unless the URL parses back to
 // exactly the configured host and path.
 func endpointURL(config Config, defaultPath string) (string, error) {
 	scheme := "https"
 	if config.TLS.Insecure {
 		scheme = "http"
 	}
-	path := config.URLPath
+	path := strings.TrimSpace(config.URLPath)
 	switch {
-	case path == "":
+	case path == "" || path == ".":
 		path = defaultPath
 	case !strings.HasPrefix(path, "/"):
 		path = "/" + path

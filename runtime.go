@@ -108,7 +108,7 @@ type Runtime struct {
 // read environment variables, and every OTLP exporter setting comes from
 // Config: the SDK still parses OTEL_EXPORTER_OTLP_* but each value is replaced
 // by an explicit option. Proxy environment variables apply only when no
-// ExporterConfig.HTTPClient is supplied. Init first replaces the process-wide
+// ExporterConfig.HTTPClient is supplied. After Config validates, Init replaces the process-wide
 // OpenTelemetry error handler and internal logger with content-free ones (see
 // installContentFreeDiagnostics), even when RegisterGlobal is false.
 // Partial providers are cleaned up with one ShutdownTimeout budget detached from

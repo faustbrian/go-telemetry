@@ -211,6 +211,8 @@ func TestEndpointURLSelectsSchemeAndSignalPath(t *testing.T) {
 		{Config{Endpoint: "collector:4318", URLPath: "custom/v1/traces"}, defaultTracePath, "https://collector:4318/custom/v1/traces"},
 		{Config{Endpoint: "[::1]:4318", TLS: TLSConfig{Insecure: true}}, defaultTracePath, "http://[::1]:4318/v1/traces"},
 		{Config{Endpoint: "collector", TLS: TLSConfig{Insecure: true}}, defaultTracePath, "http://collector/v1/traces"},
+		{Config{Endpoint: "collector:4318", URLPath: " /custom/v1/traces "}, defaultTracePath, "https://collector:4318/custom/v1/traces"},
+		{Config{Endpoint: "collector:4318", URLPath: "."}, defaultMetricPath, "https://collector:4318/v1/metrics"},
 		{Config{Protocol: ProtocolGRPC, Endpoint: "collector:4317", URLPath: "/ignored"}, defaultTracePath, "https://collector:4317"},
 	} {
 		got, err := endpointURL(test.config, test.defaultPath)
