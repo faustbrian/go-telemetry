@@ -72,6 +72,7 @@ type Config struct {
 	// Propagation is validated even when both signals are disabled.
 	Propagation telemetrypropagation.Config
 	// RegisterGlobal opts into process-wide provider/propagator replacement.
+	// Content-free SDK diagnostics are installed regardless (see Init).
 	// Only one runtime registered through this package may be active at a time.
 	RegisterGlobal bool
 	// ShutdownTimeout must be positive and caps each flush/shutdown call

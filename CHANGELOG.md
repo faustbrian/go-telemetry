@@ -5,6 +5,24 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- `Init` replaces the process-wide OpenTelemetry error handler and internal
+  logger with content-free ones before building exporters, whether or not
+  `RegisterGlobal` is set. The SDK defaults wrote export failures and parsed
+  environment values to stderr, including collector URLs, resolved addresses,
+  header values and collector response bodies. An application that installed
+  its own handler or logger before `Init` must install it again afterwards.
+- OTLP exporters no longer honor `OTEL_EXPORTER_OTLP_*` environment
+  variables. The endpoint, signal path, TLS mode and material, headers,
+  timeout, compression and metric temporality and aggregation all come from
+  `Config`. Migration: move any collector settings supplied through those
+  variables, such as `OTEL_EXPORTER_OTLP_HEADERS` for collector
+  authentication, into `ExporterConfig`.
+- An `Endpoint` or `URLPath` that does not form an exact URL now fails
+  exporter construction instead of silently falling back to an environment
+  or default endpoint. A `URLPath` without a leading slash still works.
+
 ## [4.2.0] - 2026-10-29
 
 ### Added

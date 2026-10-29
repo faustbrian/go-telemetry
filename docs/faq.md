@@ -16,8 +16,13 @@ wrappers and proprietary direct-ingestion defaults are out of scope.
 ## Why is initialization explicit?
 
 Configuration values should be safe to build in tests and dependency wiring.
-Network clients, goroutines, SDK providers, and process globals appear only
-after `Init` succeeds.
+Network clients, goroutines, SDK providers, and registered providers and
+propagators appear only after `Init` succeeds. The one exception is diagnostics:
+`Init` first replaces the process-wide OpenTelemetry error handler and internal
+logger with content-free ones once `Config` validates, even when
+`RegisterGlobal` is false or construction later fails, so SDK error text never
+reaches stderr. Exporters built directly with the `otlp` package without
+`Init` do not get this protection.
 
 ## Must I register globals?
 
