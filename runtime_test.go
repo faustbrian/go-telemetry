@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	traceapi "go.opentelemetry.io/otel/trace"
+
 	telemetrymetric "github.com/faustbrian/go-telemetry/v4/metric"
 	telemetrypropagation "github.com/faustbrian/go-telemetry/v4/propagation"
 	telemetrytrace "github.com/faustbrian/go-telemetry/v4/trace"
@@ -790,4 +792,37 @@ func (e *recordingSpanExporter) shutdownCount() int {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return e.shutdowns
+}
+
+func TestInitAppliesParentDropOnlySampling(t *testing.T) {
+	for name, test := range map[string]struct {
+		ratio  float64
+		parent traceapi.TraceFlags
+		want   bool
+	}{
+		"sampled caller beyond the local ratio":   {ratio: 0, parent: traceapi.FlagsSampled, want: false},
+		"unsampled caller within the local ratio": {ratio: 1, parent: 0, want: false},
+		"sampled caller within the local ratio":   {ratio: 1, parent: traceapi.FlagsSampled, want: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			config := enabledConfig("orders", "1.2.3")
+			config.RegisterGlobal = false
+			config.Metrics.Enabled = false
+			config.Traces.Sampler = SamplerConfig{Mode: telemetrytrace.ModeRatio, Ratio: test.ratio, ParentDropOnly: true}
+			runtime, err := Init(context.Background(), config, WithTraceExporter(&recordingSpanExporter{}))
+			if err != nil {
+				t.Fatalf("Init() error = %v", err)
+			}
+			defer func() { _ = runtime.Shutdown(context.Background()) }()
+			parent := traceapi.NewSpanContext(traceapi.SpanContextConfig{
+				TraceID: traceapi.TraceID{1}, SpanID: traceapi.SpanID{1}, TraceFlags: test.parent, Remote: true,
+			})
+			_, span := runtime.TracerProvider().Tracer("test").Start(
+				traceapi.ContextWithRemoteSpanContext(context.Background(), parent), "request")
+			defer span.End()
+			if got := span.SpanContext().IsSampled(); got != test.want {
+				t.Fatalf("sampled = %v, want %v", got, test.want)
+			}
+		})
+	}
 }

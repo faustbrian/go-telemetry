@@ -5,6 +5,18 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add `trace.Config.ParentDropOnly` and `SamplerConfig.ParentDropOnly`: an
+  unsampled parent still drops the trace, but a sampled parent goes through
+  the local root policy, so callers can lower sampling but never raise it. It
+  excludes `ParentBased`.
+- Add `otlp.Config.HTTPClient` and `ExporterConfig.HTTPClient` so an HTTP/protobuf
+  exporter uses a caller-owned client for proxy, dialing, redirect, TLS and
+  per-attempt timeout policy instead of the SDK client, which reads proxies
+  from the environment. It is rejected for gRPC and with TLS settings other
+  than `Insecure`.
+
 ## [4.1.0] - 2026-10-28
 
 ### Added

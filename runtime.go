@@ -152,9 +152,10 @@ func Init(ctx context.Context, config Config, opts ...Option) (*Runtime, error) 
 			}
 		}
 		sampler, err := settings.buildSampler(telemetrytrace.Config{
-			Mode:        config.Traces.Sampler.Mode,
-			Ratio:       config.Traces.Sampler.Ratio,
-			ParentBased: config.Traces.Sampler.ParentBased,
+			Mode:           config.Traces.Sampler.Mode,
+			Ratio:          config.Traces.Sampler.Ratio,
+			ParentBased:    config.Traces.Sampler.ParentBased,
+			ParentDropOnly: config.Traces.Sampler.ParentDropOnly,
 		})
 		if err != nil {
 			cleanup, cancel := boundedCleanupContext(ctx, config.ShutdownTimeout)
@@ -260,7 +261,8 @@ func otlpConfig(config ExporterConfig) telemetryotlp.Config {
 			MaxInterval:     config.Retry.MaxInterval,
 			MaxElapsedTime:  config.Retry.MaxElapsedTime,
 		},
-		Timeout: config.Timeout,
+		Timeout:    config.Timeout,
+		HTTPClient: config.HTTPClient,
 	}
 }
 

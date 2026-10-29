@@ -70,6 +70,9 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 	} else {
 		options = append(options, otlptracehttp.WithTLSClientConfig(tlsConfig))
 	}
+	if config.HTTPClient != nil {
+		options = append(options, otlptracehttp.WithHTTPClient(config.HTTPClient))
+	}
 	return otlptracehttp.New(ctx, options...)
 }
 
@@ -126,6 +129,9 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 		options = append(options, otlpmetrichttp.WithInsecure())
 	} else {
 		options = append(options, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
+	}
+	if config.HTTPClient != nil {
+		options = append(options, otlpmetrichttp.WithHTTPClient(config.HTTPClient))
 	}
 	return otlpmetrichttp.New(ctx, options...)
 }

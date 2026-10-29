@@ -20,6 +20,7 @@ package telemetry
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 	"unicode/utf8"
 
@@ -143,6 +144,9 @@ type ExporterConfig struct {
 	// Timeout must be positive and bounds construction and SDK export attempts.
 	// A custom TLS reader must cooperate with the constructor context.
 	Timeout time.Duration
+	// HTTPClient optionally replaces the SDK HTTP client for HTTP/protobuf; see
+	// otlp.Config.HTTPClient.
+	HTTPClient *http.Client
 }
 
 // TLSConfig controls transport security. Insecure is intended for a local or
@@ -201,6 +205,9 @@ type SamplerConfig struct {
 	// ParentBased delegates sampled/unsampled parent decisions to the SDK;
 	// Mode and Ratio then select only the root policy. Sampling is not redaction.
 	ParentBased bool
+	// ParentDropOnly honors an unsampled parent but applies Mode and Ratio to a
+	// sampled parent, so callers cannot raise sampling. It excludes ParentBased.
+	ParentDropOnly bool
 }
 
 // DefaultConfig returns inspectable, inactive defaults. Callers must explicitly
@@ -334,9 +341,10 @@ func (c TraceConfig) validate() []error {
 		errs = append(errs, errors.New("trace batch timeouts must be positive"))
 	}
 	if _, err := telemetrytrace.NewSampler(telemetrytrace.Config{
-		Mode:        c.Sampler.Mode,
-		Ratio:       c.Sampler.Ratio,
-		ParentBased: c.Sampler.ParentBased,
+		Mode:           c.Sampler.Mode,
+		Ratio:          c.Sampler.Ratio,
+		ParentBased:    c.Sampler.ParentBased,
+		ParentDropOnly: c.Sampler.ParentDropOnly,
 	}); err != nil {
 		errs = append(errs, err)
 	}

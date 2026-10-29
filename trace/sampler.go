@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"go.opentelemetry.io/otel/sdk/trace"
+	traceapi "go.opentelemetry.io/otel/trace"
 )
 
 // Mode selects the root-span sampling strategy.
@@ -30,6 +31,10 @@ type Config struct {
 	// ParentBased delegates sampled/unsampled parent decisions to the SDK;
 	// Mode and Ratio then select only the root policy. Sampling is not redaction.
 	ParentBased bool
+	// ParentDropOnly honors an unsampled parent but applies Mode and Ratio to a
+	// sampled parent as to a root, so a caller can lower sampling but never
+	// raise it above the local policy. It excludes ParentBased.
+	ParentDropOnly bool
 }
 
 // NewSampler constructs a standard OpenTelemetry SDK sampler for a supported Mode.
@@ -52,8 +57,29 @@ func NewSampler(config Config) (trace.Sampler, error) {
 	default:
 		return nil, errors.New("sampling mode is unsupported")
 	}
-	if config.ParentBased {
+	switch {
+	case config.ParentBased && config.ParentDropOnly:
+		return nil, errors.New("parent-based and parent-drop-only sampling are exclusive")
+	case config.ParentBased:
 		sampler = trace.ParentBased(sampler)
+	case config.ParentDropOnly:
+		sampler = parentDropOnly{local: sampler}
 	}
 	return sampler, nil
+}
+
+// parentDropOnly drops a trace whose parent is unsampled and otherwise defers
+// to the local policy, which sees the same trace ID for roots and children.
+type parentDropOnly struct{ local trace.Sampler }
+
+func (sampler parentDropOnly) ShouldSample(parameters trace.SamplingParameters) trace.SamplingResult {
+	parent := traceapi.SpanContextFromContext(parameters.ParentContext)
+	if parent.IsValid() && !parent.IsSampled() {
+		return trace.SamplingResult{Decision: trace.Drop, Tracestate: parent.TraceState()}
+	}
+	return sampler.local.ShouldSample(parameters)
+}
+
+func (sampler parentDropOnly) Description() string {
+	return "ParentDropOnly{" + sampler.local.Description() + "}"
 }

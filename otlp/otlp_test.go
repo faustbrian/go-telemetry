@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,6 +43,14 @@ func TestConfigValidationRejectsInvalidTransportSettings(t *testing.T) {
 		},
 		"plaintext with skip verify": func(config *Config) {
 			config.TLS.InsecureSkipVerify = true
+		},
+		"HTTP client with gRPC": func(config *Config) {
+			config.HTTPClient = &http.Client{}
+		},
+		"HTTP client with server name": func(config *Config) {
+			config.Protocol = ProtocolHTTPProtobuf
+			config.TLS = TLSConfig{ServerName: "collector.internal"}
+			config.HTTPClient = &http.Client{}
 		},
 	}
 

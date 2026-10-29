@@ -91,3 +91,48 @@ func TestSamplerModes(t *testing.T) {
 		}
 	}
 }
+
+func TestParentDropOnlySamplerLetsCallersLowerButNotRaiseSampling(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		parent *traceapi.TraceFlags
+		ratio  float64
+		want   trace.SamplingDecision
+	}{
+		{name: "sampled parent beyond the local ratio", parent: new(traceapi.FlagsSampled), ratio: 0, want: trace.Drop},
+		{name: "sampled parent within the local ratio", parent: new(traceapi.FlagsSampled), ratio: 1, want: trace.RecordAndSample},
+		{name: "unsampled parent", parent: new(traceapi.TraceFlags(0)), ratio: 1, want: trace.Drop},
+		{name: "root within the local ratio", ratio: 1, want: trace.RecordAndSample},
+		{name: "root beyond the local ratio", ratio: 0, want: trace.Drop},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			sampler, err := NewSampler(Config{Mode: ModeRatio, Ratio: test.ratio, ParentDropOnly: true})
+			if err != nil {
+				t.Fatalf("NewSampler() error = %v", err)
+			}
+			ctx := context.Background()
+			if test.parent != nil {
+				parent := traceapi.NewSpanContext(traceapi.SpanContextConfig{
+					TraceID: traceapi.TraceID{1}, SpanID: traceapi.SpanID{1}, TraceFlags: *test.parent, Remote: true,
+				})
+				ctx = traceapi.ContextWithRemoteSpanContext(ctx, parent)
+			}
+			result := sampler.ShouldSample(trace.SamplingParameters{ParentContext: ctx, TraceID: traceapi.TraceID{1}, Name: "child"})
+			if result.Decision != test.want {
+				t.Fatalf("sampling decision = %v, want %v", result.Decision, test.want)
+			}
+		})
+	}
+}
+
+func TestParentDropOnlyExcludesParentBased(t *testing.T) {
+	t.Parallel()
+
+	if _, err := NewSampler(Config{Mode: ModeAlwaysOn, ParentBased: true, ParentDropOnly: true}); err == nil {
+		t.Fatal("NewSampler() accepted both parent policies")
+	}
+}

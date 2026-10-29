@@ -312,3 +312,41 @@ func countMetrics(request *collectormetric.ExportMetricsServiceRequest) int64 {
 	}
 	return count
 }
+
+type countingTransport struct {
+	requests atomic.Int64
+	next     http.RoundTripper
+}
+
+func (transport *countingTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	transport.requests.Add(1)
+	return transport.next.RoundTrip(request)
+}
+
+func TestHTTPExportersSendThroughTheCallerHTTPClient(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_ = readOTLPBody(t, request)
+		writer.Header().Set("content-type", "application/x-protobuf")
+		response := []byte{}
+		switch request.URL.Path {
+		case "/v1/traces":
+			response, _ = proto.Marshal(&collectortrace.ExportTraceServiceResponse{})
+		case "/v1/metrics":
+			response, _ = proto.Marshal(&collectormetric.ExportMetricsServiceResponse{})
+		}
+		_, _ = writer.Write(response)
+	}))
+	defer server.Close()
+
+	transport := &countingTransport{next: &http.Transport{Proxy: nil}}
+	config := integrationConfig(ProtocolHTTPProtobuf, strings.TrimPrefix(server.URL, "http://"))
+	config.HTTPClient = &http.Client{Transport: transport, Timeout: time.Second}
+	exportTrace(t, config)
+	afterTraces := transport.requests.Load()
+	exportMetric(t, config)
+	if afterTraces == 0 || transport.requests.Load() <= afterTraces {
+		t.Fatalf("caller transport requests = %d after traces, %d after metrics", afterTraces, transport.requests.Load())
+	}
+}

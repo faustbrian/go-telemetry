@@ -9,6 +9,7 @@ package otlp
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 	"unicode/utf8"
 )
@@ -55,6 +56,12 @@ type Config struct {
 	// Timeout must be positive and bounds construction and SDK export attempts.
 	// A custom TLS reader must cooperate with the constructor context.
 	Timeout time.Duration
+	// HTTPClient optionally replaces the SDK's HTTP client for HTTP/protobuf, so
+	// the caller owns proxy, dialing, redirect, TLS and per-attempt timeout policy;
+	// the SDK client otherwise reads proxies from the environment. TLS.Insecure
+	// still selects the http scheme. It is rejected for gRPC and with any other
+	// TLS setting, which the client would silently ignore.
+	HTTPClient *http.Client
 }
 
 // TLSConfig controls server verification and optional client certificates.
@@ -147,6 +154,10 @@ func (c Config) Validate() error {
 	}
 	if c.Retry.Enabled && (c.Retry.InitialInterval <= 0 || c.Retry.MaxInterval <= 0 || c.Retry.MaxElapsedTime <= 0) {
 		errs = append(errs, errors.New("OTLP retry intervals must be positive"))
+	}
+	if c.HTTPClient != nil && (c.Protocol != ProtocolHTTPProtobuf || c.TLS.CAFile != "" || c.TLS.CertificateFile != "" ||
+		c.TLS.PrivateKeyFile != "" || c.TLS.ServerName != "" || c.TLS.InsecureSkipVerify) {
+		errs = append(errs, errors.New("OTLP HTTP client requires HTTP/protobuf and owns TLS beyond the scheme"))
 	}
 	if (c.TLS.CertificateFile == "") != (c.TLS.PrivateKeyFile == "") {
 		errs = append(errs, errors.New("OTLP client certificate and private key must be configured together"))
