@@ -104,8 +104,10 @@ type Runtime struct {
 }
 
 // Init validates config, constructs resource/propagation and enabled providers,
-// then optionally registers globals. Nil options are ignored. It does not read
-// environment variables itself; selected SDK exporters may have upstream behavior.
+// then optionally registers globals. Nil options are ignored. Neither Init nor
+// its exporters read environment variables: every exporter setting comes from
+// Config. Init also replaces the process-wide OpenTelemetry error handler with
+// one that discards SDK error text (see installContentFreeErrorHandler).
 // Partial providers are cleaned up with one ShutdownTimeout budget detached from
 // caller cancellation (context values retained). Errors join cleanup failures and
 // may expose SDK/custom-exporter causes: they are not universally secret-safe.
@@ -114,6 +116,7 @@ func Init(ctx context.Context, config Config, opts ...Option) (*Runtime, error) 
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
+	installContentFreeErrorHandler()
 
 	settings := options{
 		buildResource:      BuildResource,

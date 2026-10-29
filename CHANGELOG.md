@@ -5,6 +5,16 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- `Init` replaces the process-wide OpenTelemetry error handler with one that
+  discards SDK error text. The SDK default wrote export failures to stderr,
+  including collector URLs, resolved addresses and collector response bodies.
+- OTLP exporters no longer honor `OTEL_EXPORTER_OTLP_*` environment
+  variables. The endpoint, signal path, TLS mode, headers, compression and
+  metric temporality and aggregation all come from `Config`, so ambient
+  variables cannot redirect, downgrade or reshape exports.
+
 ## [4.2.0] - 2026-10-29
 
 ### Added

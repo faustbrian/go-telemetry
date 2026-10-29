@@ -37,13 +37,11 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 	}
 	if config.Protocol == ProtocolGRPC {
 		options := []otlptracegrpc.Option{
-			otlptracegrpc.WithEndpoint(config.Endpoint),
+			otlptracegrpc.WithEndpointURL(endpointURL(config, "")),
 			otlptracegrpc.WithHeaders(cloneHeaders(config.Headers)),
 			otlptracegrpc.WithTimeout(config.Timeout),
 			otlptracegrpc.WithRetry(otlptracegrpc.RetryConfig(config.Retry)),
-		}
-		if config.Compression == CompressionGZIP {
-			options = append(options, otlptracegrpc.WithCompressor("gzip"))
+			otlptracegrpc.WithCompressor(grpcCompressor(config.Compression)),
 		}
 		if config.TLS.Insecure {
 			options = append(options, otlptracegrpc.WithInsecure())
@@ -53,21 +51,18 @@ func NewTraceExporter(ctx context.Context, config Config) (traceexport.SpanExpor
 		return otlptracegrpc.New(ctx, options...)
 	}
 
+	compression := otlptracehttp.NoCompression
+	if config.Compression == CompressionGZIP {
+		compression = otlptracehttp.GzipCompression
+	}
 	options := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(config.Endpoint),
+		otlptracehttp.WithEndpointURL(endpointURL(config, defaultTracePath)),
 		otlptracehttp.WithHeaders(cloneHeaders(config.Headers)),
 		otlptracehttp.WithTimeout(config.Timeout),
 		otlptracehttp.WithRetry(otlptracehttp.RetryConfig(config.Retry)),
+		otlptracehttp.WithCompression(compression),
 	}
-	if config.URLPath != "" {
-		options = append(options, otlptracehttp.WithURLPath(config.URLPath))
-	}
-	if config.Compression == CompressionGZIP {
-		options = append(options, otlptracehttp.WithCompression(otlptracehttp.GzipCompression))
-	}
-	if config.TLS.Insecure {
-		options = append(options, otlptracehttp.WithInsecure())
-	} else {
+	if !config.TLS.Insecure {
 		options = append(options, otlptracehttp.WithTLSClientConfig(tlsConfig))
 	}
 	if config.HTTPClient != nil {
@@ -97,13 +92,13 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 	}
 	if config.Protocol == ProtocolGRPC {
 		options := []otlpmetricgrpc.Option{
-			otlpmetricgrpc.WithEndpoint(config.Endpoint),
+			otlpmetricgrpc.WithEndpointURL(endpointURL(config, "")),
 			otlpmetricgrpc.WithHeaders(cloneHeaders(config.Headers)),
 			otlpmetricgrpc.WithTimeout(config.Timeout),
 			otlpmetricgrpc.WithRetry(otlpmetricgrpc.RetryConfig(config.Retry)),
-		}
-		if config.Compression == CompressionGZIP {
-			options = append(options, otlpmetricgrpc.WithCompressor("gzip"))
+			otlpmetricgrpc.WithCompressor(grpcCompressor(config.Compression)),
+			otlpmetricgrpc.WithTemporalitySelector(metricexport.DefaultTemporalitySelector),
+			otlpmetricgrpc.WithAggregationSelector(metricexport.DefaultAggregationSelector),
 		}
 		if config.TLS.Insecure {
 			options = append(options, otlpmetricgrpc.WithInsecure())
@@ -113,27 +108,57 @@ func NewMetricExporter(ctx context.Context, config Config) (metricexport.Exporte
 		return otlpmetricgrpc.New(ctx, options...)
 	}
 
+	compression := otlpmetrichttp.NoCompression
+	if config.Compression == CompressionGZIP {
+		compression = otlpmetrichttp.GzipCompression
+	}
 	options := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(config.Endpoint),
+		otlpmetrichttp.WithEndpointURL(endpointURL(config, defaultMetricPath)),
 		otlpmetrichttp.WithHeaders(cloneHeaders(config.Headers)),
 		otlpmetrichttp.WithTimeout(config.Timeout),
 		otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig(config.Retry)),
+		otlpmetrichttp.WithCompression(compression),
+		otlpmetrichttp.WithTemporalitySelector(metricexport.DefaultTemporalitySelector),
+		otlpmetrichttp.WithAggregationSelector(metricexport.DefaultAggregationSelector),
 	}
-	if config.URLPath != "" {
-		options = append(options, otlpmetrichttp.WithURLPath(config.URLPath))
-	}
-	if config.Compression == CompressionGZIP {
-		options = append(options, otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression))
-	}
-	if config.TLS.Insecure {
-		options = append(options, otlpmetrichttp.WithInsecure())
-	} else {
+	if !config.TLS.Insecure {
 		options = append(options, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
 	}
 	if config.HTTPClient != nil {
 		options = append(options, otlpmetrichttp.WithHTTPClient(config.HTTPClient))
 	}
 	return otlpmetrichttp.New(ctx, options...)
+}
+
+// The SDK exporters read OTEL_EXPORTER_OTLP_* from the process environment
+// first and apply explicit options second, so every setting an environment
+// variable can carry is passed explicitly: the endpoint URL fixes host, path
+// and scheme (and so TLS), and compression and metric temporality and
+// aggregation are always set. Config is then the only input.
+const (
+	defaultTracePath  = "/v1/traces"
+	defaultMetricPath = "/v1/metrics"
+)
+
+// endpointURL renders Endpoint as a URL whose scheme selects TLS, with the
+// configured HTTP signal path or the given default. gRPC passes no path.
+func endpointURL(config Config, defaultPath string) string {
+	scheme := "https"
+	if config.TLS.Insecure {
+		scheme = "http"
+	}
+	path := config.URLPath
+	if path == "" || defaultPath == "" {
+		path = defaultPath
+	}
+	return scheme + "://" + config.Endpoint + path
+}
+
+func grpcCompressor(compression Compression) string {
+	if compression == CompressionGZIP {
+		return "gzip"
+	}
+	return "none"
 }
 
 const maxTLSMaterialBytes = 1 << 20
