@@ -5,6 +5,13 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.3.1] - 2026-11-15
+
+### Security
+
+- Build with Go 1.27.4 to address GO-2026-6859 in `net/http`.
+  Consumers should use Go 1.27.4 or newer.
+
 ## [4.3.0] - 2026-10-29
 
 ### Changed
@@ -398,7 +405,8 @@ based on Keep a Changelog, and releases follow Semantic Versioning.
   releases instead of relying on higher versions supplied by the repository
   workspace.
 
-[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.3.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-telemetry/compare/v4.3.1...HEAD
+[4.3.1]: https://github.com/faustbrian/go-telemetry/compare/v4.3.0...v4.3.1
 [4.3.0]: https://github.com/faustbrian/go-telemetry/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/faustbrian/go-telemetry/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/faustbrian/go-telemetry/compare/v4.0.0...v4.1.0

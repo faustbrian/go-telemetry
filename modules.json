@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "repository": "github.com/faustbrian/go-telemetry",
-  "go_version": "1.27.3",
+  "go_version": "1.27.4",
   "modules": [
     {
       "directory": ".",
@@ -197,7 +197,7 @@
       "family_label": "Observability",
       "family_description": "Structured logging extensions and OpenTelemetry runtime lifecycle.",
       "family_order": 6,
-      "version": "4.3.0",
+      "version": "4.3.1",
       "tag_prefix": "v",
       "owned_dependencies": [
         "github.com/faustbrian/go-cli/v2",
@@ -319,7 +319,7 @@
         "supported_go": {
           "minimum": "1.27.0",
           "tested": [
-            "1.27.3"
+            "1.27.4"
           ]
         },
         "supported_platforms": [
