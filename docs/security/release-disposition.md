@@ -11,7 +11,7 @@ the absence of vulnerabilities.
 
 ## Selected build inputs
 
-Current development builds select Go 1.27.3 and x/net 0.60.0 to address
+Current development builds select Go 1.27.4 and x/net 0.60.0 to address
 reported standard-library and HTTP/2 findings. The Go 1.27 language floor
 is unchanged. Consumers must use a patched compiler and retain the patched
 dependency graph; source selection is not proof that deployed consumers

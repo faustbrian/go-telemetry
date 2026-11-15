@@ -35,7 +35,7 @@ rewrite IDNA names or replace Go's TLS hostname verification.
 | PostgreSQL adapter | pgx/v5 5.10.x minimum; selected 5.11.0 |
 
 The module retains the Go 1.27 language floor. Security-qualified builds
-use Go 1.27.3 or a newer patched 1.27 compiler and `golang.org/x/net`
+use Go 1.27.4 or a newer patched 1.27 compiler and `golang.org/x/net`
 0.60.0 or later; older compiler or dependency overrides do not inherit
 that qualification.
 
